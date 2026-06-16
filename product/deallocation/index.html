@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deallocation</title>
+<link rel="icon" href="favicon.ico">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.15);
+    --border-strong: rgba(0,0,0,0.3);
+    --text: #1f1e1c;
+    --text-muted: #5f5e5a;
+    --accent: #185FA5;
+    --accent-bg: #E6F1FB;
+    --danger: #A32D2D;
+    --danger-bg: #FCEBEB;
+    --success: #0F6E56;
+    --success-bg: #E1F5EE;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  .subtitle { color: var(--text-muted); margin: 0 0 24px; font-size: 14px; }
+
+  .panel {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2 {
+    font-size: 16px; font-weight: 500; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent);
+    font-size: 12px; font-weight: 500;
+  }
+
+  label {
+    display: block; font-size: 13px; color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  input[type="text"], input[type="number"], input[type="date"] {
+    width: 100%; padding: 8px 10px; font-size: 14px;
+    border: 0.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text);
+    font-family: inherit;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .order-block {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .order-header {
+    display: flex; gap: 12px; align-items: end; margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .order-header > div { flex: 1; min-width: 140px; }
+  .order-header .order-title {
+    flex: 0 0 auto; min-width: 0; align-self: center;
+    font-weight: 500; color: var(--text);
+  }
+
+  table.skus {
+    width: 100%; border-collapse: collapse;
+    margin-bottom: 8px; font-size: 13px;
+  }
+  table.skus th {
+    text-align: left; font-weight: 500; color: var(--text-muted);
+    padding: 6px 8px; font-size: 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  table.skus td { padding: 4px 4px; }
+  table.skus td input { padding: 6px 8px; font-size: 13px; }
+  table.skus .col-sku { width: 60%; }
+  table.skus .col-qty { width: 110px; }
+  table.skus .col-rm { width: 32px; }
+
+  button {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+    background: var(--surface); color: var(--text);
+    border: 0.5px solid var(--border-strong);
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--bg); }
+  button.primary {
+    background: var(--accent); color: white;
+    border-color: var(--accent);
+  }
+  button.primary:hover { background: #134B82; }
+  button.ghost {
+    background: transparent; border: 0.5px dashed var(--border-strong);
+    color: var(--text-muted); width: 100%;
+  }
+  button.ghost:hover { color: var(--text); border-color: var(--text-muted); }
+  button.icon {
+    padding: 4px 8px; font-size: 16px; line-height: 1;
+    color: var(--danger); border-color: transparent;
+  }
+  button.icon:hover { background: var(--danger-bg); }
+
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+
+  .preview {
+    background: #1f1e1c; color: #d3d1c7;
+    border-radius: 8px; padding: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.4;
+    overflow-x: auto; white-space: pre;
+    max-height: 320px; overflow-y: auto;
+    margin-top: 12px;
+  }
+
+  .status {
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    margin-top: 10px;
+  }
+  .status.ok { background: var(--success-bg); color: var(--success); }
+  .status.err { background: var(--danger-bg); color: var(--danger); }
+  .status.warn { background: var(--warn-bg); color: var(--warn-text); }
+
+  .meta-row {
+    display: flex; gap: 8px; font-size: 12px;
+    color: var(--text-muted); margin-top: 8px;
+  }
+  .meta-row span { padding: 2px 8px; background: var(--bg); border-radius: 4px; }
+
+  details { margin-top: 8px; }
+  details summary {
+    cursor: pointer; font-size: 13px; color: var(--text-muted);
+    padding: 4px 0;
+  }
+  details summary:hover { color: var(--text); }
+  .help {
+    background: var(--accent-bg); color: var(--accent);
+    padding: 12px; border-radius: 8px; font-size: 13px;
+    margin-top: 8px;
+  }
+  .help code {
+    background: rgba(0,0,0,0.08); padding: 1px 4px;
+    border-radius: 3px; font-size: 12px;
+  }
+
+  /* Import panel */
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 10px;
+    padding: 20px; text-align: center;
+    background: var(--bg);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+  .drop-zone p { margin: 4px 0; font-size: 13px; }
+  .drop-zone .hint { color: var(--text-muted); font-size: 12px; }
+
+  .import-preview {
+    margin-top: 12px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 360px; overflow-y: auto;
+  }
+  .import-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto auto;
+    gap: 8px; align-items: center;
+    padding: 6px 8px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+  .import-row:last-child { border-bottom: none; }
+  .import-row.header {
+    font-weight: 500; font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 0.5px solid var(--border-strong);
+  }
+  .import-row .order-info { display: flex; flex-direction: column; }
+  .import-row .order-info small { color: var(--text-muted); font-size: 11px; }
+  .import-row input[type="checkbox"] {
+    width: 16px; height: 16px; cursor: pointer;
+  }
+  .import-summary {
+    background: var(--accent-bg); color: var(--accent);
+    padding: 8px 12px; border-radius: 6px; font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  /* Help link + popover */
+  .help-link {
+    font-size: 13px; font-weight: 400;
+    color: var(--accent); cursor: pointer;
+    margin-left: auto;
+    background: none; border: none; padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .help-link:hover { background: var(--accent-bg); }
+  .panel h2 { display: flex; align-items: center; gap: 8px; }
+
+  .popover-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .popover {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 480px; width: 100%;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .popover h3 {
+    margin: 0 0 12px; font-size: 16px; font-weight: 500;
+    padding-right: 28px;
+  }
+  .popover ol {
+    margin: 0; padding-left: 20px;
+    font-size: 14px; line-height: 1.7;
+  }
+  .popover ol li { margin-bottom: 4px; }
+  .popover .close-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none;
+    font-size: 20px; line-height: 1;
+    cursor: pointer; color: var(--text-muted);
+    padding: 4px 8px; border-radius: 6px;
+  }
+  .popover .close-btn:hover {
+    background: var(--bg); color: var(--text);
+  }
+  .popover code {
+    background: var(--bg); padding: 1px 6px;
+    border-radius: 4px; font-size: 13px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .popover .step-img {
+    margin: 8px 0 12px;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    max-width: 100%;
+    display: block;
+  }
+  .popover .step-caption {
+    font-size: 12px; color: var(--text-muted);
+    margin: -8px 0 12px; font-style: italic;
+  }
+
+  /* Credit footer */
+  .credit-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .credit-footer a { color: var(--text-muted); }
+  .credit-footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Inventory deallocation file generator</h1>
+<p class="subtitle">Generates fixed-width deallocation files from order data for upload into external systems.
+  Builds files based on expected format and saves your data locally so you can pick up where you left off.</p>
+
+<div class="panel">
+  <h2><span class="panel-num">1</span>File settings</h2>
+  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+    <div style="flex: 0 0 140px;">
+      <label for="storeNumber">Store number</label>
+      <input type="text" id="storeNumber" maxlength="1" inputmode="numeric"
+             style="text-align: center; font-weight: 500;" />
+    </div>
+    <div style="flex: 1; min-width: 200px;">
+      <label for="fileDate">Filename date (defaults to today)</label>
+      <input type="date" id="fileDate" />
+    </div>
+  </div>
+  <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+    Each order can have its own date — set those below. The filename date is just for the saved file name.
+  </div>
+</div>
+
+<div class="panel">
+  <h2><span class="panel-num">2</span>Import from spreadsheet
+    <button class="help-link" onclick="showHelp()">Where do I get this file?</button>
+  </h2>
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <p><strong>Drop your .xls or .xlsx file here</strong></p>
+    <p class="hint">or click to browse — SHIP rows are filtered out automatically</p>
+    <input type="file" id="fileInput" accept=".xls,.xlsx,.csv" style="display: none;">
+  </div>
+  <div id="importStatus"></div>
+  <div id="importPreview"></div>
+</div>
+
+<div class="panel">
+  <h2><span class="panel-num">3</span>Orders</h2>
+  <div id="orders"></div>
+  <button class="ghost" onclick="addOrder()">+ Add another order</button>
+</div>
+
+<div class="panel">
+  <h2><span class="panel-num">4</span>Generate</h2>
+  <div class="actions">
+    <button class="primary" onclick="downloadFile()">Download .txt file</button>
+    <button onclick="copyToClipboard()">Copy contents</button>
+    <div class="spacer"></div>
+    <button onclick="clearAll()" style="color: var(--danger);">Clear all</button>
+  </div>
+  <div id="status"></div>
+  <details>
+    <summary>Show file preview</summary>
+    <div class="preview" id="preview">(nothing yet)</div>
+  </details>
+
+<div id="helpPopover" class="popover-overlay" style="display: none;" onclick="if(event.target===this) hideHelp()">
+  <div class="popover">
+    <button class="close-btn" onclick="hideHelp()" aria-label="Close">×</button>
+    <h3>How to get the file to import</h3>
+    <ol>
+      <li>In <strong>ShipStation</strong>, search <strong>New Orders</strong></li>
+      <li>Pick any recent order</li>
+      <li>Copy one of its SKUs</li>
+      <li>Paste it into <strong>IMU</strong></li>
+      <li>Click the blue underlined <strong>Quantity Committed</strong> link</li>
+      <li>Select <strong>ECOMM Viewer</strong></li>
+      <li>Set the date range and store number</li>
+      <li>Click <strong>Export Kpad</strong> at the top. Opens in Excel. Save as an <code>.xls</code> to your computer</li>
+      <li>Drag that file into the import box</li>
+    </ol>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ============ STATE ============
+const STORAGE_KEY = 'invDealloc_v3';
+
+let state = loadState() || {
+  fileDate: todayISO(),
+  storeNumber: '3',
+  orders: [makeEmptyOrder()]
+};
+if (!state.storeNumber) state.storeNumber = '3';
+if (state.orders) {
+  state.orders.forEach(o => { if (!o.orderDate) o.orderDate = state.fileDate; });
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function makeEmptyOrder() {
+  return {
+    orderDate: todayISO(),
+    orderNumber: '',
+    skus: [{ sku: '', qty: 1 }]
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+function render() {
+  document.getElementById('fileDate').value = state.fileDate;
+  document.getElementById('storeNumber').value = state.storeNumber;
+
+  const ordersEl = document.getElementById('orders');
+  ordersEl.innerHTML = '';
+
+  state.orders.forEach((order, oIdx) => {
+    const block = document.createElement('div');
+    block.className = 'order-block';
+
+    const totalQty = order.skus.reduce((sum, s) => sum + (Number(s.qty) || 0), 0);
+    const lineCount = order.skus.filter(s => s.sku.trim()).length;
+
+    block.innerHTML = `
+      <div class="order-header">
+        <span class="order-title">Order ${oIdx + 1}</span>
+        <div>
+          <label>Order number</label>
+          <input type="text" value="${escapeHtml(order.orderNumber)}"
+                 placeholder="e.g. 100247474"
+                 oninput="updateOrder(${oIdx}, 'orderNumber', this.value)">
+        </div>
+        <div style="flex: 0 0 160px;">
+          <label>Order date</label>
+          <input type="date" value="${escapeHtml(order.orderDate || '')}"
+                 onchange="updateOrder(${oIdx}, 'orderDate', this.value)">
+        </div>
+        <div style="flex: 0 0 auto;">
+          <button class="icon" onclick="removeOrder(${oIdx})" title="Remove order">✕</button>
+        </div>
+      </div>
+
+      <table class="skus">
+        <thead>
+          <tr>
+            <th class="col-sku">SKU</th>
+            <th class="col-qty">Quantity</th>
+            <th class="col-rm"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${order.skus.map((s, sIdx) => `
+            <tr>
+              <td><input type="text" value="${escapeHtml(s.sku)}"
+                         placeholder="SKU code"
+                         oninput="updateSku(${oIdx}, ${sIdx}, 'sku', this.value)"></td>
+              <td><input type="number" min="1" value="${s.qty}"
+                         oninput="updateSku(${oIdx}, ${sIdx}, 'qty', this.value)"></td>
+              <td><button class="icon" onclick="removeSku(${oIdx}, ${sIdx})" title="Remove SKU">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button onclick="addSku(${oIdx})">+ Add SKU</button>
+        <div class="spacer"></div>
+        <div class="meta-row">
+          <span>${lineCount} SKU${lineCount !== 1 ? 's' : ''}</span>
+          <span>${totalQty} total qty</span>
+        </div>
+      </div>
+    `;
+    ordersEl.appendChild(block);
+  });
+
+  updatePreview();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function updateOrder(idx, field, val) {
+  state.orders[idx][field] = val;
+  saveState();
+  updatePreview();
+}
+function updateSku(oIdx, sIdx, field, val) {
+  state.orders[oIdx].skus[sIdx][field] = field === 'qty' ? Number(val) : val;
+  saveState();
+  updatePreview();
+  const blocks = document.querySelectorAll('.order-block');
+  if (blocks[oIdx]) {
+    const order = state.orders[oIdx];
+    const totalQty = order.skus.reduce((sum, s) => sum + (Number(s.qty) || 0), 0);
+    const lineCount = order.skus.filter(s => s.sku.trim()).length;
+    const meta = blocks[oIdx].querySelector('.meta-row');
+    if (meta) {
+      meta.innerHTML = `<span>${lineCount} SKU${lineCount !== 1 ? 's' : ''}</span><span>${totalQty} total qty</span>`;
+    }
+  }
+}
+function addOrder() {
+  state.orders.push(makeEmptyOrder());
+  saveState(); render();
+}
+function removeOrder(idx) {
+  if (state.orders.length === 1) {
+    state.orders[0] = makeEmptyOrder();
+  } else {
+    state.orders.splice(idx, 1);
+  }
+  saveState(); render();
+}
+function addSku(oIdx) {
+  state.orders[oIdx].skus.push({ sku: '', qty: 1 });
+  saveState(); render();
+}
+function removeSku(oIdx, sIdx) {
+  if (state.orders[oIdx].skus.length === 1) {
+    state.orders[oIdx].skus[0] = { sku: '', qty: 1 };
+  } else {
+    state.orders[oIdx].skus.splice(sIdx, 1);
+  }
+  saveState(); render();
+}
+function clearAll() {
+  if (!confirm('Clear all orders and SKUs?')) return;
+  state = { fileDate: todayISO(), storeNumber: '3', orders: [makeEmptyOrder()] };
+  saveState(); render();
+}
+
+document.getElementById('fileDate').addEventListener('change', e => {
+  state.fileDate = e.target.value;
+  saveState();
+  updatePreview();
+});
+
+document.getElementById('storeNumber').addEventListener('input', e => {
+  const digit = (e.target.value.replace(/[^0-9]/g, '')[0]) || '';
+  e.target.value = digit;
+  state.storeNumber = digit || '3';
+  saveState();
+  updatePreview();
+});
+
+function pad(s, len, char = ' ', side = 'right') {
+  s = String(s);
+  if (s.length >= len) return s.slice(0, len);
+  const fill = char.repeat(len - s.length);
+  return side === 'right' ? s + fill : fill + s;
+}
+
+function formatDateMMDDYYYY(isoDate) {
+  const [y, m, d] = isoDate.split('-');
+  return `${m}${d}${y}`;
+}
+
+function buildHeaderLine(dateMMDDYYYY, storeNumber, qtySum, orderNumber) {
+  const parts = [];
+  parts.push('H');
+  parts.push(dateMMDDYYYY);
+  parts.push('      ');
+  parts.push(String(storeNumber).slice(0, 1));
+  parts.push('  ');
+  parts.push('500000');
+  parts.push(' '.repeat(36));
+  parts.push(pad(String(qtySum), 9, '0', 'left') + '+   ');
+  parts.push('000');
+  parts.push('000000+     ');
+  parts.push(' '.repeat(185));
+  parts.push(pad(orderNumber, 9, ' ', 'right'));
+  parts.push(' '.repeat(102));
+  parts.push('d');
+  parts.push(' '.repeat(132));
+  const line = parts.join('');
+  if (line.length !== 517) {
+    console.warn(`Header line length is ${line.length}, expected 517`);
+  }
+  return line;
+}
+
+function buildDetailLine(sku, qty) {
+  const parts = [];
+  parts.push('D');
+  parts.push(pad(sku, 64, ' ', 'right'));
+  parts.push(pad(String(qty), 5, '0', 'left'));
+  parts.push('000000000');
+  parts.push('1' + pad(String(qty), 9, '0', 'left'));
+  const line = parts.join('');
+  if (line.length !== 89) {
+    console.warn(`Detail line length is ${line.length}, expected 89`);
+  }
+  return line;
+}
+
+function generateFileContent() {
+  const lines = [];
+  for (const order of state.orders) {
+    const validSkus = order.skus.filter(s => s.sku.trim() && Number(s.qty) > 0);
+    if (!order.orderNumber.trim() || validSkus.length === 0) continue;
+    const dateStr = formatDateMMDDYYYY(order.orderDate || state.fileDate);
+    const qtySum = validSkus.reduce((sum, s) => sum + Number(s.qty), 0);
+    lines.push(buildHeaderLine(dateStr, state.storeNumber, qtySum, order.orderNumber.trim()));
+    for (const s of validSkus) {
+      lines.push(buildDetailLine(s.sku.trim(), s.qty));
+    }
+  }
+  return lines.join('\n');
+}
+
+function validateState() {
+  const issues = [];
+  let validOrderCount = 0;
+  state.orders.forEach((order, i) => {
+    const trimmed = order.orderNumber.trim();
+    const validSkus = order.skus.filter(s => s.sku.trim() && Number(s.qty) > 0);
+    if (!trimmed && validSkus.length === 0) return;
+    if (!trimmed) issues.push(`Order ${i+1}: missing order number`);
+    if (!order.orderDate) issues.push(`Order ${i+1}: missing date`);
+    if (validSkus.length === 0) issues.push(`Order ${i+1}: no SKUs entered`);
+    if (trimmed && order.orderDate && validSkus.length > 0) validOrderCount++;
+  });
+  if (validOrderCount === 0 && issues.length === 0) {
+    issues.push('No orders entered yet');
+  }
+  return { issues, validOrderCount };
+}
+
+function updatePreview() {
+  const content = generateFileContent();
+  const previewEl = document.getElementById('preview');
+  if (!content) {
+    previewEl.textContent = '(nothing yet — fill in an order number and at least one SKU)';
+  } else {
+    const lines = content.split('\n');
+    previewEl.textContent = lines.map((ln, i) => {
+      const tag = ln[0];
+      const truncated = ln.length > 100 ? ln.slice(0, 100) + `... (${ln.length} chars)` : ln + ` (${ln.length} chars)`;
+      return `${String(i+1).padStart(3)}|${tag}| ${truncated}`;
+    }).join('\n');
+  }
+  const { issues, validOrderCount } = validateState();
+  const statusEl = document.getElementById('status');
+  if (issues.length) {
+    statusEl.innerHTML = `<div class="status warn">${issues.join(' • ')}</div>`;
+  } else {
+    statusEl.innerHTML = `<div class="status ok">Ready: ${validOrderCount} order${validOrderCount !== 1 ? 's' : ''}, ${content.split('\n').length} total lines</div>`;
+  }
+}
+
+function getFilename() {
+  const [y, m, d] = state.fileDate.split('-');
+  return `inventoryDeallocation-${m}-${d}-${y.slice(2)}.txt`;
+}
+
+function downloadFile() {
+  const { issues, validOrderCount } = validateState();
+  if (validOrderCount === 0) {
+    alert('Please enter at least one complete order (order number + SKU) before downloading.');
+    return;
+  }
+  const content = generateFileContent();
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = getFilename();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function copyToClipboard() {
+  const content = generateFileContent();
+  if (!content) {
+    alert('Nothing to copy yet.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(content);
+    const statusEl = document.getElementById('status');
+    const orig = statusEl.innerHTML;
+    statusEl.innerHTML = `<div class="status ok">✓ Copied to clipboard</div>`;
+    setTimeout(() => { statusEl.innerHTML = orig; updatePreview(); }, 1500);
+  } catch (e) {
+    alert('Could not copy. Try downloading instead.');
+  }
+}
+
+let pendingImport = null;
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+['dragenter', 'dragover'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    dropZone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(ev => {
+  dropZone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    dropZone.classList.remove('dragover');
+  });
+});
+dropZone.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length) handleImportFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+function setImportStatus(msg, kind) {
+  const el = document.getElementById('importStatus');
+  if (!msg) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="status ${kind || 'ok'}" style="margin-top: 10px;">${msg}</div>`;
+}
+
+function handleImportFile(file) {
+  setImportStatus(`Reading ${file.name}…`, 'ok');
+  document.getElementById('importPreview').innerHTML = '';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      processImportRows(rows, file.name);
+    } catch (err) {
+      console.error(err);
+      setImportStatus(`Could not read file: ${err.message}`, 'err');
+    }
+  };
+  reader.onerror = () => setImportStatus('Failed to read file', 'err');
+  reader.readAsArrayBuffer(file);
+}
+
+function findColumn(row, candidates) {
+  const keys = Object.keys(row);
+  const norm = s => String(s).toLowerCase().replace(/[\s\n_]+/g, '');
+  for (const cand of candidates) {
+    const target = norm(cand);
+    const found = keys.find(k => norm(k) === target);
+    if (found) return found;
+  }
+  return null;
+}
+
+function excelDateToISO(val) {
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(val).trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const us = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (us) {
+    return `${us[3]}-${us[1].padStart(2,'0')}-${us[2].padStart(2,'0')}`;
+  }
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = parseFloat(s);
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    const ms = serial * 86400000;
+    const d = new Date(epoch.getTime() + ms);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+function processImportRows(rows, fileName) {
+  if (!rows.length) {
+    setImportStatus('Spreadsheet is empty', 'err');
+    return;
+  }
+  const sample = rows[0];
+  const colStore = findColumn(sample, ['St', 'Store', 'Store #', 'Store No']);
+  const colDate = findColumn(sample, ['Order Date', 'Date']);
+  const colOrderId = findColumn(sample, ['Order ID', 'Order#', 'Order Number', 'OrderID']);
+  const colSku = findColumn(sample, ['SKU', 'Item', 'Item #']);
+  const colQty = findColumn(sample, ['Orig Order Qty', 'Orig Order\nQty', 'Quantity', 'Qty', 'Order Qty']);
+  const colDesc = findColumn(sample, ['Description', 'Desc']);
+
+  const missing = [];
+  if (!colOrderId) missing.push('Order ID');
+  if (!colSku) missing.push('SKU');
+  if (!colQty) missing.push('Quantity');
+  if (!colDate) missing.push('Order Date');
+  if (missing.length) {
+    setImportStatus(`Couldn't find required columns: ${missing.join(', ')}. Found: ${Object.keys(sample).join(', ')}`, 'err');
+    return;
+  }
+
+  const orderMap = new Map();
+  let skippedShip = 0;
+  let skippedEmpty = 0;
+  let detectedStore = null;
+
+  for (const row of rows) {
+    const sku = String(row[colSku] || '').trim();
+    const orderId = String(row[colOrderId] || '').trim();
+    const qty = Number(row[colQty]) || 0;
+
+    if (!sku || !orderId) { skippedEmpty++; continue; }
+    if (sku.toUpperCase() === 'SHIP') { skippedShip++; continue; }
+    if (qty <= 0) { skippedEmpty++; continue; }
+
+    if (colStore && detectedStore == null) {
+      const s = String(row[colStore] || '').trim();
+      if (s) detectedStore = s.charAt(0);
+    }
+
+    const isoDate = excelDateToISO(row[colDate]) || todayISO();
+
+    if (!orderMap.has(orderId)) {
+      orderMap.set(orderId, {
+        orderNumber: orderId,
+        orderDate: isoDate,
+        skus: [],
+        desc: String(row[colDesc] || '')
+      });
+    }
+    orderMap.get(orderId).skus.push({
+      sku, qty,
+      desc: colDesc ? String(row[colDesc] || '') : ''
+    });
+  }
+
+  if (orderMap.size === 0) {
+    setImportStatus(`No usable orders found (skipped ${skippedShip} SHIP rows, ${skippedEmpty} empty/zero-qty rows)`, 'err');
+    return;
+  }
+
+  pendingImport = {
+    fileName,
+    detectedStore,
+    orders: Array.from(orderMap.values()).map(o => ({ ...o, selected: true })),
+    skippedShip,
+    skippedEmpty
+  };
+
+  renderImportPreview();
+}
+
+function renderImportPreview() {
+  const previewEl = document.getElementById('importPreview');
+  if (!pendingImport) { previewEl.innerHTML = ''; return; }
+
+  const { orders, detectedStore, skippedShip, fileName } = pendingImport;
+  const selectedCount = orders.filter(o => o.selected).length;
+  const totalSkus = orders.filter(o => o.selected).reduce((sum, o) => sum + o.skus.length, 0);
+  const totalQty = orders.filter(o => o.selected).reduce((sum, o) => sum + o.skus.reduce((s, x) => s + x.qty, 0), 0);
+
+  let html = `
+    <div class="import-summary">
+      Found <strong>${orders.length} orders</strong> in ${escapeHtml(fileName)}.
+      ${detectedStore ? `Store <strong>${escapeHtml(detectedStore)}</strong> detected. ` : ''}
+      Skipped ${skippedShip} SHIP row${skippedShip !== 1 ? 's' : ''}.
+    </div>
+    <div class="import-preview">
+      <div class="import-row header">
+        <span><input type="checkbox" id="selectAll" ${selectedCount === orders.length ? 'checked' : ''}></span>
+        <span>Order</span>
+        <span>SKUs</span>
+        <span>Qty</span>
+      </div>
+  `;
+
+  orders.forEach((o, i) => {
+    const orderQty = o.skus.reduce((s, x) => s + x.qty, 0);
+    const dateDisplay = o.orderDate ? new Date(o.orderDate + 'T00:00:00').toLocaleDateString() : '?';
+    html += `
+      <div class="import-row">
+        <span><input type="checkbox" data-idx="${i}" ${o.selected ? 'checked' : ''}></span>
+        <span class="order-info">
+          <span><strong>${escapeHtml(o.orderNumber)}</strong></span>
+          <small>${dateDisplay} · ${escapeHtml(o.skus.map(s => s.sku).slice(0, 3).join(', '))}${o.skus.length > 3 ? '…' : ''}</small>
+        </span>
+        <span>${o.skus.length}</span>
+        <span>${orderQty}</span>
+      </div>
+    `;
+  });
+
+  html += `
+    </div>
+    <div class="actions" style="margin-top: 12px;">
+      <button class="primary" onclick="commitImport(false)">Replace existing orders</button>
+      <button onclick="commitImport(true)">Append to existing</button>
+      <div class="spacer"></div>
+      <button onclick="cancelImport()" style="color: var(--danger);">Cancel</button>
+      <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">
+        ${selectedCount} of ${orders.length} selected · ${totalSkus} SKUs · ${totalQty} total qty
+      </span>
+    </div>
+  `;
+
+  previewEl.innerHTML = html;
+
+  previewEl.querySelector('#selectAll').addEventListener('change', e => {
+    pendingImport.orders.forEach(o => o.selected = e.target.checked);
+    renderImportPreview();
+  });
+  previewEl.querySelectorAll('input[data-idx]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const idx = Number(e.target.dataset.idx);
+      pendingImport.orders[idx].selected = e.target.checked;
+      renderImportPreview();
+    });
+  });
+}
+
+function commitImport(append) {
+  if (!pendingImport) return;
+  const selected = pendingImport.orders.filter(o => o.selected);
+  if (selected.length === 0) {
+    setImportStatus('No orders selected', 'warn');
+    return;
+  }
+
+  if (pendingImport.detectedStore) {
+    state.storeNumber = pendingImport.detectedStore;
+  }
+
+  const newOrders = selected.map(o => ({
+    orderNumber: o.orderNumber,
+    orderDate: o.orderDate,
+    skus: o.skus.map(s => ({ sku: s.sku, qty: s.qty }))
+  }));
+
+  if (append) {
+    const nonEmpty = state.orders.filter(o =>
+      o.orderNumber.trim() || o.skus.some(s => s.sku.trim())
+    );
+    state.orders = [...nonEmpty, ...newOrders];
+    if (state.orders.length === 0) state.orders = newOrders;
+  } else {
+    state.orders = newOrders;
+  }
+
+  if (state.orders.length === 0) state.orders.push(makeEmptyOrder());
+
+  pendingImport = null;
+  document.getElementById('importPreview').innerHTML = '';
+  setImportStatus(`Imported ${selected.length} order${selected.length !== 1 ? 's' : ''}`, 'ok');
+  setTimeout(() => setImportStatus(''), 3000);
+
+  saveState();
+  render();
+}
+
+function cancelImport() {
+  pendingImport = null;
+  document.getElementById('importPreview').innerHTML = '';
+  setImportStatus('');
+}
+
+function showHelp() {
+  document.getElementById('helpPopover').style.display = 'flex';
+}
+function hideHelp() {
+  document.getElementById('helpPopover').style.display = 'none';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideHelp();
+});
+
+render();
+</script>
+
+  <div style="margin-top:16px; font-size:12px; color: var(--text-muted);">
+    Not affiliated with or endorsed by Epicor. Verify all outputs before use.
+  </div>
+
+  <footer class="credit-footer">
+    Built by <a href="https://github.com/caitlinsc">caitlinsc</a> on GitHub
+  </footer>
+</div>
+
+</body>
+</html>

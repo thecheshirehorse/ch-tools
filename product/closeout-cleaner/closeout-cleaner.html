@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closeout OOS Matcher</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 700px; margin: 0 auto; }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #888; margin-bottom: 1.5rem; }
+  .card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 13px; font-weight: 500; margin-bottom: 0.75rem; }
+  .upload-row { display: flex; gap: 10px; align-items: stretch; }
+  .upload-box { flex: 1; border: 1.5px dashed #ddd; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; }
+  .upload-box:hover { border-color: #aaa; background: #fafafa; }
+  .upload-box.loaded { border-color: #3b6d11; border-style: solid; background: #f4faea; }
+  .upload-box input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .upload-icon { font-size: 20px; color: #bbb; margin-bottom: 6px; }
+  .upload-box.loaded .upload-icon { color: #3b6d11; }
+  .upload-label { font-size: 12px; color: #888; }
+  .upload-box.loaded .upload-label { color: #3b6d11; font-weight: 500; }
+  .upload-sublabel { font-size: 11px; color: #bbb; margin-top: 2px; }
+  button { font-size: 13px; padding: 8px 16px; border-radius: 8px; border: 0.5px solid #ccc; background: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+  button:hover:not(:disabled) { background: #f5f5f3; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.primary:hover:not(:disabled) { background: #333; }
+  .run-row { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+  #status { font-size: 13px; color: #666; min-height: 20px; margin: 0.5rem 0; display: flex; align-items: center; gap: 6px; }
+  .spinner { width: 13px; height: 13px; border: 2px solid #ddd; border-top-color: #555; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .stats { display: flex; gap: 10px; margin: 1rem 0; }
+  .stat { background: #f5f5f3; border-radius: 8px; padding: 0.75rem 1rem; flex: 1; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 500; }
+  .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+  .results-header { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 8px; }
+  .product-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; gap: 12px; font-size: 13px; }
+  .product-row:last-child { border-bottom: none; }
+  .product-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #444; }
+  .product-sku { font-family: monospace; font-size: 11px; color: #888; min-width: 120px; }
+  .product-master { font-family: monospace; font-size: 11px; color: #bbb; min-width: 90px; }
+  .results-scroll { max-height: 360px; overflow-y: auto; }
+  .export-row { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; margin-top: 0.5rem; border-top: 0.5px solid #f0f0f0; }
+  .note { font-size: 12px; color: #aaa; margin-top: 1rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Closeout OOS matcher</h1>
+  <p class="subtitle">Upload the SF closeout export and Compass inventory export to find SKUs that need to be disabled.</p>
+
+  <div class="card">
+    <div class="upload-row">
+      <div class="upload-box" id="box-sf" onclick="document.getElementById('input-sf').click()">
+        <input type="file" id="input-sf" accept=".csv" onchange="loadSF(this)">
+        <div class="upload-icon">&#8659;</div>
+        <div class="upload-label" id="label-sf">SF closeout export</div>
+        <div class="upload-sublabel">.csv</div>
+      </div>
+      <div class="upload-box" id="box-inv" onclick="document.getElementById('input-inv').click()">
+        <input type="file" id="input-inv" accept=".xlsx,.xls,.csv" onchange="loadInv(this)">
+        <div class="upload-icon">&#8659;</div>
+        <div class="upload-label" id="label-inv">Compass inventory export</div>
+        <div class="upload-sublabel">.xlsx / .csv</div>
+      </div>
+    </div>
+    <div class="run-row">
+      <button class="primary" id="run-btn" onclick="run()" disabled>Find OOS SKUs</button>
+    </div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none">
+    <div id="status"></div>
+    <div id="stats"></div>
+    <div id="results"></div>
+    <div id="export-row" style="display:none" class="export-row">
+      <span style="font-size:12px;color:#888;" id="export-note"></span>
+      <button onclick="exportCSV()">&#8595; Export SKU list (.csv)</button>
+    </div>
+  </div>
+
+  <p class="note">SKUs with qty = 0 across both stores are flagged for disabling. SKUs not found in Compass are excluded (likely online-only items not stocked in store).</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let sfData = null, invData = null, oosResults = [];
+
+function loadSF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    sfData = parseCSV(text);
+    document.getElementById('label-sf').textContent = file.name;
+    document.getElementById('box-sf').classList.add('loaded');
+    checkReady();
+  };
+  reader.readAsText(file);
+}
+
+function loadInv(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    invData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    document.getElementById('label-inv').textContent = file.name;
+    document.getElementById('box-inv').classList.add('loaded');
+    checkReady();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(l => {
+    const vals = parseCSVLine(l);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function checkReady() {
+  document.getElementById('run-btn').disabled = !(sfData && invData);
+}
+
+function run() {
+  document.getElementById('results-card').style.display = 'block';
+  setStatus('Expanding SF variants...', true);
+  oosResults = [];
+
+  setTimeout(() => {
+    try {
+      // Expand SF SKUs
+      const sfSkus = [];
+      sfData.forEach(row => {
+        const variants = (row['variants'] || '').trim();
+        const masterId = row['ID'] || '';
+        const name = row['name__default'] || '';
+        if (variants && variants.toLowerCase() !== 'nan') {
+          variants.split(';').forEach(v => {
+            v = v.trim();
+            if (v) sfSkus.push({ master_id: masterId, sku: v, name });
+          });
+        } else if (masterId) {
+          sfSkus.push({ master_id: masterId, sku: masterId, name });
+        }
+      });
+
+      // Build inventory map: SKU -> total qty across stores
+      setStatus('Matching inventory...', true);
+      const invMap = {};
+      invData.forEach(row => {
+        const sku = String(row['Item Number'] || '').trim();
+        const qty = parseFloat(row['Quantity on Hand']) || 0;
+        if (sku) invMap[sku] = (invMap[sku] || 0) + qty;
+      });
+
+      // Match and find OOS
+      let matched = 0, notFound = 0;
+      sfSkus.forEach(item => {
+        if (item.sku in invMap) {
+          matched++;
+          if (invMap[item.sku] === 0) oosResults.push(item);
+        } else {
+          notFound++;
+        }
+      });
+
+      renderResults(sfSkus.length, matched, notFound);
+    } catch(e) {
+      setStatus('Error: ' + e.message);
+    }
+  }, 50);
+}
+
+function renderResults(total, matched, notFound) {
+  const inStock = matched - oosResults.length;
+
+  document.getElementById('stats').innerHTML =
+    '<div class="stats">' +
+    '<div class="stat"><div class="stat-num">' + total + '</div><div class="stat-label">total SF SKUs</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#a32d2d">' + oosResults.length + '</div><div class="stat-label">out of stock</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#3b6d11">' + inStock + '</div><div class="stat-label">in stock</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#bbb">' + notFound + '</div><div class="stat-label">not in Compass</div></div>' +
+    '</div>';
+
+  if (oosResults.length === 0) {
+    setStatus('No out-of-stock closeouts found.');
+    return;
+  }
+
+  setStatus('Found ' + oosResults.length + ' OOS SKU' + (oosResults.length !== 1 ? 's' : '') + ' to disable.');
+
+  const rows = oosResults.map(p =>
+    '<div class="product-row">' +
+    '<div class="product-sku">' + escHtml(p.sku) + '</div>' +
+    '<div class="product-name">' + escHtml(p.name || '—') + '</div>' +
+    '<div class="product-master">' + escHtml(p.master_id !== p.sku ? p.master_id : '') + '</div>' +
+    '</div>'
+  ).join('');
+
+  document.getElementById('results').innerHTML =
+    '<div class="results-header">OOS SKUs (' + oosResults.length + ')</div>' +
+    '<div class="results-scroll">' +
+    '<div style="display:flex;gap:12px;padding:6px 0;border-bottom:0.5px solid #eee;font-size:11px;color:#bbb;font-weight:500;">' +
+    '<div style="min-width:120px">SKU</div><div style="flex:1">Product name</div><div style="min-width:90px">Master ID</div>' +
+    '</div>' + rows + '</div>';
+
+  document.getElementById('export-note').textContent = oosResults.length + ' SKUs ready to export';
+  document.getElementById('export-row').style.display = 'flex';
+}
+
+function exportCSV() {
+  const date = new Date().toISOString().slice(0, 10);
+  const rows = [['SKU', 'Product Name', 'Master ID']];
+  oosResults.forEach(p => rows.push([p.sku, p.name || '', p.master_id !== p.sku ? p.master_id : '']));
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'closeout-oos-' + date + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function setStatus(msg, spinning) {
+  document.getElementById('status').innerHTML = spinning
+    ? '<div class="spinner"></div>' + msg : msg;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

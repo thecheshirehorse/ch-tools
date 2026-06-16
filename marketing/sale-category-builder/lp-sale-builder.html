@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LP Sale Category Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  header {
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: #1a1a2e;
+  }
+
+  header p {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    max-width: 1100px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #6b7280;
+    margin-bottom: 16px;
+  }
+
+  /* Drop zone */
+  #dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 36px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 20px;
+  }
+
+  #dropzone.over {
+    border-color: #4f46e5;
+    background: #eef2ff;
+  }
+
+  #dropzone svg {
+    display: block;
+    margin: 0 auto 10px;
+    opacity: 0.4;
+  }
+
+  #dropzone p {
+    font-size: 13px;
+    color: #9ca3af;
+  }
+
+  #dropzone strong {
+    color: #4f46e5;
+    cursor: pointer;
+  }
+
+  #fileInput { display: none; }
+
+  /* File queue */
+  #fileList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .file-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 160px 32px;
+    gap: 8px;
+    align-items: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .file-row .filename {
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-row .row-count {
+    font-size: 11px;
+    color: #9ca3af;
+  }
+
+  .file-row select, .file-row input[type="text"] {
+    font-size: 12px;
+    padding: 5px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #1a1a2e;
+    width: 100%;
+  }
+
+  .file-row select:focus, .file-row input[type="text"]:focus {
+    outline: 2px solid #4f46e5;
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  .file-row button.remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #d1d5db;
+    font-size: 16px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.1s;
+  }
+
+  .file-row button.remove:hover { color: #ef4444; }
+
+  .col-labels {
+    display: grid;
+    grid-template-columns: 1fr 120px 160px 32px;
+    gap: 8px;
+    padding: 0 12px;
+    margin-bottom: 4px;
+  }
+
+  .col-labels span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+    font-weight: 600;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Summary */
+  #summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tier-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .tier-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  .tier-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    flex: 1;
+  }
+
+  .tier-detail {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: right;
+  }
+
+  .dot-10 { background: #10b981; }
+  .dot-15 { background: #3b82f6; }
+  .dot-20 { background: #8b5cf6; }
+
+  /* Export buttons */
+  #exportArea {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .export-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .export-btn:active:not(:disabled) { transform: translateY(0); }
+  .export-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+  .export-btn .badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.3);
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+
+  .btn-10 { background: #10b981; color: #fff; }
+  .btn-15 { background: #3b82f6; color: #fff; }
+  .btn-20 { background: #8b5cf6; color: #fff; }
+  .btn-all { background: #1a1a2e; color: #fff; }
+
+  .export-all-wrap {
+    margin-top: 4px;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 24px;
+    color: #9ca3af;
+    font-size: 12px;
+  }
+
+  /* Notice */
+  .notice {
+    font-size: 11px;
+    color: #9ca3af;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    line-height: 1.5;
+  }
+
+  .notice strong { color: #6b7280; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LP Sale Category Builder</h1>
+  <p>Drop SFCC category exports → assign discount tier & sheet name → export xlsx files for Logical Position</p>
+</header>
+
+<div class="layout">
+  <!-- Main panel -->
+  <div>
+    <div class="card">
+      <h2>Category Exports</h2>
+
+      <div id="dropzone">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+        </svg>
+        <p>Drag & drop CSV or XLSX exports here<br><strong>or click to browse</strong></p>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".csv,.xlsx,.xls">
+
+      <div class="col-labels" id="colLabels" style="display:none">
+        <span>File</span>
+        <span>Discount Tier</span>
+        <span>Sheet Name</span>
+        <span></span>
+      </div>
+
+      <div id="fileList">
+        <div class="empty" id="emptyMsg">No files loaded yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="card">
+      <h2>Summary</h2>
+      <div id="summary">
+        <div class="empty">Add files to see summary.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Export</h2>
+      <div id="exportArea">
+        <button class="export-btn btn-10" id="exp10" disabled onclick="exportTier('10')">
+          10% Off <span class="badge">10%</span>
+        </button>
+        <button class="export-btn btn-15" id="exp15" disabled onclick="exportTier('15')">
+          15% Off <span class="badge">15%</span>
+        </button>
+        <button class="export-btn btn-20" id="exp20" disabled onclick="exportTier('20')">
+          20% Off <span class="badge">20%</span>
+        </button>
+        <div class="export-all-wrap">
+          <button class="export-btn btn-all" id="expAll" disabled onclick="exportAll()" style="width:100%">
+            Export All Tiers <span class="badge">ALL</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice">
+      <strong>Auto-filter:</strong> Rows where <code>onlineFlag__default</code> = false or N are removed automatically before export.
+    </div>
+  </div>
+</div>
+
+<script>
+const COLS = ['ID','brand','name__default','onlineFlag__default','variants','variationGroups','productSets'];
+const TIERS = ['10','15','20'];
+const TIER_COLORS = { '10': '#10b981', '15': '#3b82f6', '20': '#8b5cf6' };
+
+// files: [{ name, tier, sheetName, rows }]
+let files = [];
+
+// --- Drop zone ---
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('over');
+  handleFiles([...e.dataTransfer.files]);
+});
+fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+function handleFiles(newFiles) {
+  newFiles.forEach(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    reader.onload = e => {
+      let rows = [];
+      if (ext === 'csv') {
+        rows = parseCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      }
+      // Guess sheet name from filename
+      const guessedSheet = guessSheetName(f.name);
+      files.push({ id: Date.now() + Math.random(), name: f.name, tier: '15', sheetName: guessedSheet, rows });
+      render();
+    };
+    if (ext === 'csv') reader.readAsText(f);
+    else reader.readAsArrayBuffer(f);
+  });
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return [];
+  const headers = splitCSVRow(lines[0]);
+  return lines.slice(1).map(l => {
+    const vals = splitCSVRow(l);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+    return obj;
+  });
+}
+
+function splitCSVRow(row) {
+  const result = [];
+  let cur = '', inQuote = false;
+  for (let i = 0; i < row.length; i++) {
+    const c = row[i];
+    if (c === '"') { inQuote = !inQuote; }
+    else if (c === ',' && !inQuote) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function guessSheetName(filename) {
+  // strip extension, lowercase, remove numbers/special
+  let base = filename.replace(/\.[^.]+$/, '').toLowerCase();
+  // common patterns: "tack_export", "horse_clothing", etc.
+  base = base.replace(/[_\-\s]+/g, '_').replace(/[^a-z0-9_]/g, '');
+  return base.substring(0, 31) || 'sheet1';
+}
+
+// --- Render ---
+function render() {
+  const list = document.getElementById('fileList');
+  const empty = document.getElementById('emptyMsg');
+  const labels = document.getElementById('colLabels');
+
+  if (!files.length) {
+    list.innerHTML = '<div class="empty" id="emptyMsg">No files loaded yet.</div>';
+    labels.style.display = 'none';
+    renderSummary();
+    return;
+  }
+
+  labels.style.display = 'grid';
+  list.innerHTML = '';
+
+  files.forEach(file => {
+    const filtered = filterOnline(file.rows);
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `
+      <div>
+        <div class="filename" title="${esc(file.name)}">${esc(file.name)}</div>
+        <div class="row-count">${filtered.length.toLocaleString()} rows (online)</div>
+      </div>
+      <select onchange="updateFile('${file.id}','tier',this.value)">
+        ${TIERS.map(t => `<option value="${t}" ${file.tier===t?'selected':''}>${t}% off</option>`).join('')}
+      </select>
+      <input type="text" value="${esc(file.sheetName)}" maxlength="31"
+        placeholder="sheet name"
+        onchange="updateFile('${file.id}','sheetName',this.value)"
+        oninput="updateFile('${file.id}','sheetName',this.value)">
+      <button class="remove" onclick="removeFile('${file.id}')" title="Remove">×</button>
+    `;
+    list.appendChild(row);
+  });
+
+  renderSummary();
+}
+
+function updateFile(id, key, val) {
+  const f = files.find(f => f.id == id);
+  if (f) { f[key] = val; renderSummary(); }
+}
+
+function removeFile(id) {
+  files = files.filter(f => f.id != id);
+  render();
+}
+
+function filterOnline(rows) {
+  return rows.filter(r => {
+    const v = String(r['onlineFlag__default'] ?? '').toLowerCase().trim();
+    return v !== 'false' && v !== 'n' && v !== 'no' && v !== '0';
+  });
+}
+
+// --- Summary & buttons ---
+function renderSummary() {
+  const summary = document.getElementById('summary');
+
+  const tierData = {};
+  TIERS.forEach(t => { tierData[t] = { sheets: new Set(), rows: 0 }; });
+
+  files.forEach(f => {
+    const t = f.tier;
+    tierData[t].sheets.add(f.sheetName || 'unnamed');
+    tierData[t].rows += filterOnline(f.rows).length;
+  });
+
+  const hasTier = t => tierData[t].rows > 0;
+
+  if (!files.length) {
+    summary.innerHTML = '<div class="empty">Add files to see summary.</div>';
+  } else {
+    summary.innerHTML = TIERS.map(t => {
+      const d = tierData[t];
+      const active = d.rows > 0;
+      return `<div class="tier-summary-row" style="opacity:${active?1:0.4}">
+        <div class="tier-dot dot-${t}"></div>
+        <span class="tier-label">${t}% off</span>
+        <div class="tier-detail">
+          ${active ? `${d.sheets.size} sheet${d.sheets.size!==1?'s':''} · ${d.rows.toLocaleString()} rows` : 'no files'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('exp10').disabled = !hasTier('10');
+  document.getElementById('exp15').disabled = !hasTier('15');
+  document.getElementById('exp20').disabled = !hasTier('20');
+  document.getElementById('expAll').disabled = !files.length;
+}
+
+// --- Export ---
+function buildWorkbook(tier) {
+  const wb = XLSX.utils.book_new();
+  const tierFiles = files.filter(f => f.tier === tier);
+
+  // Group by sheet name
+  const sheetMap = {};
+  tierFiles.forEach(f => {
+    const name = (f.sheetName || 'sheet1').substring(0, 31);
+    if (!sheetMap[name]) sheetMap[name] = [];
+    sheetMap[name].push(...filterOnline(f.rows));
+  });
+
+  Object.entries(sheetMap).forEach(([sheetName, rows]) => {
+    // Normalize: pick only our columns, in order, fill missing with ''
+    const normalized = rows.map(r => {
+      const out = {};
+      COLS.forEach(c => { out[c] = r[c] ?? ''; });
+      return out;
+    });
+    const ws = XLSX.utils.json_to_sheet(normalized, { header: COLS });
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  return wb;
+}
+
+function exportTier(tier) {
+  const wb = buildWorkbook(tier);
+  const filename = `${tier}__off.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+function exportAll() {
+  TIERS.forEach(t => {
+    if (files.some(f => f.tier === t)) exportTier(t);
+  });
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

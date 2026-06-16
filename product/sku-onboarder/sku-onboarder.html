@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKU Onboarder — Cheshire Horse</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #0a0d12; } #root { min-height: 100vh; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useCallback, useMemo, useEffect } = React;
+// XLSX loaded via CDN
+
+/* ─── constants ─── */
+const CATALOG_ID = "master-cheshirehorse";
+const PRICEBOOK_ID = "ch-list-prices";
+const RULES_KEY = "ch-onboarder-rules";
+
+const CATEGORIES = [
+  { id: "apparel", label: "Apparel", children: [
+    { id: "merino-wool-clothing", label: "Merino Wool Clothing", children: [
+      { id: "merino-wool-shirts", label: "Merino Wool Shirts" },
+      { id: "merino-wool-pants-and-leggings", label: "Merino Wool Pants & Leggings" },
+      { id: "merino-wool-socks-and-undergarments", label: "Merino Wool Socks & Undergarments" },
+      { id: "merino-wool-hats-accessories", label: "Merino Wool Hats & Accessories" },
+      { id: "women-s-merino-wool", label: "Women's Merino Wool" },
+      { id: "men-s-merino-wool", label: "Men's Merino Wool" },
+      { id: "kids-merino-wool", label: "Kids' Merino Wool" },
+      { id: "baby-merino-wool", label: "Baby Merino Wool" },
+      { id: "wool-clothing-care", label: "Wool Clothing Care" },
+    ]},
+    { id: "bags-gear", label: "Bags & Gear", children: [
+      { id: "backpacks", label: "Backpacks" },
+      { id: "boot-bags", label: "Boot Bags" },
+      { id: "bridle-bags", label: "Bridle Bags" },
+      { id: "duffel-bags", label: "Duffel Bags" },
+      { id: "garment-bags", label: "Garment Bags" },
+      { id: "helmet-bags-hat-cans", label: "Helmet Bags & Hat Cans" },
+      { id: "tote-bags", label: "Tote Bags" },
+    ]},
+    { id: "belts-and-belt-buckles", label: "Belts" },
+    { id: "breeches-tights", label: "Breeches & Tights", children: [
+      { id: "bootcut-breeches-tights", label: "Bootcut Breeches & Tights" },
+      { id: "full-seat-breeches", label: "Full Seat Breeches" },
+      { id: "knee-patch-breeches", label: "Knee Patch Breeches" },
+      { id: "mens-breeches", label: "Men's Breeches" },
+      { id: "tights-schooling-breeches", label: "Schooling Tights" },
+      { id: "show-breeches2", label: "Show Breeches" },
+      { id: "winter-breeches", label: "Winter Breeches" },
+      { id: "riding-jeans", label: "Riding Jeans" },
+    ]},
+    { id: "casual-wear", label: "Casual Wear", children: [
+      { id: "caps-hats", label: "Caps & Hats" },
+      { id: "cheshire-horse-apparel", label: "Cheshire Horse Apparel" },
+      { id: "equestrian-shirts-tops", label: "Equestrian Shirts & Tops" },
+      { id: "outerwear", label: "Outerwear" },
+      { id: "rain-gear", label: "Rain Gear" },
+      { id: "scarves-neck-warmers", label: "Scarves & Neck Warmers" },
+      { id: "sweatshirts-and-hoodies", label: "Sweatshirts & Hoodies" },
+    ]},
+    { id: "footwear", label: "Footwear", children: [
+      { id: "boot-accessories", label: "Boot Care & Accessories" },
+      { id: "casual-footwear", label: "Casual Footwear" },
+      { id: "kids-footwear", label: "Kids' Footwear" },
+      { id: "tall-riding-boots", label: "Tall Riding Boots" },
+      { id: "men-s-footwear", label: "Men's Footwear" },
+      { id: "muck-mud-boots", label: "Muck & Mud Boots" },
+      { id: "paddock-boots", label: "Paddock Boots" },
+      { id: "winter-riding-boots", label: "Winter Riding Boots" },
+    ]},
+    { id: "gloves", label: "Gloves", children: [
+      { id: "schooling-gloves", label: "Schooling Gloves" },
+      { id: "show-gloves", label: "Show Gloves" },
+      { id: "winter-gloves", label: "Winter Gloves" },
+      { id: "work-gloves", label: "Work Gloves" },
+    ]},
+    { id: "half-chaps", label: "Half Chaps" },
+    { id: "helmets-accessories", label: "Helmets & Accessories", children: [
+      { id: "kids-helmets", label: "Kids' Helmets" },
+      { id: "novelty-helmets", label: "Novelty Helmets" },
+      { id: "schooling-helmets", label: "Schooling Helmets" },
+      { id: "show-helmets", label: "Show Helmets" },
+      { id: "skull-caps", label: "Skull Caps" },
+      { id: "trail-western-helmets", label: "Trail & Western Helmets" },
+      { id: "helmets-with-mips", label: "Helmets with MIPS" },
+      { id: "helmet-covers-accessories", label: "Helmet Covers & Accessories" },
+    ]},
+    { id: "kids-apparel", label: "Kids' Apparel", children: [
+      { id: "kids-accessories", label: "Kids' Accessories" },
+      { id: "kids-breeches-tights-jods", label: "Kids' Breeches, Tights & Jods" },
+      { id: "kids-casual-wear", label: "Kids' Casual Wear" },
+      { id: "kids-chaps-half-chaps", label: "Kids' Chaps & Half Chaps" },
+      { id: "kids-gloves", label: "Kids' Gloves" },
+      { id: "kids-show-coats", label: "Kids' Show Coats" },
+      { id: "kids-show-shirts", label: "Kids' Show Shirts" },
+      { id: "kids-socks-2", label: "Kids' Socks" },
+      { id: "kids-western-hats", label: "Kids' Western Hats" },
+    ]},
+    { id: "protective-vests", label: "Protective Vests" },
+    { id: "show-apparel", label: "Show Apparel", children: [
+      { id: "hunt-dressage-coats", label: "Hunt & Dressage Coats" },
+      { id: "kids-show-breeches", label: "Kids' Show Breeches" },
+      { id: "show-accessories", label: "Show Accessories" },
+      { id: "show-breeches", label: "Show Breeches" },
+      { id: "show-shirts", label: "Show Shirts" },
+      { id: "western-show-apparel", label: "Western Show Apparel" },
+    ]},
+    { id: "socks", label: "Socks", children: [
+      { id: "casual-socks", label: "Casual Socks" },
+      { id: "kids-socks", label: "Kids' Socks" },
+      { id: "mens-socks", label: "Men's Socks" },
+      { id: "tall-boot-socks", label: "Tall Boot Socks" },
+      { id: "winter-socks", label: "Winter Socks" },
+    ]},
+    { id: "spurs-spur-straps", label: "Spurs & Spur Straps", children: [
+      { id: "english-spurs", label: "English Spurs" },
+      { id: "english-spur-straps", label: "English Spur Straps" },
+      { id: "western-spurs", label: "Western Spurs" },
+      { id: "western-spur-straps", label: "Western Spur Straps" },
+    ]},
+    { id: "therapeutics", label: "Therapeutics" },
+    { id: "undergarments", label: "Undergarments" },
+    { id: "alternative-leather-apparel2", label: "Alternative Leather Apparel" },
+    { id: "western-wear", label: "Western Wear", children: [
+      { id: "buckles", label: "Western Belt Buckles" },
+      { id: "western-belts", label: "Western Belts" },
+      { id: "western-hats", label: "Western Hats" },
+      { id: "jeans", label: "Jeans" },
+      { id: "western-footwear", label: "Western Footwear" },
+      { id: "western-jewelry", label: "Western Jewelry" },
+    ]},
+  ]},
+  { id: "tack", label: "Tack", children: [
+    { id: "saddles", label: "Saddles", children: [
+      { id: "english-saddles", label: "English Saddles" },
+      { id: "western-saddles", label: "Western Saddles" },
+      { id: "demo-and-used-saddles-on-consignment", label: "Used & Demo Saddles" },
+    ]},
+    { id: "bareback-pads-treeless-saddles", label: "Bareback Pads & Treeless Saddles" },
+    { id: "bits", label: "Bits", children: [
+      { id: "baucher-bits", label: "Baucher Bits" },
+      { id: "bit-accessories", label: "Bit Accessories" },
+      { id: "bradoon-bits", label: "Bradoon Bits" },
+      { id: "d-ring-bits", label: "D-Ring Bits" },
+      { id: "eggbutt-bits", label: "Eggbutt Bits" },
+      { id: "elevator-gag-bits", label: "Elevator & Gag Bits" },
+      { id: "full-cheek-bits", label: "Full Cheek Bits" },
+      { id: "hackamores", label: "Hackamores" },
+      { id: "half-cheek-bits", label: "Half Cheek Bits" },
+      { id: "kimberwicke-bits", label: "Kimberwicke Bits" },
+      { id: "loose-ring-bits", label: "Loose Ring Bits" },
+      { id: "mullen-mouth-bits", label: "Mullen Mouth Bits" },
+      { id: "pelham-bits", label: "Pelham Bits" },
+      { id: "pony-bits", label: "Pony Bits" },
+      { id: "rubber-mouth-bits", label: "Rubber Mouth Bits" },
+      { id: "weymouth-bits", label: "Weymouth Bits" },
+    ]},
+    { id: "draft-horse", label: "Draft Horse", children: [
+      { id: "draft-bits", label: "Draft Bits" },
+      { id: "draft-halters", label: "Draft Halters" },
+      { id: "other-draft-products", label: "Other Draft Products" },
+    ]},
+    { id: "driving", label: "Driving", children: [
+      { id: "driving-bits", label: "Driving Bits" },
+      { id: "driving-harnesses", label: "Driving Harnesses" },
+      { id: "driving-parts-hardware", label: "Driving Tack & Hardware" },
+      { id: "driving-whips", label: "Driving Whips" },
+    ]},
+    { id: "english-bridles-reins", label: "English Bridles & Reins", children: [
+      { id: "alternative-bridles", label: "Alternative Bridles" },
+      { id: "bridle-parts", label: "Bridle Parts" },
+      { id: "double-bridles", label: "Double Bridles" },
+      { id: "dressage-bridles", label: "Dressage Bridles" },
+      { id: "figure-8-bridles", label: "Figure-8 Bridles" },
+      { id: "flash-bridles", label: "Flash Bridles" },
+      { id: "hunter-bridles", label: "Hunter Bridles" },
+      { id: "pony-bridles", label: "Pony Bridles" },
+      { id: "laced-reins", label: "Laced Reins" },
+      { id: "plain-reins", label: "Plain Reins" },
+      { id: "rubber-reins", label: "Rubber Reins" },
+      { id: "web-reins", label: "Web Reins" },
+    ]},
+    { id: "girths", label: "Girths", children: [
+      { id: "dressage-girths", label: "Dressage Girths" },
+      { id: "fleece-lined-girths", label: "Fleece-Lined Girths" },
+      { id: "hunter-jumper-girths", label: "Hunter/Jumper Girths" },
+      { id: "leather-girths", label: "Leather Girths" },
+      { id: "synthetic-girths", label: "Synthetic Girths" },
+      { id: "girth-covers-accessories", label: "Girth Covers & Accessories" },
+    ]},
+    { id: "halters-leads", label: "Halters & Leads", children: [
+      { id: "breakaway-halters", label: "Breakaway Halters" },
+      { id: "foal-pony-halters", label: "Foal & Pony Halters" },
+      { id: "grooming-halters", label: "Grooming Halters" },
+      { id: "leather-halters", label: "Leather Halters" },
+      { id: "nylon-halters", label: "Nylon Halters" },
+      { id: "rope-halters", label: "Rope Halters" },
+      { id: "halter-accessories", label: "Halter Accessories" },
+      { id: "leads-with-shanks", label: "Leads with Shanks" },
+      { id: "leather-and-synthetic-leads", label: "Leather & Synthetic Leads" },
+      { id: "rope-nylon-leads", label: "Rope & Nylon Leads" },
+    ]},
+    { id: "leather-care", label: "Leather Care", children: [
+      { id: "alternative-leather-care2", label: "Alternative Leather Care" },
+      { id: "dressings-oils", label: "Dressings & Oils" },
+      { id: "leather-cleaners", label: "Leather Cleaners" },
+      { id: "leather-conditioners", label: "Leather Conditioners" },
+      { id: "leather-punches", label: "Leather Punches" },
+      { id: "polishes-dyes", label: "Polishes & Dyes" },
+      { id: "sponges-applicators", label: "Sponges & Applicators" },
+      { id: "weatherproofing", label: "Weatherproofing" },
+    ]},
+    { id: "martingales-breastplates", label: "Martingales & Breastplates", children: [
+      { id: "breastplates", label: "Breastplates" },
+      { id: "running-martingales", label: "Running Martingales" },
+      { id: "standing-martingales", label: "Standing Martingales" },
+      { id: "martingale-attachments", label: "Martingale Attachments" },
+    ]},
+    { id: "mini-horse", label: "Mini Horse" },
+    { id: "natural-horsemanship", label: "Natural Horsemanship" },
+    { id: "pony-tack-equipment", label: "Pony Tack & Equipment" },
+    { id: "saddle-pads", label: "Saddle Pads", children: [
+      { id: "all-purpose-pads", label: "All Purpose Pads" },
+      { id: "baby-pads", label: "Baby Pads" },
+      { id: "close-contact-pads", label: "Close Contact Pads" },
+      { id: "dressage-pads", label: "Dressage Pads" },
+      { id: "half-pads", label: "Half Pads" },
+      { id: "non-slip-pads", label: "Non-Slip Pads" },
+      { id: "novelty-saddle-pads", label: "Novelty Saddle Pads" },
+      { id: "pony-saddle-pads", label: "Pony Saddle Pads" },
+      { id: "riser-pommel-pads", label: "Riser & Pommel Pads" },
+      { id: "therapeutic-shim-pads", label: "Therapeutic & Shim Pads" },
+      { id: "trail-riding-pads", label: "Trail Riding Pads" },
+      { id: "saddle-pad-accessories", label: "Saddle Pad Accessories" },
+    ]},
+    { id: "stirrup-irons-leathers", label: "Stirrups & Leathers", children: [
+      { id: "kids-stirrup-leathers", label: "Kids' Stirrup Leathers" },
+      { id: "stirrup-covers", label: "Stirrup Covers" },
+      { id: "stirrup-irons", label: "Stirrup Irons" },
+      { id: "safety-stirrups", label: "Safety Stirrups" },
+      { id: "stirrup-leathers", label: "Stirrup Leathers" },
+      { id: "stirrup-pads", label: "Stirrup Pads" },
+    ]},
+    { id: "training", label: "Training", children: [
+      { id: "cavessons", label: "Cavessons" },
+      { id: "draw-reins", label: "Draw Reins" },
+      { id: "long-lines-lunge-systems", label: "Long Lines & Lunge Systems" },
+      { id: "lunge-lines", label: "Lunge Lines" },
+      { id: "lunge-whips-1", label: "Lunge Whips" },
+      { id: "side-reins", label: "Side Reins" },
+      { id: "surcingles", label: "Surcingles" },
+      { id: "training-equipment", label: "Training Equipment" },
+    ]},
+    { id: "western-tack", label: "Western Tack", children: [
+      { id: "western-bits", label: "Western Bits" },
+      { id: "western-breastplates-breast-collars", label: "Western Breastplates & Breast Collars" },
+      { id: "western-cinches", label: "Western Cinches" },
+      { id: "western-headstalls", label: "Western Headstalls" },
+      { id: "western-reins", label: "Western Reins" },
+      { id: "western-saddle-accessories", label: "Western Saddle Accessories" },
+      { id: "western-saddle-pads-blankets", label: "Western Saddle Pads & Blankets" },
+      { id: "western-stirrups", label: "Western Stirrups" },
+      { id: "western-tack-accessories", label: "Western Tack Accessories" },
+      { id: "western-training", label: "Western Training" },
+    ]},
+    { id: "whips-crops", label: "Whips & Crops", children: [
+      { id: "bats", label: "Bats" },
+      { id: "crops", label: "Crops" },
+      { id: "dressage-whips", label: "Dressage Whips" },
+      { id: "lunge-whips", label: "Lunge Whips" },
+      { id: "training-whips", label: "Training Whips" },
+      { id: "whip-rests", label: "Whip Rests" },
+    ]},
+    { id: "alternative-leather-tack2", label: "Alternative Leather Tack" },
+    { id: "high-visibility-gear", label: "High Visibility Gear" },
+  ]},
+  { id: "horse-clothing", label: "Horse Clothing", children: [
+    { id: "blanket-accessories", label: "Blanket Accessories" },
+    { id: "fly-apparel", label: "Fly Apparel", children: [
+      { id: "ear-nets", label: "Ear Nets" },
+      { id: "fly-leg-wraps", label: "Fly Leg Wraps" },
+      { id: "fly-masks", label: "Fly Masks" },
+      { id: "fly-sheets", label: "Fly Sheets" },
+    ]},
+    { id: "foal-blankets", label: "Foal Blankets" },
+    { id: "hoods-shoulder-guards-sweats", label: "Hoods, Shoulder Guards & Sweats" },
+    { id: "horse-boots", label: "Horse Boots", children: [
+      { id: "bell-boots", label: "Bell Boots" },
+      { id: "fetlock-boots", label: "Fetlock Boots" },
+      { id: "front-boots", label: "Front Boots" },
+      { id: "hind-boots", label: "Hind Boots" },
+      { id: "hock-boots", label: "Hock Boots" },
+      { id: "riding-hoof-boots", label: "Riding Hoof Boots" },
+      { id: "shipping-boots", label: "Shipping Boots" },
+      { id: "splint-boots", label: "Splint Boots" },
+    ]},
+    { id: "studs", label: "Studs" },
+    { id: "miniature-horse-clothing", label: "Miniature Horse Clothing" },
+    { id: "neck-covers", label: "Neck Covers" },
+    { id: "pony-clothing", label: "Pony Clothing" },
+    { id: "quarter-sheets-exercise-sheets", label: "Quarter & Exercise Sheets" },
+    { id: "ringside-rain-sheets", label: "Ringside Rain Sheets" },
+    { id: "stable-blankets-sheets-liners", label: "Stable Blankets & Liners" },
+    { id: "therapy-sheets", label: "Therapy Sheets" },
+    { id: "therapy-boots", label: "Therapy Boots" },
+    { id: "turnout-blankets", label: "Turnout Blankets", children: [
+      { id: "high-neck-combo-turnout-blankets", label: "High Neck & Combo Turnout Blankets" },
+      { id: "standard-neck-turnout-blankets", label: "Standard Neck Turnout Blankets" },
+    ]},
+    { id: "turnout-sheets", label: "Turnout Sheets" },
+    { id: "uv-protection-masks", label: "UV Protection Masks" },
+  ]},
+  { id: "horse-health", label: "Horse Health", children: [
+    { id: "bandages-wraps", label: "Bandages & Wraps" },
+    { id: "cribbing-chewing", label: "Cribbing & Chewing" },
+    { id: "dewormer", label: "Dewormers" },
+    { id: "first-aid-wound-care", label: "First Aid & Wound Care" },
+    { id: "fly-control", label: "Fly Control", children: [
+      { id: "concentrate", label: "Concentrate" },
+      { id: "feed-through-fly-prevention", label: "Feed-Through Fly Prevention" },
+      { id: "fly-tape-traps", label: "Fly Tape & Traps" },
+      { id: "natural-fly-control", label: "Natural Fly Control" },
+      { id: "ointments", label: "Ointments" },
+      { id: "ready-to-use-aerosols", label: "Ready-To-Use & Aerosols" },
+      { id: "roll-on-wipes", label: "Roll-On & Wipes" },
+      { id: "spot-on-prevention", label: "Spot-On Prevention" },
+      { id: "sprayer-bottles", label: "Sprayer Bottles" },
+    ]},
+    { id: "hoof-care", label: "Hoof Care", children: [
+      { id: "hoof-brushes", label: "Hoof Brushes" },
+      { id: "hoof-boots-and-accessories", label: "Hoof Boots & Accessories" },
+      { id: "hoof-conditioners-dressings", label: "Hoof Conditioners & Dressings" },
+      { id: "hoof-disinfectants-care", label: "Hoof Disinfectants & Care" },
+      { id: "hoof-packing-repair", label: "Hoof Packing & Repair" },
+      { id: "hoof-supplements-1", label: "Hoof Supplements" },
+      { id: "thrush-treatments", label: "Thrush Treatments" },
+    ]},
+    { id: "liniments-poultices", label: "Liniments & Poultices" },
+    { id: "measuring-tapes-sticks", label: "Measuring Tapes & Sticks" },
+    { id: "salt-licks", label: "Salt Licks" },
+    { id: "skin-care", label: "Skin Care" },
+    { id: "therapy-products", label: "Therapy Products", children: [
+      { id: "cold-hydro-therapy", label: "Cold & Hydro Therapy" },
+      { id: "thermal-warmth-therapy", label: "Thermal Warmth Therapy" },
+    ]},
+    { id: "vise-control", label: "Vise Control" },
+  ]},
+  { id: "supplements", label: "Supplements", children: [
+    { id: "anti-inflammatory-supplements", label: "Anti-Inflammatory" },
+    { id: "calming-supplements", label: "Calming" },
+    { id: "complete-supplements", label: "Complete" },
+    { id: "digestive-supplements", label: "Digestive" },
+    { id: "electrolytes", label: "Electrolytes" },
+    { id: "flavor-additives-dressings", label: "Flavor Additives" },
+    { id: "herbal-supplements", label: "Herbal" },
+    { id: "hoof-supplements", label: "Hoof" },
+    { id: "immune-supplements", label: "Immune" },
+    { id: "joint-supplements", label: "Joint" },
+    { id: "mare-foal-supplements", label: "Mare & Foal" },
+    { id: "metabolic-supplements", label: "Metabolic" },
+    { id: "muscle-supplements", label: "Muscle" },
+    { id: "respiratory-supplements", label: "Respiratory" },
+    { id: "senior-supplements", label: "Senior" },
+    { id: "skin-coat-supplements", label: "Skin & Coat" },
+    { id: "flax-seed-supplements", label: "Flax Seed" },
+    { id: "top-dressing2", label: "Top Dressing" },
+    { id: "vitamin-mineral-supplements", label: "Vitamin & Mineral" },
+    { id: "weight-gain-supplements", label: "Weight Gain" },
+  ]},
+  { id: "grooming", label: "Grooming", children: [
+    { id: "braiding", label: "Braiding" },
+    { id: "clippers", label: "Clippers", children: [
+      { id: "corded-clippers", label: "Corded Clippers" },
+      { id: "cordless-clippers", label: "Cordless Clippers" },
+      { id: "clipper-blades", label: "Clipper Blades" },
+      { id: "clipper-accessories", label: "Clipper Accessories" },
+    ]},
+    { id: "coat-care", label: "Coat Care" },
+    { id: "grooming-bags-totes", label: "Grooming Bags & Totes" },
+    { id: "grooming-robots2", label: "Grooming Halters" },
+    { id: "grooming-tools", label: "Grooming Tools", children: [
+      { id: "brushes", label: "Brushes" },
+      { id: "cloths-mitts-sponges", label: "Cloths, Mitts & Sponges" },
+      { id: "curry-combs", label: "Curry Combs" },
+      { id: "grooming-kits", label: "Grooming Kits" },
+      { id: "hoof-picks", label: "Hoof Picks" },
+      { id: "shedding-blades", label: "Shedding Blades" },
+      { id: "sweat-scrapers", label: "Sweat Scrapers" },
+      { id: "vacuums-accessories", label: "Vacuums & Accessories" },
+    ]},
+    { id: "bathing", label: "Bathing" },
+    { id: "hoof-polishes", label: "Hoof Polishes" },
+    { id: "mane-tail", label: "Mane & Tail" },
+  ]},
+  { id: "supplies", label: "Supplies", children: [
+    { id: "arena-supplies", label: "Arena Supplies" },
+    { id: "barn-equipment", label: "Barn Equipment" },
+    { id: "cleaning-deodorizing", label: "Cleaning & Deodorizing" },
+    { id: "rodent-pest-control", label: "Rodent & Pest Control" },
+    { id: "scoops-shovels-stable-forks", label: "Scoops, Shovels & Forks" },
+    { id: "fans-fan-accessories", label: "Fans & Accessories" },
+    { id: "hoses-hose-accessories", label: "Hoses & Accessories" },
+    { id: "ice-melt", label: "Ice Melt" },
+    { id: "feeding", label: "Feeding", children: [
+      { id: "buckets-feeders", label: "Buckets & Feeders" },
+      { id: "feed-bags", label: "Feed Bags" },
+      { id: "feed-scoops", label: "Feed Scoops" },
+      { id: "feed-tubs", label: "Feed Tubs" },
+      { id: "feeders", label: "Feeders" },
+      { id: "flatback-buckets", label: "Flatback Buckets" },
+      { id: "round-buckets", label: "Round Buckets" },
+      { id: "bucket-covers", label: "Bucket Covers" },
+      { id: "cross-ties-tie-rings", label: "Cross Ties & Tie Rings" },
+    ]},
+    { id: "farrier-supplies", label: "Farrier Supplies" },
+    { id: "fencing-supplies", label: "Fencing Supplies" },
+    { id: "hardware", label: "Hardware" },
+    { id: "stall-gate-hardware", label: "Stall & Gate Hardware" },
+    { id: "horse-toys", label: "Horse Toys" },
+    { id: "jump-equipment", label: "Jump Equipment" },
+    { id: "pasture-equipment", label: "Pasture Equipment" },
+    { id: "stall-equipment", label: "Stall Equipment" },
+    { id: "tack-trunks-accessories", label: "Tack Trunks & Accessories" },
+    { id: "tack-room-supplies", label: "Tack Room Supplies" },
+    { id: "tractors-trailers", label: "Tractors & Trailers" },
+    { id: "hay-bags-nets", label: "Hay Bags & Nets" },
+    { id: "mats", label: "Stall Mats" },
+  ]},
+  { id: "pets", label: "Pets", children: [
+    { id: "beekeeping", label: "Beekeeping" },
+    { id: "cat-supplies", label: "Cat Supplies" },
+    { id: "cat-food", label: "Cat Food" },
+    { id: "cat-grooming", label: "Cat Grooming" },
+    { id: "cat-health-care", label: "Cat Health Care" },
+    { id: "cat-litter-products", label: "Cat Litter Products" },
+    { id: "cat-stain-odor", label: "Cat Stain & Odor" },
+    { id: "cat-toys", label: "Cat Toys" },
+    { id: "cat-treats", label: "Cat Treats" },
+    { id: "dog-supplies", label: "Dog Supplies" },
+    { id: "dog-food", label: "Dog Food" },
+    { id: "dog-grooming", label: "Dog Grooming" },
+    { id: "dog-health-care", label: "Dog Health Care" },
+    { id: "dog-kennels-pens", label: "Dog Kennels & Pens" },
+    { id: "dog-supplements", label: "Dog Supplements" },
+    { id: "dog-toys", label: "Dog Toys" },
+    { id: "dog-training-aids", label: "Dog Training Aids" },
+    { id: "dog-treats-and-chews", label: "Dog Treats & Chews" },
+    { id: "dog-stain-odor", label: "Dog Stain & Odor" },
+    { id: "small-animals", label: "Small Animals" },
+    { id: "exotic-animals", label: "Exotic Animals" },
+  ]},
+  { id: "livestock", label: "Livestock", children: [
+    { id: "livestock1", label: "Livestock General" },
+    { id: "cow", label: "Cow" },
+    { id: "poultry", label: "Poultry" },
+    { id: "goats", label: "Goats" },
+    { id: "sheep", label: "Sheep" },
+    { id: "swine", label: "Swine" },
+    { id: "wild-birds", label: "Wild Birds" },
+  ]},
+  { id: "feed", label: "Feed", children: [
+    { id: "horse-feed", label: "Horse Feed" },
+    { id: "horse-treats", label: "Horse Treats" },
+    { id: "livestock-feed", label: "Livestock Feed" },
+    { id: "goat-feed", label: "Goat Feed" },
+    { id: "rabbit-feed", label: "Rabbit Feed" },
+    { id: "sheep-feed-2", label: "Sheep Feed" },
+    { id: "swine-feed", label: "Swine Feed" },
+    { id: "poultry-feed", label: "Poultry Feed" },
+    { id: "organic-feeds", label: "Organic Feeds" },
+    { id: "whole-grains", label: "Whole Grains" },
+    { id: "forage-products", label: "Forage Products" },
+    { id: "minerals-and-protein-tubs", label: "Minerals & Protein Tubs" },
+  ]},
+  { id: "gifts", label: "Gifts", children: [
+    { id: "the-cheshire-horse-gift-cards", label: "Gift Cards" },
+    { id: "books-and-dvds", label: "Books & DVDs" },
+    { id: "collectible-models", label: "Collectible Models" },
+    { id: "home-farm-decor", label: "Home & Farm Décor" },
+    { id: "jewelry", label: "Jewelry" },
+    { id: "rider-health-care", label: "Rider Health Care" },
+    { id: "seasonal-gifts-decorations", label: "Seasonal Gifts & Decorations" },
+    { id: "snacks-spices-sweets", label: "Snacks, Spices & Sweets" },
+    { id: "stationery-office-supplies", label: "Stationery & Office Supplies" },
+    { id: "stickers-magnets", label: "Stickers & Magnets" },
+    { id: "totes-handbags-and-wallets", label: "Totes, Handbags & Wallets" },
+    { id: "toys-games", label: "Toys & Games" },
+    { id: "kitchenware", label: "Kitchenware" },
+    { id: "drinkware", label: "Drinkware" },
+  ]},
+  { id: "yeti", label: "YETI", children: [
+    { id: "yeti-backpacks-carryalls", label: "YETI Backpacks & Carryalls" },
+    { id: "yeti-barware", label: "YETI Barware" },
+    { id: "yeti-bottles", label: "YETI Bottles" },
+    { id: "yeti-coolers", label: "YETI Coolers" },
+    { id: "yeti-pet-bowls", label: "YETI Pet Bowls" },
+    { id: "yeti-tumblers", label: "YETI Tumblers" },
+    { id: "yeti-storage", label: "YETI Storage" },
+  ]},
+  { id: "closeout", label: "Closeout", children: [
+    { id: "casual-apparel-closeouts", label: "Casual Apparel" },
+    { id: "riding-apparel-closeouts", label: "Riding Apparel" },
+    { id: "footwear-closeouts", label: "Footwear" },
+    { id: "gift-misc-closeouts", label: "Gift & Misc" },
+    { id: "horse-grooming-health-closeouts", label: "Grooming & Health" },
+    { id: "horse-clothing-closeouts", label: "Horse Clothing" },
+    { id: "pets-and-livestock-closeouts", label: "Pet & Livestock" },
+    { id: "supply-closeouts", label: "Supplies" },
+    { id: "tack-closeouts", label: "Tack" },
+    { id: "final-chance-clearance", label: "Final Chance Clearance" },
+  ]},
+];
+
+const TAX_MAP = { T: "standard", X: "exempt", C: "clothing" };
+const TAX_LABEL = { T: "Taxable", X: "Exempt", C: "Clothing" };
+const VARIATION_TYPES = [
+  { id: "color", label: "Color Only" },
+  { id: "size", label: "Size Only" },
+  { id: "color-size", label: "Color + Size" },
+];
+
+/* Category → SFCC variation attribute ID mapping */
+const VARIATION_ATTR_MAP = {
+  "apparel":        { color: "color_apparel",        size: "size_apparel" },
+  "tack":           { color: "color_tack",           size: "size_tack" },
+  "horse-clothing": { color: "color_horse_clothing", size: "size_horse_clothing" },
+  "horse-health":   { color: "color_healthcare",     size: "size_healthcare" },
+  "supplements":    { color: "color_healthcare",     size: "size_supplements" },
+  "grooming":       { color: "color_grooming",       size: "size_grooming" },
+  "supplies":       { color: "color_supplies",       size: "size_supplies" },
+  "pets":           { color: "color_pet_livestock",   size: "size_pet_livestock" },
+  "livestock":      { color: "color_pet_livestock",   size: "size_pet_livestock" },
+  "feed":           { color: "color_supplies",        size: "size_feed" },
+  "gifts":          { color: "color_gifts",           size: "size_gifts" },
+  "yeti":           { color: "color_gifts",           size: "size_gifts" },
+  "closeout":       { color: "color",                 size: "size" },
+};
+
+/* Sub-category overrides for special attribute needs */
+const VARIATION_ATTR_OVERRIDES = {
+  "footwear":           { size: "size_footwear" },
+  "kids-footwear":      { size: "size_footwear" },
+  "tall-riding-boots":  { size: "size_footwear" },
+  "paddock-boots":      { size: "size_footwear" },
+  "winter-riding-boots":{ size: "size_footwear" },
+  "muck-mud-boots":     { size: "size_footwear" },
+  "western-footwear":   { size: "size_footwear" },
+  "casual-footwear":    { size: "size_footwear" },
+  "men-s-footwear":     { size: "size_footwear" },
+  "gloves":             { size: "size_gloves" },
+  "schooling-gloves":   { size: "size_gloves" },
+  "show-gloves":        { size: "size_gloves" },
+  "winter-gloves":      { size: "size_gloves" },
+  "work-gloves":        { size: "size_gloves" },
+  "kids-gloves":        { size: "size_gloves" },
+  "helmets-accessories":{ size: "size_helmet" },
+  "schooling-helmets":  { size: "size_helmet" },
+  "show-helmets":       { size: "size_helmet" },
+  "kids-helmets":       { size: "size_helmet" },
+  "trail-western-helmets":{ size: "size_helmet" },
+  "helmets-with-mips":  { size: "size_helmet" },
+  "horse-boots":        { size: "size_horse_clothing" },
+  "hoof-care":          { size: "size_hoof_boot" },
+};
+
+function getVariationAttrs(category) {
+  // Check sub-category overrides first
+  if (category && VARIATION_ATTR_OVERRIDES[category]) {
+    // Find the parent top-level category for the base mapping
+    const parentMap = findParentCategoryMap(category);
+    return { ...parentMap, ...VARIATION_ATTR_OVERRIDES[category] };
+  }
+  // Check direct top-level match
+  if (category && VARIATION_ATTR_MAP[category]) {
+    return VARIATION_ATTR_MAP[category];
+  }
+  // Walk up to find parent
+  return findParentCategoryMap(category) || { color: "color", size: "size" };
+}
+
+function findParentCategoryMap(catId) {
+  if (!catId) return { color: "color", size: "size" };
+  for (const top of CATEGORIES) {
+    if (top.id === catId) return VARIATION_ATTR_MAP[top.id] || { color: "color", size: "size" };
+    for (const mid of (top.children || [])) {
+      if (mid.id === catId) return VARIATION_ATTR_MAP[top.id] || { color: "color", size: "size" };
+      for (const leaf of (mid.children || [])) {
+        if (leaf.id === catId) {
+          // Check if mid-level has an override
+          if (VARIATION_ATTR_OVERRIDES[mid.id]) {
+            return { ...(VARIATION_ATTR_MAP[top.id] || { color: "color", size: "size" }), ...VARIATION_ATTR_OVERRIDES[mid.id] };
+          }
+          return VARIATION_ATTR_MAP[top.id] || { color: "color", size: "size" };
+        }
+      }
+    }
+  }
+  return { color: "color", size: "size" };
+}
+
+function varAttrLabel(attrId) {
+  const labels = {
+    color: "Color", color_apparel: "Color (Apparel)", color_gifts: "Color (Gifts)",
+    color_grooming: "Color (Grooming)", color_healthcare: "Color (Health)",
+    color_horse_clothing: "Color (Horse Clothing)", color_pet_livestock: "Color (Pet/Livestock)",
+    color_supplies: "Color (Supplies)", color_tack: "Color (Tack)",
+    size: "Size", size_apparel: "Size (Apparel)", size_feed: "Size (Feed)",
+    size_footwear: "Size (Footwear)", size_gifts: "Size (Gifts)", size_gloves: "Size (Gloves)",
+    size_grooming: "Size (Grooming)", size_healthcare: "Size (Health)",
+    size_helmet: "Size (Helmet)", size_hoof_boot: "Size (Hoof Boot)",
+    size_horse_clothing: "Size (Horse Clothing)", size_pet_livestock: "Size (Pet/Livestock)",
+    size_supplements: "Size (Supplements)", size_supplies: "Size (Supplies)", size_tack: "Size (Tack)",
+  };
+  return labels[attrId] || attrId;
+}
+
+/* ═══════════════════════════════════════════════════
+   RULES ENGINE — persisted via window.storage
+   ═══════════════════════════════════════════════════ */
+const DEFAULT_RULES = {
+  classRules: {
+    C03: { action: "upload", name: "English Fittings" },
+    C07: { action: "upload", name: "English Saddle Pads" },
+    C12: { action: "upload", name: "Western Tack" },
+    C20: { action: "upload", name: "Special Order (site)" },
+    C50: { action: "upload", name: "Feed" },
+    C55: { action: "upload", name: "Grooming Supplies" },
+    C58: { action: "upload", name: "Pet Supplies" },
+  },
+  deptRules: {
+    H1: { action: "drop", name: "Coupon" },
+    H2: { action: "drop", name: "Coupon" },
+    "80": { action: "drop", name: "Delivery" },
+  },
+  vendorRules: {},
+  skuRules: {},
+  prefixRules: {
+    ZZ: { action: "drop", name: "Special order" },
+    DP: { action: "drop", name: "Display/promo" },
+    IS: { action: "drop", name: "Instant savings" },
+  },
+};
+
+async function loadRules() {
+  try {
+    const result = await window.storage.get(RULES_KEY);
+    if (result && result.value) {
+      const saved = JSON.parse(result.value);
+      return {
+        classRules: { ...DEFAULT_RULES.classRules, ...saved.classRules },
+        deptRules: { ...DEFAULT_RULES.deptRules, ...saved.deptRules },
+        vendorRules: { ...DEFAULT_RULES.vendorRules, ...saved.vendorRules },
+        skuRules: { ...DEFAULT_RULES.skuRules, ...saved.skuRules },
+        prefixRules: { ...DEFAULT_RULES.prefixRules, ...saved.prefixRules },
+      };
+    }
+  } catch (e) { /* first run */ }
+  return { ...DEFAULT_RULES };
+}
+
+async function saveRules(rules) {
+  try { await window.storage.set(RULES_KEY, JSON.stringify(rules)); }
+  catch (e) { console.error("Failed to save rules:", e); }
+}
+
+function classifyItem(item, rules) {
+  const sku = (item.sku || "").toUpperCase();
+  const vendor = (item.vendor || "").toUpperCase().trim();
+  const closeout = (item.closeout || "").toUpperCase();
+  const dept = (item.deptCode || "").toUpperCase().trim();
+  const klass = (item.classCode || "").toUpperCase().trim();
+  const retail = item.retailPrice || 0;
+
+  if (rules.skuRules[sku]) {
+    const r = rules.skuRules[sku];
+    if (r.action === "upload") return { bucket: "auto", reason: `SKU rule: ${r.name}`, ruleType: "sku" };
+    if (r.action === "drop") return { bucket: "drop", reason: `SKU rule: ${r.name}`, ruleType: "sku" };
+  }
+  if (vendor === "BLANK") return { bucket: "drop", reason: "Blank vendor", ruleType: "hard" };
+  if (retail <= 0) return { bucket: "drop", reason: "$0 retail price", ruleType: "hard" };
+  if (closeout === "Y") return { bucket: "drop", reason: "Store closeout", ruleType: "hard" };
+  for (const [prefix, rule] of Object.entries(rules.prefixRules)) {
+    if (sku.startsWith(prefix.toUpperCase())) {
+      if (rule.action === "drop") return { bucket: "drop", reason: `${rule.name} (${prefix}*)`, ruleType: "prefix" };
+      if (rule.action === "upload") return { bucket: "auto", reason: `${rule.name} (${prefix}*)`, ruleType: "prefix" };
+    }
+  }
+  if (vendor && rules.vendorRules[vendor]) {
+    const r = rules.vendorRules[vendor];
+    if (r.action === "drop") return { bucket: "drop", reason: `Vendor: ${r.name}`, ruleType: "vendor" };
+    if (r.action === "upload") return { bucket: "auto", reason: `Vendor: ${r.name}`, ruleType: "vendor" };
+  }
+  if (dept && rules.deptRules[dept]) {
+    const r = rules.deptRules[dept];
+    if (r.action === "drop") return { bucket: "drop", reason: `${r.name} (dept ${dept})`, ruleType: "dept" };
+    if (r.action === "upload") return { bucket: "auto", reason: `${r.name} (dept ${dept})`, ruleType: "dept" };
+  }
+  if (klass && rules.classRules[klass]) {
+    const r = rules.classRules[klass];
+    if (r.action === "upload") return { bucket: "auto", reason: `${r.name}`, ruleType: "class" };
+    if (r.action === "drop") return { bucket: "drop", reason: `Class skip: ${r.name}`, ruleType: "class" };
+  }
+  return { bucket: "review", reason: "", ruleType: "" };
+}
+
+
+/* ─── helpers ─── */
+function escXml(s) { return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;") : ""; }
+function titleCase(str) { return str ? str.toLowerCase().replace(/(?:^|\s|[-/])\w/g, m => m.toUpperCase()) : ""; }
+
+function extractVariantLabel(description, baseName) {
+  if (!description || !baseName) return description || "";
+  const desc = description.toUpperCase().trim(), base = baseName.toUpperCase().trim();
+  if (desc.startsWith(base)) { const s = description.slice(baseName.length).trim(); return s || description; }
+  const dw = desc.split(/\s+/), bw = base.split(/\s+/);
+  let ov = 0;
+  for (let i = 0; i < Math.min(dw.length, bw.length); i++) { if (dw[i]===bw[i]) ov=i+1; else break; }
+  return ov > 0 ? dw.slice(ov).join(" ") || description : description;
+}
+
+function findCommonSkuPrefix(skus) {
+  if (skus.length < 2) return skus[0]||"";
+  const s=[...skus].sort(); let i=0;
+  while (i<s[0].length && s[0][i]===s[s.length-1][i]) i++;
+  return s[0].slice(0,i);
+}
+
+function findCommonDescPrefix(descs) {
+  if (descs.length < 2) return descs[0]||"";
+  const w0=descs[0].split(/\s+/); let sh=w0.length;
+  for (let d=1; d<descs.length; d++) { const w=descs[d].split(/\s+/); let m=0; for(let i=0;i<Math.min(sh,w.length);i++){if(w[i].toUpperCase()===w0[i].toUpperCase())m++;else break;}sh=m; }
+  return w0.slice(0,sh).join(" ");
+}
+
+
+/* ─── file parsing ─── */
+function parseXlsFile(buffer, rules) {
+  const wb = XLSX.read(buffer, { type: "array", cellDates: true });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+  const colMap = {};
+  const first = raw[0] || {};
+  for (const k of Object.keys(first)) {
+    const lk = k.toLowerCase().replace(/\n/g, " ").trim();
+    if (lk.includes("item number")) colMap.sku = k;
+    else if (lk.includes("item description")) colMap.name = k;
+    else if (lk.includes("mfg part")) colMap.mfg = k;
+    else if (lk.includes("upc")) colMap.upc = k;
+    else if (lk.includes("weight")) colMap.weight = k;
+    else if (lk.includes("vendor name")) colMap.vendor = k;
+    else if (lk.includes("closeout")) colMap.closeout = k;
+    else if (lk.includes("date added")) colMap.dateAdded = k;
+    else if (lk.includes("quantity on hand")) colMap.qoh = k;
+    else if (lk.includes("quantity on order")) colMap.qoo = k;
+    else if (lk.includes("tax")) colMap.tax = k;
+    else if (lk.includes("list price")) colMap.listPrice = k;
+    else if (lk.includes("retail price")) colMap.retailPrice = k;
+    else if (lk.includes("vendor code")) colMap.vendorCode = k;
+    else if (lk.includes("department code")||lk.includes("dept code")) colMap.deptCode = k;
+    else if (lk.includes("department name")||lk.includes("dept name")) colMap.deptName = k;
+    else if (lk.includes("class code")) colMap.classCode = k;
+    else if (lk.includes("class name")) colMap.className = k;
+  }
+
+  const hasEnrichment = !!(colMap.deptCode || colMap.classCode);
+  const grouped = {};
+  for (const row of raw) {
+    const sku = String(row[colMap.sku]||"").trim();
+    if (!sku) continue;
+    if (!grouped[sku]) {
+      grouped[sku] = {
+        sku, name: String(row[colMap.name]||"").trim(), mfg: String(row[colMap.mfg]||"").trim(),
+        upcs: [], weight: parseFloat(row[colMap.weight])||0,
+        vendor: String(row[colMap.vendor]||"").trim(),
+        vendorCode: colMap.vendorCode ? String(row[colMap.vendorCode]||"").trim() : "",
+        closeout: String(row[colMap.closeout]||"").trim(),
+        dateAdded: row[colMap.dateAdded]||"",
+        qoh: parseFloat(row[colMap.qoh])||0, qoo: parseFloat(row[colMap.qoo])||0,
+        tax: colMap.tax ? String(row[colMap.tax]||"").trim() : "",
+        listPrice: parseFloat(row[colMap.listPrice])||0,
+        retailPrice: parseFloat(row[colMap.retailPrice])||0,
+        deptCode: colMap.deptCode ? String(row[colMap.deptCode]||"").trim() : "",
+        deptName: colMap.deptName ? String(row[colMap.deptName]||"").trim() : "",
+        classCode: colMap.classCode ? String(row[colMap.classCode]||"").trim() : "",
+        className: colMap.className ? String(row[colMap.className]||"").trim() : "",
+      };
+    }
+    const upc = String(row[colMap.upc]||"").trim();
+    if (upc && !grouped[sku].upcs.includes(upc)) grouped[sku].upcs.push(upc);
+  }
+
+  const allItems = Object.values(grouped);
+  const drops = [], autoUploads = [], review = [];
+  for (const item of allItems) {
+    const c = classifyItem(item, rules);
+    item._bucket = c.bucket; item._reason = c.reason; item._ruleType = c.ruleType;
+    if (c.bucket === "drop") drops.push(item);
+    else if (c.bucket === "auto") autoUploads.push(item);
+    else review.push(item);
+  }
+
+  // Auto-approved items are pre-selected; review items start unselected
+  const autoProducts = autoUploads.map(item => ({
+    ...item, displayName: titleCase(item.name), category: "",
+    selected: true, description: "",
+    groupId: null, variationType: "", variantValue: "",
+  }));
+  const reviewProducts = review.map(item => ({
+    ...item, displayName: titleCase(item.name), category: "",
+    selected: false, description: "",
+    groupId: null, variationType: "", variantValue: "",
+  }));
+
+  autoProducts.sort((a, b) => a.name.localeCompare(b.name));
+  reviewProducts.sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    products: [...autoProducts, ...reviewProducts],
+    drops,
+    autoCount: autoUploads.length,
+    reviewCount: review.length,
+    totalRaw: raw.length,
+    uniqueSkus: allItems.length,
+    hasEnrichment,
+  };
+}
+
+
+/* ─── XML generation ─── */
+function generateCatalogXml(products, groups) {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<catalog xmlns="http://www.demandware.com/xml/impex/catalog/2006-10-31" catalog-id="${CATALOG_ID}">\n\n`;
+  for (const p of products) { if (!p.selected || p.groupId) continue; xml += bpx(p); }
+  for (const g of groups) {
+    const members = products.filter(p => p.selected && p.groupId === g.id);
+    if (!members.length) continue;
+    const bid = g.id + "x";
+    xml += `  <product product-id="${escXml(bid)}">\n    <display-name xml:lang="x-default">${escXml(g.displayName)}</display-name>\n`;
+    if (g.description) xml += `    <short-description xml:lang="x-default">${escXml(g.description)}</short-description>\n`;
+    xml += `    <online-flag>true</online-flag>\n    <searchable-flag>true</searchable-flag>\n`;
+    if (g.brand) xml += `    <brand>${escXml(g.brand)}</brand>\n`;
+    if (g.tax) xml += `    <tax-class-id>${TAX_MAP[g.tax]||"standard"}</tax-class-id>\n`;
+    xml += `    <variations>\n      <attributes>\n`;
+    const vAttrs = getVariationAttrs(g.category);
+    if (g.variationType==="color"||g.variationType==="color-size") {
+      const colorAttrId = g.colorAttrOverride || vAttrs.color;
+      xml += `        <variation-attribute attribute-id="${colorAttrId}" variation-attribute-id="${colorAttrId}">\n          <display-name xml:lang="x-default">Color</display-name>\n          <variation-attribute-values>\n`;
+      [...new Set(members.map(m=>m.variantColor||m.variantValue).filter(Boolean))].forEach(c => { xml += `            <variation-attribute-value value="${escXml(c)}"><display-value xml:lang="x-default">${escXml(titleCase(c))}</display-value></variation-attribute-value>\n`; });
+      xml += `          </variation-attribute-values>\n        </variation-attribute>\n`;
+    }
+    if (g.variationType==="size"||g.variationType==="color-size") {
+      const sizeAttrId = g.sizeAttrOverride || vAttrs.size;
+      xml += `        <variation-attribute attribute-id="${sizeAttrId}" variation-attribute-id="${sizeAttrId}">\n          <display-name xml:lang="x-default">Size</display-name>\n          <variation-attribute-values>\n`;
+      [...new Set(members.map(m=>m.variantSize||m.variantValue).filter(Boolean))].forEach(s => { xml += `            <variation-attribute-value value="${escXml(s)}"><display-value xml:lang="x-default">${escXml(s)}</display-value></variation-attribute-value>\n`; });
+      xml += `          </variation-attribute-values>\n        </variation-attribute>\n`;
+    }
+    xml += `      </attributes>\n      <variants>\n`;
+    members.forEach(m => { xml += `        <variant product-id="${escXml(m.sku)}"/>\n`; });
+    xml += `      </variants>\n    </variations>\n  </product>\n\n`;
+    members.forEach(m => { xml += bpx(m, g); });
+  }
+  const ca = [];
+  for (const p of products) { if (!p.selected||!p.category) continue; if (p.groupId) { const bid=p.groupId+"x"; if(!ca.find(a=>a.c===p.category&&a.p===bid)) ca.push({c:p.category,p:bid}); } else ca.push({c:p.category,p:p.sku}); }
+  for (const g of groups) { if(g.category){const bid=g.id+"x"; if(!ca.find(a=>a.c===g.category&&a.p===bid)) ca.push({c:g.category,p:bid});} }
+  if (ca.length) { xml += "\n"; ca.forEach(a => { xml += `  <category-assignment category-id="${escXml(a.c)}" product-id="${escXml(a.p)}">\n    <primary-flag>true</primary-flag>\n  </category-assignment>\n`; }); }
+  return xml + "\n</catalog>";
+}
+
+function bpx(p, g) {
+  let x = `  <product product-id="${escXml(p.sku)}">\n    <display-name xml:lang="x-default">${escXml(p.displayName)}</display-name>\n`;
+  if (p.description) x += `    <short-description xml:lang="x-default">${escXml(p.description)}</short-description>\n`;
+  x += `    <online-flag>true</online-flag>\n    <searchable-flag>${g?"false":"true"}</searchable-flag>\n`;
+  if (p.upcs.length) x += `    <upc>${escXml(p.upcs[0])}</upc>\n`;
+  if (p.mfg) x += `    <manufacturer-sku>${escXml(p.mfg)}</manufacturer-sku>\n`;
+  if (!g && p.vendor) x += `    <brand>${escXml(p.vendor)}</brand>\n`;
+  if (!g && p.tax) x += `    <tax-class-id>${TAX_MAP[p.tax]||"standard"}</tax-class-id>\n`;
+  if (p.weight > 0) x += `    <custom-attributes>\n      <custom-attribute attribute-id="weight">${p.weight}</custom-attribute>\n    </custom-attributes>\n`;
+  return x + `  </product>\n\n`;
+}
+
+function generatePricebookXml(products) {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<pricebooks xmlns="http://www.demandware.com/xml/impex/pricebook/2006-10-31">\n  <pricebook>\n    <header pricebook-id="${PRICEBOOK_ID}">\n      <display-name xml:lang="x-default">List Prices</display-name>\n      <currency>USD</currency>\n    </header>\n    <price-tables>\n`;
+  for (const p of products) { if (!p.selected||p.retailPrice<=0) continue; xml += `      <price-table product-id="${escXml(p.sku)}">\n        <amount quantity="1">${p.retailPrice.toFixed(2)}</amount>\n      </price-table>\n`; }
+  return xml + `    </price-tables>\n  </pricebook>\n</pricebooks>`;
+}
+
+function downloadFile(c, f) { const b=new Blob([c],{type:"application/xml"}),u=URL.createObjectURL(b),a=document.createElement("a"); a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u); }
+function catLabel(id) {
+  for (const g of CATEGORIES) {
+    if (g.id === id) return g.label;
+    for (const c of (g.children||[])) {
+      if (c.id === id) return c.label;
+      for (const s of (c.children||[])) {
+        if (s.id === id) return s.label;
+      }
+    }
+  }
+  return id;
+}
+
+function CategorySelect({value,onChange,className}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState({});
+  const ref = useRef();
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const toggleExpand = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const select = (id) => { onChange(id); setOpen(false); setSearch(""); };
+
+  // Flatten for search
+  const matchesSearch = (label) => !search || label.toLowerCase().includes(search.toLowerCase());
+
+  // Build full breadcrumb label for selected value
+  const selectedLabel = useMemo(() => {
+    if (!value) return "";
+    for (const g of CATEGORIES) {
+      if (g.id === value) return g.label;
+      for (const c of (g.children||[])) {
+        if (c.id === value) return `${g.label} › ${c.label}`;
+        for (const s of (c.children||[])) {
+          if (s.id === value) return `${g.label} › ${c.label} › ${s.label}`;
+        }
+      }
+    }
+    return value;
+  }, [value]);
+
+  // When searching, auto-expand matching parents
+  const searchLC = search.toLowerCase();
+  const shouldShow = (cat, depth) => {
+    if (!search) return true;
+    if (cat.label.toLowerCase().includes(searchLC)) return true;
+    if (cat.children) return cat.children.some(c => shouldShow(c, depth+1));
+    return false;
+  };
+  const isSearchExpanded = (cat) => {
+    if (!search) return expanded[cat.id];
+    return cat.children && cat.children.some(c => shouldShow(c, 1));
+  };
+
+  const renderNode = (cat, depth) => {
+    if (!shouldShow(cat, depth)) return null;
+    const hasKids = cat.children && cat.children.length > 0;
+    const isExp = isSearchExpanded(cat);
+    const isSelected = value === cat.id;
+    const pad = depth * 16;
+
+    return (
+      <div key={cat.id}>
+        <div
+          className={`cat-node ${isSelected ? "cat-sel" : ""}`}
+          style={{ paddingLeft: 8 + pad }}
+          onClick={(e) => { e.stopPropagation(); if (hasKids) toggleExpand(cat.id); else select(cat.id); }}
+        >
+          {hasKids ? (
+            <span className="cat-arrow" onClick={(e) => { e.stopPropagation(); toggleExpand(cat.id); }}>
+              {isExp ? "▾" : "▸"}
+            </span>
+          ) : <span className="cat-dot">•</span>}
+          <span className="cat-lbl" style={{ fontWeight: depth === 0 ? 600 : depth === 1 && hasKids ? 500 : 400 }}>
+            {cat.label}
+          </span>
+          {hasKids && (
+            <button className="cat-pick" onClick={(e) => { e.stopPropagation(); select(cat.id); }} title={`Assign to ${cat.label}`}>
+              ✓
+            </button>
+          )}
+        </div>
+        {hasKids && isExp && (
+          <div>{cat.children.map(c => renderNode(c, depth + 1))}</div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block", minWidth: 220 }}>
+      <button
+        className={`fi cat-trigger ${className||""} ${!value ? "iw" : ""}`}
+        onClick={() => setOpen(!open)}
+        style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, cursor: "pointer" }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, fontSize: 12 }}>
+          {value ? selectedLabel : "— Select Category —"}
+        </span>
+        <span style={{ fontSize: 10, color: "#4b5563", flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="cat-dropdown">
+          <input
+            className="fi cat-search"
+            placeholder="Search categories..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoFocus
+            onClick={e => e.stopPropagation()}
+          />
+          {value && (
+            <div className="cat-node cat-clear" style={{ paddingLeft: 8 }} onClick={() => select("")}>
+              <span className="cat-dot" style={{ color: "#ef4444" }}>✕</span>
+              <span className="cat-lbl" style={{ color: "#ef4444" }}>Clear category</span>
+            </div>
+          )}
+          <div className="cat-tree">
+            {CATEGORIES.map(g => renderNode(g, 0))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 0: Upload
+   ═══════════════════════════════════════════════════ */
+function UploadStep({ onData, rules, rulesLoaded }) {
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef();
+  const handleFile = useCallback((file) => {
+    if (!file || !rulesLoaded) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try { onData(parseXlsFile(new Uint8Array(e.target.result), rules)); }
+      catch (err) { alert("Error reading file: " + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }, [onData, rules, rulesLoaded]);
+
+  return (
+    <div style={{ textAlign: "center", padding: "60px 20px" }}>
+      <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.4 }}>📦</div>
+      <h2 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 22 }}>Upload KW/IMU Export</h2>
+      <p style={{ color: "#6b7280", marginBottom: 8, fontSize: 14 }}>Drop your .xls or .xlsx RPH report from Eagle</p>
+      {rulesLoaded && <p style={{ color: "#22c55e", fontSize: 12, marginBottom: 20 }}>✓ {Object.keys(rules.classRules).length + Object.keys(rules.vendorRules).length + Object.keys(rules.skuRules).length + Object.keys(rules.prefixRules).length + Object.keys(rules.deptRules).length} rules loaded</p>}
+      <div className={`dz ${dragging?"dz-a":""}`}
+        onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)}
+        onDrop={e=>{e.preventDefault();setDragging(false);handleFile(e.dataTransfer.files[0]);}}
+        onClick={()=>fileRef.current?.click()}>
+        <span style={{ fontSize: 14, color: "#9ca3af" }}>{dragging ? "Drop it here" : "Click or drag file here"}</span>
+        <span style={{ fontSize: 12, color: "#4b5563", marginTop: 6 }}>.xls or .xlsx · RPH export from KW/IMU</span>
+        <input ref={fileRef} type="file" accept=".xls,.xlsx,.csv" hidden onChange={e=>handleFile(e.target.files[0])} />
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 1: Cascade Results — auto-approved + drops w/ rescue
+   ═══════════════════════════════════════════════════ */
+function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRule, onRescue }) {
+  const [showDrops, setShowDrops] = useState(false);
+  const [showAuto, setShowAuto] = useState(false);
+  const [rescuePrompt, setRescuePrompt] = useState(null);
+
+  const autoProducts = useMemo(() => products.filter(p => p._bucket === "auto"), [products]);
+  const reviewProducts = useMemo(() => products.filter(p => p._bucket === "review" || p._bucket === "rescued"), [products]);
+
+  const dropSummary = useMemo(() => {
+    const c = {};
+    drops.forEach(d => { c[d._reason] = (c[d._reason]||0)+1; });
+    return Object.entries(c).sort((a,b) => b[1]-a[1]);
+  }, [drops]);
+
+  const confirmRescue = (item, ruleType) => {
+    onRescue(item);
+    if (ruleType === "sku") {
+      onSaveRule("sku", item.sku.toUpperCase(), { action: "upload", name: `Rescued: ${item.name.slice(0, 40)}` });
+    } else if (ruleType === "class" && item.classCode) {
+      onSaveRule("class", item.classCode.toUpperCase(), { action: "upload", name: item.className || item.classCode });
+    } else if (ruleType === "vendor" && item.vendor) {
+      onSaveRule("vendor", item.vendor.toUpperCase(), { action: "upload", name: item.vendor });
+    }
+    setRescuePrompt(null);
+  };
+
+  // Toggle an auto-approved item off (deselect it)
+  const toggleAuto = (sku) => onUpdate(products.map(p => p.sku === sku ? { ...p, selected: !p.selected } : p));
+
+  return (
+    <div>
+      <div className="cascade-banner">
+        <div className="cb-title">
+          <span style={{ fontSize: 18 }}>⚡</span><span>Cascade Results</span>
+          {!stats.hasEnrichment && <span className="cb-warn">Add dept/class to RPH query for full filtering</span>}
+        </div>
+        <div className="cb-grid">
+          <div className="cb-card cb-drop"><div className="cb-num">{drops.length}</div><div className="cb-label">Dropped</div></div>
+          <div className="cb-card cb-auto"><div className="cb-num">{autoProducts.length}</div><div className="cb-label">Auto-approved</div></div>
+          <div className="cb-card cb-rev"><div className="cb-num">{reviewProducts.length}</div><div className="cb-label">Needs Review</div></div>
+          <div className="cb-card"><div className="cb-num">{stats.uniqueSkus}</div><div className="cb-label">Total SKUs</div></div>
+        </div>
+      </div>
+
+      {/* Auto-approved list */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0, fontSize: 15, color: "#22c55e" }}>✓ Auto-Approved ({autoProducts.length})</h3>
+          <button className="btn-xs" onClick={() => setShowAuto(!showAuto)}>{showAuto ? "Hide" : "Show"}</button>
+        </div>
+        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Matched by class, vendor, or SKU rules. Pre-selected for import. Deselect any you don't want.</p>
+        {showAuto && (
+          <div className="tw" style={{ maxHeight: 300, marginTop: 12 }}>
+            <table className="tbl"><thead><tr>
+              <th style={{ width: 36 }}></th><th>SKU</th><th>Description</th><th>Vendor</th><th style={{ textAlign: "right" }}>Retail</th><th>Rule</th>
+            </tr></thead>
+              <tbody>{autoProducts.map(p => (
+                <tr key={p.sku} className={p.selected ? "" : "row-off"} onClick={() => toggleAuto(p.sku)}>
+                  <td onClick={e => e.stopPropagation()}><input type="checkbox" checked={p.selected} onChange={() => toggleAuto(p.sku)} /></td>
+                  <td className="mono">{p.sku}</td>
+                  <td style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</td>
+                  <td style={{ fontSize: 12, color: "#6b7280" }}>{p.vendor}</td>
+                  <td style={{ textAlign: "right" }} className="mono">${p.retailPrice.toFixed(2)}</td>
+                  <td><span className="badge-au">{p._reason}</span></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Drops list with rescue */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0, fontSize: 15, color: "#ef4444" }}>✕ Dropped ({drops.length})</h3>
+          <button className="btn-xs" onClick={() => setShowDrops(!showDrops)}>{showDrops ? "Hide" : "Show"}</button>
+        </div>
+        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Filtered out by cascade rules. Rescue items that should be included.</p>
+        {showDrops && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {dropSummary.map(([r,c]) => <span key={r} className="drop-chip">{r}: {c}</span>)}
+            </div>
+            <div className="tw" style={{ maxHeight: 300 }}>
+              <table className="tbl"><thead><tr><th>SKU</th><th>Description</th><th>Vendor</th><th>Reason</th><th style={{width:70}}>Rescue</th></tr></thead>
+                <tbody>{drops.slice(0,200).map(d => (
+                  <tr key={d.sku} style={{ opacity: 0.7 }}>
+                    <td className="mono">{d.sku}</td>
+                    <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</td>
+                    <td style={{ fontSize: 12, color: "#6b7280" }}>{d.vendor}</td>
+                    <td><span className="drop-chip">{d._reason}</span></td>
+                    <td><button className="btn-xs" style={{ color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" }} onClick={(e) => { e.stopPropagation(); setRescuePrompt(d); }}>Rescue</button></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+              {drops.length > 200 && <div style={{padding:12,textAlign:"center",color:"#4b5563",fontSize:13}}>Showing 200 of {drops.length}</div>}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Rescue modal */}
+      {rescuePrompt && (
+        <div className="modal-overlay" onClick={() => setRescuePrompt(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 16 }}>Rescue: {rescuePrompt.name}</h3>
+            <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px" }}>
+              Dropped because: <strong style={{ color: "#f87171" }}>{rescuePrompt._reason}</strong>
+            </p>
+            <p style={{ fontSize: 13, color: "#9ca3af", margin: "0 0 12px" }}>How should this be remembered?</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button className="btn-sm" onClick={() => confirmRescue(rescuePrompt, "none")} style={{ textAlign: "left" }}>
+                🔄 Just this once — don't save a rule
+              </button>
+              <button className="btn-sm" onClick={() => confirmRescue(rescuePrompt, "sku")} style={{ textAlign: "left" }}>
+                📌 Remember this SKU — always upload <strong>{rescuePrompt.sku}</strong>
+              </button>
+              {rescuePrompt.classCode && (
+                <button className="btn-sm" onClick={() => confirmRescue(rescuePrompt, "class")} style={{ textAlign: "left" }}>
+                  📁 Remember this class — always upload <strong>{rescuePrompt.classCode} ({rescuePrompt.className || ""})</strong>
+                </button>
+              )}
+              {rescuePrompt.vendor && rescuePrompt.vendor !== "BLANK" && (
+                <button className="btn-sm" onClick={() => confirmRescue(rescuePrompt, "vendor")} style={{ textAlign: "left" }}>
+                  🏭 Remember this vendor — always upload <strong>{rescuePrompt.vendor}</strong>
+                </button>
+              )}
+            </div>
+            <button className="btn-outline" style={{ marginTop: 12, width: "100%" }} onClick={() => setRescuePrompt(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Review preview + next */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 14, color: "#e2e4e9" }}>
+            <strong>{reviewProducts.length}</strong> items need manual review →
+          </p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Items not matched by any rule. You'll select which ones to include next.</p>
+        </div>
+        <button className="btn-primary" onClick={onNext}>
+          Review {reviewProducts.length} Items →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 2: Manual Review — dedicated step for review bucket
+   ═══════════════════════════════════════════════════ */
+function ReviewStep({ products, onUpdate, onNext, onBack, stats, onSaveRule }) {
+  const [filter, setFilter] = useState("");
+  const [vendorFilter, setVendorFilter] = useState("all");
+
+  const reviewItems = useMemo(() => products.filter(p => p._bucket === "review" || p._bucket === "rescued"), [products]);
+  const vendors = useMemo(() => [...new Set(reviewItems.map(p => p.vendor))].sort(), [reviewItems]);
+
+  const filtered = useMemo(() => reviewItems.filter(p => {
+    if (filter && !p.name.toLowerCase().includes(filter.toLowerCase()) && !p.sku.toLowerCase().includes(filter.toLowerCase())) return false;
+    if (vendorFilter !== "all" && p.vendor !== vendorFilter) return false;
+    return true;
+  }), [reviewItems, filter, vendorFilter]);
+
+  const selectedCount = reviewItems.filter(p => p.selected).length;
+  const filteredSelected = filtered.filter(p => p.selected).length;
+  const totalSelected = products.filter(p => p.selected).length;
+
+  const toggleAll = (v) => {
+    const s = new Set(filtered.map(p => p.sku));
+    onUpdate(products.map(p => s.has(p.sku) ? { ...p, selected: v } : p));
+  };
+  const toggleOne = (sku) => onUpdate(products.map(p => p.sku === sku ? { ...p, selected: !p.selected } : p));
+
+  // Bulk actions: select/skip all from a vendor and optionally save as rule
+  const [bulkPrompt, setBulkPrompt] = useState(null);
+
+  const bulkVendorAction = (vendor, action) => {
+    onUpdate(products.map(p => {
+      if ((p._bucket === "review" || p._bucket === "rescued") && p.vendor === vendor) {
+        return { ...p, selected: action === "upload" };
+      }
+      return p;
+    }));
+  };
+
+  const confirmBulkVendor = (vendor, action, saveRule) => {
+    bulkVendorAction(vendor, action);
+    if (saveRule) {
+      onSaveRule("vendor", vendor.toUpperCase(), {
+        action: action,
+        name: vendor,
+      });
+    }
+    setBulkPrompt(null);
+  };
+
+  // Vendor summary for quick actions
+  const vendorSummary = useMemo(() => {
+    const m = {};
+    reviewItems.forEach(p => {
+      if (!m[p.vendor]) m[p.vendor] = { total: 0, selected: 0 };
+      m[p.vendor].total++;
+      if (p.selected) m[p.vendor].selected++;
+    });
+    return Object.entries(m).sort((a,b) => b[1].total - a[1].total);
+  }, [reviewItems]);
+
+  return (
+    <div>
+      <div className="step-header">
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, color: "#e2e4e9" }}>Manual Review</h2>
+          <p className="step-sub">{selectedCount} of {reviewItems.length} review items selected · {totalSelected} total for import</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-outline" onClick={onBack}>← Back</button>
+          <button className="btn-primary" onClick={onNext}>Next: Group Variations →</button>
+        </div>
+      </div>
+
+      {/* Vendor quick-action chips */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#9ca3af" }}>Quick Actions by Vendor</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12, color: "#4b5563" }}>Click a vendor to select/skip all their items and optionally save as a permanent rule.</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {vendorSummary.map(([v, s]) => (
+            <button key={v} className="suggestion-chip" onClick={() => setBulkPrompt(v)}>
+              <strong>{v}</strong>
+              <span style={{ color: "#6b7280", margin: "0 4px" }}>·</span>
+              {s.total}
+              {s.selected > 0 && <span style={{ color: "#22c55e", marginLeft: 4, fontSize: 11 }}>({s.selected} ✓)</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bulk vendor prompt modal */}
+      {bulkPrompt && (
+        <div className="modal-overlay" onClick={() => setBulkPrompt(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 16 }}>{bulkPrompt}</h3>
+            <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px" }}>
+              {vendorSummary.find(([v]) => v === bulkPrompt)?.[1]?.total || 0} items in review
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button className="btn-sm" onClick={() => confirmBulkVendor(bulkPrompt, "upload", false)} style={{ textAlign: "left" }}>
+                ✅ Select all — just this time
+              </button>
+              <button className="btn-sm" onClick={() => confirmBulkVendor(bulkPrompt, "upload", true)} style={{ textAlign: "left" }}>
+                ✅📌 Select all + save rule — always auto-upload <strong>{bulkPrompt}</strong>
+              </button>
+              <button className="btn-sm" onClick={() => confirmBulkVendor(bulkPrompt, "drop", false)} style={{ textAlign: "left" }}>
+                ❌ Skip all — just this time
+              </button>
+              <button className="btn-sm" onClick={() => confirmBulkVendor(bulkPrompt, "drop", true)} style={{ textAlign: "left" }}>
+                ❌📌 Skip all + save rule — always auto-drop <strong>{bulkPrompt}</strong>
+              </button>
+            </div>
+            <button className="btn-outline" style={{ marginTop: 12, width: "100%" }} onClick={() => setBulkPrompt(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Filter bar */}
+      <div className="fbar">
+        <input type="text" placeholder="Search name or SKU..." value={filter} onChange={e => setFilter(e.target.value)} className="fi" style={{ width: 220 }} />
+        <select value={vendorFilter} onChange={e => setVendorFilter(e.target.value)} className="fi">
+          <option value="all">All Vendors ({reviewItems.length})</option>
+          {vendors.map(v => <option key={v} value={v}>{v} ({reviewItems.filter(p=>p.vendor===v).length})</option>)}
+        </select>
+        <button className="btn-sm" onClick={() => toggleAll(true)}>Select Shown ({filtered.length})</button>
+        <button className="btn-sm btn-outline" onClick={() => toggleAll(false)}>Deselect Shown</button>
+      </div>
+
+      {/* Items table */}
+      <div className="tw" style={{ maxHeight: "55vh" }}>
+        <table className="tbl"><thead><tr>
+          <th style={{ width: 36 }}><input type="checkbox" checked={filteredSelected === filtered.length && filtered.length > 0} onChange={e => toggleAll(e.target.checked)} /></th>
+          <th>SKU</th><th>Description</th><th>Vendor</th>
+          {stats.hasEnrichment && <th>Class</th>}
+          <th style={{ textAlign: "right" }}>Retail</th><th style={{ textAlign: "right" }}>QOH</th>
+        </tr></thead>
+          <tbody>{filtered.slice(0, 400).map(p => (
+            <tr key={p.sku} className={p.selected ? "" : "row-off"} onClick={() => toggleOne(p.sku)}>
+              <td onClick={e => e.stopPropagation()}><input type="checkbox" checked={p.selected} onChange={() => toggleOne(p.sku)} /></td>
+              <td className="mono">{p.sku}</td>
+              <td style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</td>
+              <td style={{ fontSize: 12, color: "#6b7280" }}>{p.vendor}</td>
+              {stats.hasEnrichment && <td style={{ fontSize: 11, color: "#6b7280" }}>{p.classCode}{p.className && ` · ${p.className}`}</td>}
+              <td style={{ textAlign: "right" }} className="mono">${p.retailPrice.toFixed(2)}</td>
+              <td style={{ textAlign: "right" }} className="mono">{p.qoh || "—"}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+        {filtered.length > 400 && <div style={{ padding: 12, textAlign: "center", color: "#4b5563", fontSize: 13 }}>Showing 400 of {filtered.length}</div>}
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 3: Group Variations
+   ═══════════════════════════════════════════════════ */
+function GroupStep({ products, onUpdate, groups, setGroups, onNext, onBack }) {
+  const selected = useMemo(() => products.filter(p=>p.selected), [products]);
+  const ungrouped = useMemo(() => selected.filter(p=>!p.groupId), [selected]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSkus, setSelectedSkus] = useState(new Set());
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupType, setNewGroupType] = useState("color");
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [autoSugg, setAutoSugg] = useState([]);
+  const [varPrefs, setVarPrefs] = useState({});
+
+  // Load saved variation preferences (vendor → {type, colorAttr, sizeAttr})
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get("ch-var-prefs");
+        if (r && r.value) setVarPrefs(JSON.parse(r.value));
+      } catch(e) {}
+    })();
+  }, []);
+
+  const saveVarPref = (vendor, pref) => {
+    setVarPrefs(prev => {
+      const next = { ...prev, [vendor.toUpperCase()]: pref };
+      window.storage.set("ch-var-prefs", JSON.stringify(next)).catch(()=>{});
+      return next;
+    });
+  };
+
+  // Smart detection: is the variant label a size, a color, or both?
+  const SIZE_PATTERNS = /^(XXS|XS|S|M|L|XL|XXL|XXXL|2XL|3XL|4XL|5XL|ONE SIZE|OS|YOUTH|CHILD|ADULT|SM|MD|MED|LG|XLG|SMALL|MEDIUM|LARGE|X-SMALL|X-LARGE|XX-LARGE|XXX-LARGE|X-SM|X-LG|S\/M|M\/L|L\/XL|PONY|COB|HORSE|FULL|OVERSIZE|WARMBLOOD|DRAFT|WEANLING|YEARLING|FOAL|MINI|PETITE|REGULAR|TALL|SHORT|LONG|SLIM|WIDE|NARROW|EX WIDE|EXTRA WIDE|\d+['".]?\s*(REGULAR|LONG|SHORT|SLIM|WIDE)?|\d+\s*-\s*\d+|\d+\/\d+|\d+[A-Z]?R?L?S?|\d+\.\d+)$/i;
+  const COLOR_WORDS = /^(BLACK|WHITE|BROWN|TAN|NAVY|BLUE|RED|GREEN|GREY|GRAY|PINK|PURPLE|ORANGE|YELLOW|BEIGE|CREAM|IVORY|CORAL|TEAL|BURGUNDY|WINE|CHARCOAL|CHOCOLATE|CHESTNUT|BAY|HUNTER|MIDNIGHT|ROYAL|DARK|LIGHT|HAVANA|OAK|COGNAC|SAGE|OLIVE|SLATE|STONE|PEWTER|SILVER|GOLD|ROSE|MAUVE|LILAC|PLUM|DENIM|CAMEL|ESPRESSO|MOCHA|SAND|STEEL|AQUA|MINT|LAVENDER|BLUSH|SMOKE|STORM|OCEAN|FOREST|AUTUMN|RUST|COPPER|BRONZE|MAHOGANY|WALNUT|NATURAL|CLASSIC|WHEAT|OATMEAL|ASH|GRAPHITE|JET|ONYX|PEARL|EGGPLANT|COBALT|INDIGO|SCARLET|CRIMSON|EMERALD|RUBY|SAPPHIRE|AMBER|CEDAR|DUSK|DAWN|FROST|ICE|CLOUD|SHADOW|RAVEN|EBONY|IRON|TITANIUM|PLATINUM|CHAMPAGNE|BONE|HONEY|APRICOT|PEACH|FAWN|TAUPE|TRUFFLE|COCOA|LATTE|CAPPUCCINO|MULBERRY|MAGENTA|ORCHID|VIOLET|PERIWINKLE|CORNFLOWER|SKY|HARBOR|MARINA|PACIFIC|ARCTIC|ALPINE|EVERGREEN|BASIL|MOSS|PINE|FERN|LIME|CITRUS|LEMON|CANARY|SUNFLOWER|MARIGOLD|TANGERINE|PUMPKIN|PAPRIKA|CAYENNE|SPICE|CINNAMON|SIENNA|TERRA|CLAY|BRICK|MERLOT)$/i;
+
+  function detectVariationType(members, baseName, vendor) {
+    // Check saved prefs first
+    const pref = varPrefs[(vendor||"").toUpperCase()];
+    if (pref && pref.type) return pref.type;
+
+    const labels = members.map(m => extractVariantLabel(m.name, baseName).toUpperCase().trim()).filter(Boolean);
+    if (labels.length === 0) return "color";
+
+    // Check sizes first — if any label matches size, count it
+    let sizeCount = 0, colorCount = 0;
+    for (const l of labels) {
+      // Test whole label and also first word
+      if (SIZE_PATTERNS.test(l)) { sizeCount++; continue; }
+      // Multi-word: check if first word is a color
+      const firstWord = l.split(/[\s\/,-]+/)[0];
+      if (COLOR_WORDS.test(firstWord)) colorCount++;
+    }
+    const sizeRatio = sizeCount / labels.length;
+    const colorRatio = colorCount / labels.length;
+    if (sizeRatio > 0.5 && colorRatio > 0.3) return "color-size";
+    if (sizeRatio > 0.5) return "size";
+    return "color";
+  }
+
+  // All available variation attributes for the override dropdown
+  const ALL_VAR_ATTRS = [
+    { id: "", label: "— Auto from category —" },
+    { group: "Color Attributes", items: [
+      { id: "color", label: "Color (generic)" },
+      { id: "color_apparel", label: "Color (Apparel)" },
+      { id: "color_gifts", label: "Color (Gifts)" },
+      { id: "color_grooming", label: "Color (Grooming)" },
+      { id: "color_healthcare", label: "Color (Health)" },
+      { id: "color_horse_clothing", label: "Color (Horse Clothing)" },
+      { id: "color_pet_livestock", label: "Color (Pet/Livestock)" },
+      { id: "color_supplies", label: "Color (Supplies)" },
+      { id: "color_tack", label: "Color (Tack)" },
+    ]},
+    { group: "Size Attributes", items: [
+      { id: "size", label: "Size (generic)" },
+      { id: "size_apparel", label: "Size (Apparel)" },
+      { id: "size_feed", label: "Size (Feed)" },
+      { id: "size_footwear", label: "Size (Footwear)" },
+      { id: "size_gifts", label: "Size (Gifts)" },
+      { id: "size_gloves", label: "Size (Gloves)" },
+      { id: "size_grooming", label: "Size (Grooming)" },
+      { id: "size_healthcare", label: "Size (Health)" },
+      { id: "size_helmet", label: "Size (Helmet)" },
+      { id: "size_hoof_boot", label: "Size (Hoof Boot)" },
+      { id: "size_horse_clothing", label: "Size (Horse Clothing)" },
+      { id: "size_pet_livestock", label: "Size (Pet/Livestock)" },
+      { id: "size_supplements", label: "Size (Supplements)" },
+      { id: "size_supplies", label: "Size (Supplies)" },
+      { id: "size_tack", label: "Size (Tack)" },
+    ]},
+    { group: "Other", items: [
+      { id: "weight", label: "Weight" },
+      { id: "length", label: "Length" },
+      { id: "width", label: "Width" },
+      { id: "count", label: "Count" },
+      { id: "flavor", label: "Flavor" },
+      { id: "scent", label: "Scent" },
+      { id: "general_variety", label: "Variety" },
+      { id: "general_volume", label: "Volume" },
+      { id: "style", label: "Style" },
+      { id: "breech_type", label: "Type of Breech" },
+      { id: "calf_width", label: "Calf Width" },
+      { id: "helmet_liner_size", label: "Helmet Liner Size" },
+      { id: "saddle_seat_size", label: "Saddle Seat Size" },
+      { id: "pet_leash", label: "Pet Leash" },
+      { id: "tack_style", label: "Tack Style" },
+      { id: "tack_accent", label: "Tack Accent" },
+    ]},
+  ];
+
+  function VarAttrSelect({ value, onChange, label }) {
+    return <div><label className="fl">{label}</label><select className="fi" style={{width:"100%"}} value={value||""} onChange={e=>onChange(e.target.value)}>
+      {ALL_VAR_ATTRS.map((item,i) => item.group
+        ? <optgroup key={item.group} label={item.group}>{item.items.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</optgroup>
+        : <option key={i} value={item.id}>{item.label}</option>
+      )}
+    </select></div>;
+  }
+
+  useEffect(() => {
+    if (ungrouped.length<2){setAutoSugg([]);return;}
+    const byP={};
+    for(const p of ungrouped){const s=p.sku;for(let l=Math.max(3,s.length-3);l<s.length;l++){const px=s.slice(0,l);if(!byP[px])byP[px]=[];byP[px].push(p);}}
+    const cands={};
+    for(const[px,ms]of Object.entries(byP)){if(ms.length<2||ms.length>20)continue;const v=ms[0].vendor;if(!ms.every(m=>m.vendor===v))continue;const k=ms.map(m=>m.sku).sort().join("|");if(!cands[k]||px.length>cands[k].prefix.length)cands[k]={prefix:px,members:ms,vendor:v};}
+    const suggestions = Object.values(cands).filter(c=>c.members.length>=2).sort((a,b)=>b.members.length-a.members.length).slice(0,15);
+    for (const s of suggestions) {
+      const bn = findCommonDescPrefix(s.members.map(m => m.name));
+      s._detectedType = detectVariationType(s.members, bn, s.vendor);
+      s._baseName = bn;
+    }
+    setAutoSugg(suggestions);
+  }, [ungrouped, varPrefs]);
+
+  const filtUng = useMemo(() => { if(!searchTerm) return ungrouped; const q=searchTerm.toLowerCase(); return ungrouped.filter(p=>p.sku.toLowerCase().includes(q)||p.name.toLowerCase().includes(q)); }, [ungrouped, searchTerm]);
+  const toggleSku = s => setSelectedSkus(prev=>{const n=new Set(prev);n.has(s)?n.delete(s):n.add(s);return n;});
+
+  const createGroup = () => {
+    if(selectedSkus.size<2)return;
+    const ms=selected.filter(p=>selectedSkus.has(p.sku));
+    const gid=newGroupName?newGroupName.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase():findCommonSkuPrefix(ms.map(m=>m.sku))||`group-${Date.now()}`;
+    const bn=findCommonDescPrefix(ms.map(m=>m.name));
+    const vt = newGroupType;
+    setGroups(prev=>[...prev,{id:gid,displayName:newGroupName||titleCase(bn)||"Untitled Product",description:"",variationType:vt,brand:ms[0].vendor,tax:ms[0].tax,category:"",colorAttrOverride:"",sizeAttrOverride:""}]);
+    onUpdate(products.map(p=>{if(!selectedSkus.has(p.sku))return p;const vl=extractVariantLabel(p.name,bn);return{...p,groupId:gid,variantValue:titleCase(vl),variantColor:vt!=="size"?titleCase(vl):"",variantSize:vt!=="color"?titleCase(vl):""};}));
+    setSelectedSkus(new Set());setNewGroupName("");
+  };
+
+  const quickGroup = s => {
+    const ss=new Set(s.members.map(m=>m.sku));
+    const bn = s._baseName || findCommonDescPrefix(s.members.map(m=>m.name));
+    const vendor = s.vendor;
+    const pref = varPrefs[(vendor||"").toUpperCase()];
+    const vt = pref?.type || s._detectedType || "color";
+    const gid=s.prefix.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase()||`group-${Date.now()}`;
+    setGroups(prev=>[...prev,{id:gid,displayName:titleCase(bn)||titleCase(s.prefix),description:"",variationType:vt,brand:vendor,tax:s.members[0].tax,category:"",colorAttrOverride:pref?.colorAttr||"",sizeAttrOverride:pref?.sizeAttr||""}]);
+    onUpdate(products.map(p=>{if(!ss.has(p.sku))return p;const vl=extractVariantLabel(p.name,bn);return{...p,groupId:gid,variantValue:titleCase(vl),variantColor:vt!=="size"?titleCase(vl):"",variantSize:vt!=="color"?titleCase(vl):""};}));
+  };
+
+  // Save variation type + attribute prefs for a vendor
+  const saveGroupVarPref = (g) => {
+    if (!g.brand) return;
+    saveVarPref(g.brand, {
+      type: g.variationType,
+      colorAttr: g.colorAttrOverride || "",
+      sizeAttr: g.sizeAttrOverride || "",
+    });
+  };
+
+  const rmGroup = gid => {setGroups(prev=>prev.filter(g=>g.id!==gid));onUpdate(products.map(p=>p.groupId===gid?{...p,groupId:null,variantValue:"",variantColor:"",variantSize:""}:p));};
+
+  return (
+    <div>
+      <div className="step-header">
+        <div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Group Variations</h2><p className="step-sub">{groups.length} group{groups.length!==1?"s":""} · {ungrouped.length} ungrouped</p></div>
+        <div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onNext}>Next: Edit →</button></div>
+      </div>
+      {autoSugg.length>0&&(<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>🔍 Detected Groups</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Shared prefix + vendor — click to group. Type auto-detected from variant labels.</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{autoSugg.map((s,i)=><button key={i} className="suggestion-chip" onClick={()=>quickGroup(s)}><strong>{s.prefix}*</strong><span style={{color:"#6b7280",margin:"0 4px"}}>·</span>{s.members.length}<span style={{color:"#6b7280",margin:"0 4px"}}>·</span><span style={{color:"#6b7280",fontSize:11}}>{s.vendor}</span><span className="badge-type" style={{marginLeft:6,fontSize:10}}>{s._detectedType||"color"}</span></button>)}</div></div>)}
+
+      {groups.map(g=>{const ms=products.filter(p=>p.selected&&p.groupId===g.id);const isEd=editingGroup===g.id;return(
+        <div key={g.id} className="gcard"><div className="ghead"><div>
+          {isEd?<input className="fi" style={{fontSize:15,fontWeight:600,padding:"4px 8px",maxWidth:400}} value={g.displayName} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,displayName:e.target.value}:gg))} />
+          :<span style={{fontSize:15,fontWeight:600,color:"#e2e4e9"}}>{g.displayName}</span>}
+          <span className="mono" style={{marginLeft:10,fontSize:11,color:"#4b5563"}}>Base: {g.id}x</span><span style={{marginLeft:8,fontSize:12,color:"#6b7280"}}>{ms.length}v</span><span className="badge-type">{g.variationType}</span>
+          {g.category && (() => { const va = getVariationAttrs(g.category); return <span style={{marginLeft:6,fontSize:10,color:"#4b5563"}}>→ {g.variationType!=="size"&&va.color}{g.variationType==="color-size"&&" + "}{g.variationType!=="color"&&va.size}</span>; })()}
+        </div><div style={{display:"flex",gap:6}}><button className="btn-xs" onClick={()=>setEditingGroup(isEd?null:g.id)}>{isEd?"Done":"Edit"}</button><button className="btn-xs btn-danger" onClick={()=>rmGroup(g.id)}>Ungroup</button></div></div>
+        {isEd&&<div style={{padding:"12px 16px",borderTop:"1px solid #1e2330"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:12}}>
+          <div><label className="fl">Variation Type</label><select className="fi" style={{width:"100%"}} value={g.variationType} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,variationType:e.target.value}:gg))}>{VARIATION_TYPES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
+          <div><label className="fl">Category</label><CategorySelect value={g.category} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,category:v}:gg))} /></div>
+          <div style={{display:"flex",alignItems:"flex-end"}}><button className="btn-sm" style={{width:"100%"}} onClick={()=>saveGroupVarPref(g)} title="Save this type + attribute for all future groups from this vendor">📌 Remember for {g.brand}</button></div>
+        </div>
+        {(g.variationType==="color"||g.variationType==="color-size")&&<VarAttrSelect label="Color Attribute Override" value={g.colorAttrOverride||""} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,colorAttrOverride:v}:gg))} />}
+        {(g.variationType==="size"||g.variationType==="color-size")&&<VarAttrSelect label="Size Attribute Override" value={g.sizeAttrOverride||""} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,sizeAttrOverride:v}:gg))} />}
+        <label className="fl">Variant Values</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><div key={m.sku} className="vchip"><span className="mono" style={{fontSize:10,color:"#4b5563"}}>{m.sku}</span><input className="vinput" value={m.variantValue} onChange={e=>onUpdate(products.map(p=>p.sku===m.sku?{...p,variantValue:e.target.value,variantColor:g.variationType!=="size"?e.target.value:p.variantColor,variantSize:g.variationType!=="color"?e.target.value:p.variantSize}:p))} /></div>)}</div></div>}
+        {!isEd&&<div style={{padding:"8px 16px",display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><span key={m.sku} className="vtag">{m.variantValue||m.sku}</span>)}</div>}
+      </div>);})}
+
+      <div className="panel" style={{marginTop:16}}>
+        <h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>Manual Grouping</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Select 2+ variant SKUs.</p>
+        {selectedSkus.size>=2&&<div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}><input className="fi" style={{maxWidth:280}} placeholder="Group name..." value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} /><select className="fi" value={newGroupType} onChange={e=>setNewGroupType(e.target.value)}>{VARIATION_TYPES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select><button className="btn-primary" onClick={createGroup}>Create ({selectedSkus.size})</button><button className="btn-sm btn-outline" onClick={()=>setSelectedSkus(new Set())}>Clear</button></div>}
+        <input className="fi" placeholder="Search ungrouped..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{marginBottom:10,width:"100%",maxWidth:400}} />
+        <div className="tw" style={{maxHeight:350}}><table className="tbl"><thead><tr><th style={{width:36}}></th><th>SKU</th><th>Description</th><th>Vendor</th><th style={{textAlign:"right"}}>Retail</th></tr></thead>
+          <tbody>{filtUng.slice(0,150).map(p=><tr key={p.sku} className={selectedSkus.has(p.sku)?"row-hl":""} onClick={()=>toggleSku(p.sku)}><td onClick={e=>e.stopPropagation()}><input type="checkbox" checked={selectedSkus.has(p.sku)} onChange={()=>toggleSku(p.sku)} /></td><td className="mono">{p.sku}</td><td style={{maxWidth:280,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</td><td style={{fontSize:12,color:"#6b7280"}}>{p.vendor}</td><td style={{textAlign:"right"}} className="mono">${p.retailPrice.toFixed(2)}</td></tr>)}</tbody></table></div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 4: Edit & Categorize
+   ═══════════════════════════════════════════════════ */
+function EditStep({ products, onUpdate, groups, setGroups, onNext, onBack }) {
+  const simple=useMemo(()=>products.filter(p=>p.selected&&!p.groupId),[products]);
+  const allSel=useMemo(()=>products.filter(p=>p.selected),[products]);
+  const [cur,setCur]=useState(0); const [bulkCat,setBulkCat]=useState(""); const [bulkMode,setBulkMode]=useState(false); const [bulkVendor,setBulkVendor]=useState("all"); const [view,setView]=useState("simple");
+  const p=simple[cur];
+  const upd=(s,f,v)=>onUpdate(products.map(pr=>pr.sku===s?{...pr,[f]:v}:pr));
+  const applyBulk=()=>{if(!bulkCat)return;onUpdate(products.map(pr=>{if(!pr.selected||pr.category)return pr;if(bulkVendor!=="all"&&pr.vendor!==bulkVendor)return pr;return{...pr,category:bulkCat};}));setGroups(prev=>prev.map(g=>{if(g.category)return g;if(bulkVendor!=="all"&&g.brand!==bulkVendor)return g;return{...g,category:bulkCat};}));setBulkMode(false);};
+  const catS=simple.filter(p=>p.category).length; const catG=groups.filter(g=>g.category).length;
+  const vendors=useMemo(()=>[...new Set(allSel.map(p=>p.vendor))].sort(),[allSel]);
+
+  return (
+    <div>
+      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Edit & Categorize</h2><p className="step-sub">{catS}/{simple.length} simple · {catG}/{groups.length} groups</p></div>
+        <div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-sm" onClick={()=>setBulkMode(!bulkMode)}>{bulkMode?"Close":"Bulk Assign"}</button><button className="btn-primary" onClick={onNext}>Next: Export →</button></div></div>
+      {bulkMode&&<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>Bulk Category</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Apply to all uncategorized.</p><div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><select value={bulkVendor} onChange={e=>setBulkVendor(e.target.value)} className="fi"><option value="all">All Vendors</option>{vendors.map(v=><option key={v} value={v}>{v}</option>)}</select><CategorySelect value={bulkCat} onChange={setBulkCat} /><button className="btn-primary" onClick={applyBulk} disabled={!bulkCat}>Apply</button></div></div>}
+      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #1e2330"}}><button className={`tab ${view==="simple"?"active":""}`} onClick={()=>setView("simple")}>Simple ({simple.length})</button><button className={`tab ${view==="groups"?"active":""}`} onClick={()=>setView("groups")}>Groups ({groups.length})</button></div>
+      {view==="groups"&&<div>{groups.length===0&&<p style={{color:"#4b5563",textAlign:"center",padding:40}}>No groups created.</p>}
+        {groups.map(g=>{const ms=products.filter(p=>p.selected&&p.groupId===g.id);return(<div key={g.id} className="gcard"><div style={{padding:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}><div><label className="fl">Display Name</label><input className="fi" value={g.displayName} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,displayName:e.target.value}:gg))} /></div><div><label className="fl">Category</label><CategorySelect value={g.category} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,category:v}:gg))} className={`fi ${!g.category?"iw":""}`} /></div></div>
+          <label className="fl">Description</label><textarea className="fi" style={{resize:"vertical",width:"100%"}} rows={2} value={g.description||""} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,description:e.target.value}:gg))} placeholder="Description..." />
+          <div style={{marginTop:10}}><label className="fl">Variants</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><span key={m.sku} className="vtag">{m.variantValue||m.sku} <span className="mono" style={{fontSize:10,color:"#4b5563"}}>({m.sku})</span></span>)}</div></div>
+        </div></div>);})}</div>}
+      {view==="simple"&&simple.length>0&&p&&(
+        <div className="elayout"><div className="esidebar">{simple.map((item,i)=><div key={item.sku} className={`si ${i===cur?"si-a":""} ${item.category?"si-c":""}`} onClick={()=>setCur(i)}><span className="mono" style={{fontSize:11,color:"#6b7280",width:90,flexShrink:0}}>{item.sku}</span><span style={{fontSize:12,color:"#9ca3af",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{item.displayName}</span>{item.category&&<span style={{color:"#22c55e",fontSize:14}}>✓</span>}</div>)}</div>
+        <div className="eform"><div style={{maxWidth:700}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,paddingBottom:16,borderBottom:"1px solid #1e2330"}}><div><span className="mono" style={{fontSize:20,fontWeight:600,color:"#fff"}}>{p.sku}</span><span style={{marginLeft:12,background:"#1e2330",padding:"4px 10px",borderRadius:5,fontSize:12,color:"#6b7280"}}>{p.vendor}</span></div><div style={{display:"flex",alignItems:"center",gap:8}}><button disabled={cur===0} onClick={()=>setCur(cur-1)} className="btn-icon">←</button><span className="mono" style={{fontSize:13,color:"#4b5563"}}>{cur+1}/{simple.length}</span><button disabled={cur===simple.length-1} onClick={()=>setCur(cur+1)} className="btn-icon">→</button></div></div>
+          <label className="fl">Display Name</label><input type="text" value={p.displayName} onChange={e=>upd(p.sku,"displayName",e.target.value)} className="fi" style={{width:"100%"}} /><span style={{fontSize:12,color:"#4b5563",marginTop:4,display:"block"}}>Original: {p.name}</span>
+          <label className="fl">Short Description</label><textarea value={p.description} onChange={e=>upd(p.sku,"description",e.target.value)} className="fi" style={{resize:"vertical",width:"100%"}} rows={3} placeholder="Description..." />
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}><div><label className="fl">Category</label><CategorySelect value={p.category} onChange={v=>upd(p.sku,"category",v)} className={`fi ${!p.category?"iw":""}`} /></div><div><label className="fl">Retail Price</label><input type="number" step="0.01" value={p.retailPrice} onChange={e=>upd(p.sku,"retailPrice",parseFloat(e.target.value)||0)} className="fi" style={{width:"100%"}} /></div></div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginTop:12}}><div><label className="fl">Tax</label><span className="fv">{TAX_LABEL[p.tax]||"Not Set"}</span></div><div><label className="fl">Weight</label><span className="fv">{p.weight>0?`${p.weight} lbs`:"—"}</span></div><div><label className="fl">UPC</label><span className="fv" style={{fontSize:12,wordBreak:"break-all"}}>{p.upcs[0]||"—"}</span></div><div><label className="fl">MFG #</label><span className="fv" style={{fontSize:12,wordBreak:"break-all"}}>{p.mfg||"—"}</span></div></div>
+        </div></div></div>
+      )}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   STEP 5: Export
+   ═══════════════════════════════════════════════════ */
+function ExportStep({ products, groups, onBack }) {
+  const sel=useMemo(()=>products.filter(p=>p.selected),[products]);
+  const simple=sel.filter(p=>!p.groupId); const catS=simple.filter(p=>p.category); const catG=groups.filter(g=>g.category);
+  const [tab,setTab]=useState("catalog"); const [done,setDone]=useState(false);
+  const catXml=useMemo(()=>generateCatalogXml(products,groups),[products,groups]);
+  const pbXml=useMemo(()=>generatePricebookXml(products),[products]);
+  const doExport=()=>{const d=new Date().toISOString().slice(0,10);downloadFile(catXml,`catalog-import-${d}.xml`);setTimeout(()=>downloadFile(pbXml,`pricebook-import-${d}.xml`),300);setDone(true);};
+  const uc=simple.filter(p=>!p.category).length+groups.filter(g=>!g.category).length;
+
+  return (
+    <div>
+      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Review & Export</h2><p className="step-sub">{sel.length} products · {groups.length} groups</p></div><div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-export" onClick={doExport}>{done?"✓ Downloaded":"Download Import Files"}</button></div></div>
+      {uc>0&&<div className="warn">⚠ {uc} item{uc>1?"s":""} without a category.</div>}
+      <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:20,marginBottom:28}}>
+        <div className="panel"><h3 style={{margin:"0 0 12px",fontSize:16,color:"#e2e4e9"}}>Summary</h3><div className="srows"><div className="srow"><span>Simple</span><span className="sv">{simple.length}</span></div><div className="srow"><span>Groups</span><span className="sv">{groups.length}</span></div><div className="srow"><span>Variant SKUs</span><span className="sv">{sel.filter(p=>p.groupId).length}</span></div><div className="srow"><span>Categorized</span><span className="sv" style={{color:"#22c55e"}}>{catS.length+catG.length}</span></div><div className="srow"><span>Uncategorized</span><span className="sv" style={{color:uc>0?"#f97316":"#22c55e"}}>{uc}</span></div></div></div>
+        <div className="panel" style={{padding:0,overflow:"hidden"}}><div style={{display:"flex",borderBottom:"1px solid #1e2330"}}><button className={`tab ${tab==="catalog"?"active":""}`} onClick={()=>setTab("catalog")}>Catalog XML</button><button className={`tab ${tab==="pricebook"?"active":""}`} onClick={()=>setTab("pricebook")}>Price Book XML</button></div><pre style={{padding:16,margin:0,fontFamily:"'SF Mono',Menlo,Consolas,monospace",fontSize:11,lineHeight:1.6,color:"#8b95a5",maxHeight:400,overflow:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{(tab==="catalog"?catXml:pbXml).slice(0,4000)}{(tab==="catalog"?catXml:pbXml).length>4000&&"\n\n... (truncated)"}</pre></div>
+      </div>
+      <h3 style={{fontSize:18,color:"#e2e4e9",margin:"0 0 16px"}}>Import into Business Manager</h3>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>{[{n:1,t:"Upload Catalog XML",d:"Administration → Site Development → Import & Export"},{n:2,t:"Import Catalog",d:"Select file, MERGE mode. Creates products + variations."},{n:3,t:"Import Price Book",d:"Upload and import pricebook XML, MERGE mode."},{n:4,t:"Verify",d:"Search imported SKUs in staging. Check variations and pricing."}].map(s=><div key={s.n} style={{display:"flex",gap:14,background:"#111520",border:"1px solid #1e2330",borderRadius:10,padding:16}}><span style={{width:28,height:28,flexShrink:0,background:"#3b82f6",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700}}>{s.n}</span><div><strong style={{color:"#e2e4e9",fontSize:14,display:"block",marginBottom:4}}>{s.t}</strong><p style={{color:"#6b7280",fontSize:13,margin:0,lineHeight:1.5}}>{s.d}</p></div></div>)}</div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   Rules Manager Panel
+   ═══════════════════════════════════════════════════ */
+function RulesPanel({ rules, onSaveRule, onDeleteRule }) {
+  const [newType, setNewType] = useState("class");
+  const [newKey, setNewKey] = useState("");
+  const [newAction, setNewAction] = useState("upload");
+  const [newName, setNewName] = useState("");
+  const addRule = () => {
+    if (!newKey.trim()) return;
+    onSaveRule(newType, newKey.trim().toUpperCase(), { action: newAction, name: newName || newKey.trim() });
+    setNewKey(""); setNewName("");
+  };
+  const sections = [
+    { key: "classRules", label: "Class Rules", type: "class" },
+    { key: "deptRules", label: "Department Rules", type: "dept" },
+    { key: "vendorRules", label: "Vendor Rules", type: "vendor" },
+    { key: "skuRules", label: "SKU Overrides", type: "sku" },
+    { key: "prefixRules", label: "Prefix Rules", type: "prefix" },
+  ];
+
+  return (
+    <div>
+      <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "#e2e4e9" }}>Rules Manager</h2>
+      <p className="step-sub" style={{ marginBottom: 20 }}>Rules persist across sessions. They control how the cascade classifies items on upload.</p>
+      <div className="panel" style={{ marginBottom: 20 }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#e2e4e9" }}>Add Rule</h3>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <select className="fi" value={newType} onChange={e => setNewType(e.target.value)}>
+            <option value="class">Class</option><option value="dept">Department</option><option value="vendor">Vendor</option><option value="sku">SKU</option><option value="prefix">Prefix</option>
+          </select>
+          <input className="fi" placeholder="Code/ID..." value={newKey} onChange={e => setNewKey(e.target.value)} style={{ width: 160 }} />
+          <select className="fi" value={newAction} onChange={e => setNewAction(e.target.value)}>
+            <option value="upload">Auto-upload</option><option value="drop">Auto-drop</option>
+          </select>
+          <input className="fi" placeholder="Label (optional)..." value={newName} onChange={e => setNewName(e.target.value)} style={{ width: 200 }} />
+          <button className="btn-primary" onClick={addRule} disabled={!newKey.trim()}>Add</button>
+        </div>
+      </div>
+      {sections.map(sec => {
+        const entries = Object.entries(rules[sec.key] || {});
+        if (!entries.length) return null;
+        return (
+          <div key={sec.key} style={{ marginBottom: 16 }}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#9ca3af" }}>{sec.label} ({entries.length})</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {entries.sort((a,b) => a[0].localeCompare(b[0])).map(([code, rule]) => (
+                <span key={code} className={rule.action === "upload" ? "rule-chip-up" : "rule-chip-drop"}>
+                  <strong>{code}</strong> · {rule.name} · {rule.action}
+                  <button onClick={() => onDeleteRule(sec.key, code)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", marginLeft: 6, fontSize: 14, padding: 0 }}>×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════════════ */
+function SKUOnboarder() {
+  const [step, setStep] = useState(0);
+  const [products, setProducts] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [drops, setDrops] = useState([]);
+  const [stats, setStats] = useState({});
+  const [rules, setRules] = useState(DEFAULT_RULES);
+  const [rulesLoaded, setRulesLoaded] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+
+  useEffect(() => {
+    loadRules().then(r => { setRules(r); setRulesLoaded(true); });
+  }, []);
+
+  const handleUpload = (result) => {
+    setProducts(result.products); setDrops(result.drops);
+    setStats({ autoCount: result.autoCount, reviewCount: result.reviewCount, totalRaw: result.totalRaw, uniqueSkus: result.uniqueSkus, hasEnrichment: result.hasEnrichment });
+    setStep(1);
+  };
+
+  const handleSaveRule = (type, key, rule) => {
+    const ruleKey = { class: "classRules", dept: "deptRules", vendor: "vendorRules", sku: "skuRules", prefix: "prefixRules" }[type];
+    if (!ruleKey) return;
+    setRules(prev => {
+      const next = { ...prev, [ruleKey]: { ...prev[ruleKey], [key]: rule } };
+      saveRules(next);
+      return next;
+    });
+  };
+
+  const handleDeleteRule = (ruleKey, code) => {
+    setRules(prev => {
+      const next = { ...prev, [ruleKey]: { ...prev[ruleKey] } };
+      delete next[ruleKey][code];
+      saveRules(next);
+      return next;
+    });
+  };
+
+  const handleRescue = (item) => {
+    setDrops(prev => prev.filter(d => d.sku !== item.sku));
+    setProducts(prev => [...prev, {
+      ...item, _bucket: "rescued", _reason: "Rescued", _ruleType: "",
+      displayName: titleCase(item.name), category: "", selected: false,
+      description: "", groupId: null, variationType: "", variantValue: "",
+    }]);
+    setStats(prev => ({ ...prev, reviewCount: (prev.reviewCount || 0) + 1 }));
+  };
+
+  const steps = ["Upload", "Cascade", "Review", "Group Variations", "Edit & Categorize", "Export"];
+
+  return (
+    <div className="app">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+        .app{font-family:'DM Sans',sans-serif;min-height:100vh;background:#0a0d12;color:#c9cbd0}
+        .app-header{display:flex;align-items:center;gap:10px;padding:8px 20px;background:linear-gradient(135deg,#0f1219,#111827);border-bottom:1px solid #1e2330}
+        .app-logo{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;letter-spacing:1px}
+        .app-title{font-size:15px;font-weight:600;color:#e2e4e9}
+        .app-sub{font-size:12px;color:#4b5563;margin-left:4px}
+        .stepper{display:flex;align-items:center;padding:8px 20px;background:#0c0f14;border-bottom:1px solid #1a1f2e;overflow-x:auto}
+        .sd{display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;padding:4px 10px;border-radius:20px;white-space:nowrap;transition:all .15s}
+        .sd.active{color:#3b82f6;background:rgba(59,130,246,.1);font-weight:500}.sd.done{color:#22c55e}
+        .sn{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:#1e2330;color:#6b7280}
+        .sd.active .sn{background:#3b82f6;color:#fff}.sd.done .sn{background:#22c55e;color:#fff}
+        .sc{color:#2a2f3d;margin:0 2px;font-size:14px}
+        .app-content{padding:16px 20px;max-width:1200px;margin:0 auto}
+        .step-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+        .step-sub{margin:2px 0 0;font-size:13px;color:#6b7280}
+        .cascade-banner{background:#111520;border:1px solid #1e2330;border-radius:12px;padding:12px 16px;margin-bottom:14px}
+        .cb-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#e2e4e9;margin-bottom:8px;flex-wrap:wrap}
+        .cb-warn{font-size:12px;font-weight:400;color:#f97316;margin-left:8px;padding:2px 8px;background:rgba(249,115,22,.1);border-radius:4px}
+        .cb-grid{display:flex;gap:8px;flex-wrap:wrap}
+        .cb-card{background:#0c0f14;border:1px solid #1a1f2e;border-radius:8px;padding:8px 14px;min-width:90px;text-align:center}
+        .cb-drop{border-color:rgba(239,68,68,.3)}.cb-auto{border-color:rgba(34,197,94,.3)}.cb-rev{border-color:rgba(59,130,246,.3)}
+        .cb-num{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:20px;font-weight:700;color:#e2e4e9}
+        .cb-drop .cb-num{color:#ef4444}.cb-auto .cb-num{color:#22c55e}.cb-rev .cb-num{color:#3b82f6}
+        .cb-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+        .drop-chip{background:rgba(239,68,68,.1);color:#f87171;padding:3px 8px;border-radius:4px;font-size:11px;display:inline-block}
+        .btn-primary{background:#3b82f6;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+        .btn-primary:hover{background:#2563eb}.btn-primary:disabled{opacity:.4;cursor:default}
+        .btn-outline{background:none;color:#9ca3af;border:1px solid #2a2f3d;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+        .btn-outline:hover{border-color:#4b5563;color:#e2e4e9}
+        .btn-sm{background:#1e2330;color:#9ca3af;border:1px solid #2a2f3d;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
+        .btn-sm:hover{background:#252b3b;color:#e2e4e9}
+        .btn-xs{background:none;color:#6b7280;border:1px solid #2a2f3d;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
+        .btn-xs:hover{background:#1e2330}
+        .btn-danger{border-color:rgba(239,68,68,.3);color:#ef4444}.btn-danger:hover{background:rgba(239,68,68,.1)}
+        .btn-icon{background:#1e2330;color:#9ca3af;border:1px solid #2a2f3d;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+        .btn-icon:disabled{opacity:.3;cursor:default}
+        .btn-export{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+        .btn-rules{background:none;color:#6b7280;border:1px solid #2a2f3d;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
+        .btn-rules:hover{background:#1e2330;color:#9ca3af}
+        .fi{background:#111520;border:1px solid #2a2f3d;color:#e2e4e9;padding:8px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+        .fi:focus{border-color:#3b82f6}.iw{border-color:#f97316}
+        .fl{display:block;font-size:11px;font-weight:500;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 5px}
+        .fv{font-size:14px;color:#c9cbd0}
+        .fbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#0c0f14;border:1px solid #1a1f2e;border-radius:10px}
+        .tw{overflow:auto;border:1px solid #1e2330;border-radius:10px}
+        .tbl{width:100%;border-collapse:collapse;font-size:13px}
+        .tbl thead{position:sticky;top:0;z-index:1}
+        .tbl th{background:#111520;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid #1e2330}
+        .tbl td{padding:8px 12px;border-bottom:1px solid #141820;color:#c9cbd0}
+        .tbl tbody tr{cursor:pointer;transition:background .1s}
+        .tbl tbody tr:hover{background:#111520}
+        .row-off{opacity:.35}.row-hl{background:rgba(59,130,246,.08)!important}
+        .mono{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px}
+        .badge-au{background:rgba(34,197,94,.12);color:#22c55e;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+        .badge-rv{background:rgba(59,130,246,.12);color:#60a5fa;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+        .badge-type{background:rgba(99,102,241,.12);color:#818cf8;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-left:8px}
+        .panel{background:#111520;border:1px solid #1e2330;border-radius:10px;padding:16px}
+        .dz{border:2px dashed #2a2f3d;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+        .dz:hover,.dz-a{border-color:#3b82f6;background:rgba(59,130,246,.05)}
+        .suggestion-chip{background:#0c0f14;border:1px solid #2a2f3d;color:#c9cbd0;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center}
+        .suggestion-chip:hover{border-color:#3b82f6;background:rgba(59,130,246,.05)}
+        .gcard{background:#111520;border:1px solid #1e2330;border-radius:10px;margin-bottom:10px;overflow:hidden}
+        .ghead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #1a1f2e}
+        .vtag{background:#1a1f2e;color:#9ca3af;padding:4px 10px;border-radius:5px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .vchip{background:#0c0f14;border:1px solid #1e2330;border-radius:6px;padding:6px 10px;display:flex;flex-direction:column;gap:4px}
+        .vinput{background:#111520;border:1px solid #2a2f3d;color:#e2e4e9;padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none;width:120px}
+        .vinput:focus{border-color:#3b82f6}
+        .elayout{display:flex;gap:0;height:calc(100vh - 200px);border:1px solid #1e2330;border-radius:12px;overflow:hidden}
+        .esidebar{width:300px;flex-shrink:0;background:#111520;border-right:1px solid #1e2330;overflow-y:auto}
+        .si{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:background .1s;border-left:3px solid transparent}
+        .si:hover{background:#161b28}.si-a{background:#1a2035;border-left-color:#3b82f6}.si-c .mono{color:#22c55e!important}
+        .eform{flex:1;padding:20px;background:#0c0f14;overflow-y:auto}
+        .tab{padding:10px 20px;font-size:13px;font-weight:500;color:#6b7280;background:none;border:none;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent}
+        .tab.active{color:#3b82f6;border-bottom-color:#3b82f6}.tab:hover{color:#9ca3af}
+        .srows{display:flex;flex-direction:column}
+        .srow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1f2e;font-size:13px;color:#9ca3af}
+        .sv{font-family:'SF Mono',Menlo,Consolas,monospace;color:#e2e4e9}
+        .warn{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 18px;font-size:14px;color:#fb923c;margin-bottom:20px}
+        .rule-chip-up{background:rgba(34,197,94,.1);color:#22c55e;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .rule-chip-drop{background:rgba(239,68,68,.1);color:#f87171;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100}
+        .modal{background:#111520;border:1px solid #2a2f3d;border-radius:12px;padding:24px;max-width:480px;width:90%}
+        .cat-trigger{min-height:36px}
+        .cat-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;background:#111520;border:1px solid #2a2f3d;border-radius:10px;margin-top:4px;box-shadow:0 12px 40px rgba(0,0,0,.5);min-width:300px;max-width:420px}
+        .cat-search{width:100%;border:none;border-bottom:1px solid #1e2330;border-radius:10px 10px 0 0;padding:10px 12px;font-size:13px}
+        .cat-tree{max-height:320px;overflow-y:auto;padding:4px 0}
+        .cat-node{display:flex;align-items:center;gap:6px;padding:5px 8px;cursor:pointer;transition:background .1s;font-size:13px;color:#c9cbd0;min-height:28px}
+        .cat-node:hover{background:#1a2035}
+        .cat-sel{background:rgba(59,130,246,.12)!important;color:#60a5fa}
+        .cat-clear:hover{background:rgba(239,68,68,.08)!important}
+        .cat-arrow{color:#4b5563;font-size:11px;width:14px;text-align:center;flex-shrink:0;cursor:pointer}
+        .cat-arrow:hover{color:#9ca3af}
+        .cat-dot{color:#2a2f3d;font-size:8px;width:14px;text-align:center;flex-shrink:0}
+        .cat-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .cat-pick{background:none;border:1px solid #2a2f3d;color:#4b5563;width:20px;height:20px;border-radius:4px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .15s}
+        .cat-node:hover .cat-pick{opacity:1}
+        .cat-pick:hover{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.1)}
+        ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2a2f3d;border-radius:3px}
+        select option,select optgroup{background:#111520;color:#e2e4e9}
+        @media(max-width:800px){.elayout{flex-direction:column;height:auto}.esidebar{width:100%;max-height:200px;border-right:none;border-bottom:1px solid #1e2330}}
+      `}</style>
+
+      <header className="app-header">
+        <div className="app-logo">CH</div>
+        <span className="app-title">SKU Onboarder</span>
+        <span className="app-sub">Cheshire Horse · SFCC Import Tool</span>
+        <div style={{ marginLeft: "auto" }}>
+          <button className="btn-rules" onClick={() => setShowRules(!showRules)}>
+            ⚙ Rules {showRules ? "▾" : "▸"}
+          </button>
+        </div>
+      </header>
+
+      {!showRules && (
+        <div className="stepper">
+          {steps.map((label, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center" }}>
+              {i > 0 && <span className="sc">›</span>}
+              <div className={`sd ${i === step ? "active" : i < step ? "done" : ""}`} onClick={() => { if (i < step) setStep(i); }} style={{ cursor: i < step ? "pointer" : "default" }}>
+                <span className="sn">{i < step ? "✓" : i + 1}</span>{label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="app-content">
+        {showRules ? (
+          <RulesPanel rules={rules} onSaveRule={handleSaveRule} onDeleteRule={handleDeleteRule} />
+        ) : (
+          <>
+            {step === 0 && <UploadStep onData={handleUpload} rules={rules} rulesLoaded={rulesLoaded} />}
+            {step === 1 && <CascadeStep products={products} drops={drops} stats={stats} onUpdate={setProducts} onNext={() => setStep(2)} rules={rules} onSaveRule={handleSaveRule} onRescue={handleRescue} />}
+            {step === 2 && <ReviewStep products={products} onUpdate={setProducts} onNext={() => setStep(3)} onBack={() => setStep(1)} stats={stats} onSaveRule={handleSaveRule} />}
+            {step === 3 && <GroupStep products={products} onUpdate={setProducts} groups={groups} setGroups={setGroups} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
+            {step === 4 && <EditStep products={products} onUpdate={setProducts} groups={groups} setGroups={setGroups} onNext={() => setStep(5)} onBack={() => setStep(3)} />}
+            {step === 5 && <ExportStep products={products} groups={groups} onBack={() => setStep(4)} />}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+if (!window.storage) {
+  window.storage = {
+    async get(key) { try { const v = localStorage.getItem(key); return v !== null ? { key, value: v, shared: false } : null; } catch(e) { return null; } },
+    async set(key, value) { try { localStorage.setItem(key, value); return { key, value, shared: false }; } catch(e) { return null; } },
+    async delete(key) { try { localStorage.removeItem(key); return { key, deleted: true, shared: false }; } catch(e) { return null; } },
+    async list(prefix) { try { const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!prefix || k.startsWith(prefix)) keys.push(k); } return { keys, shared: false }; } catch(e) { return { keys: [], shared: false }; } }
+  };
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(SKUOnboarder));
+</script>
+</body>
+</html>

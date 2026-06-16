@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Checker PWA</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Simple styles -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    #reader {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 400px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Price Checker</h1>
+  <p>Scan a product barcode to check prices.</p>
+
+  <!-- Scanner container -->
+  <div id="reader"></div>
+
+  <!-- Optional Start Scan button for mobile autoplay issues -->
+  <button onclick="startScanner()">Start Scan</button>
+
+  <!-- Barcode scanner library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    let html5QrCode;
+
+    async function startScanner() {
+      try {
+        html5QrCode = new Html5Qrcode("reader");
+        await html5QrCode.start(
+          { facingMode: "environment" }, // Rear camera
+          { fps: 10, qrbox: 250 },
+          qrCodeMessage => {
+            // Redirect to actual Cheshire Horse product page
+            window.location.href = "https://www.cheshirehorse.com/p/" + qrCodeMessage;
+          },
+          errorMessage => {
+            console.log("Scan error:", errorMessage);
+          }
+        );
+      } catch (err) {
+        console.error("Unable to start scanner:", err);
+        alert("Camera/Scanner error: " + err);
+      }
+    }
+
+    // Automatically start scanner on page load
+    window.onload = startScanner;
+  </script>
+
+</body>
+</html>

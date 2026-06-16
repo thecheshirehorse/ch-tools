@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Missing UPC &amp; MFG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111110;
+    --surface: #1A1A19;
+    --surface-raised: #222221;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #E8E7E3;
+    --text-muted: #8A8985;
+    --accent: #60A5FA;
+    --accent-hover: #93C5FD;
+    --accent-bg: rgba(96,165,250,0.10);
+    --danger: #F87171;
+    --danger-bg: rgba(248,113,113,0.10);
+    --success: #34D399;
+    --success-bg: rgba(52,211,153,0.08);
+    --warn-bg: rgba(251,191,36,0.08);
+    --warn-text: #FBBF24;
+    --warn-border: rgba(251,191,36,0.20);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --font: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .header-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .header .tag {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .header p {
+    width: 100%;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ── Main ── */
+  .main {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .main { grid-template-columns: 1fr; }
+  }
+
+  /* ── Sidebar ── */
+  .sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .panel h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .file-drop {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .file-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .file-drop .drop-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .file-drop .drop-label strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .file-drop .file-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 4px;
+    pointer-events: none;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .hint code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ── Buttons ── */
+  button {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  button:hover:not(:disabled) { background: var(--bg); box-shadow: var(--shadow-sm); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); color: var(--bg); }
+  .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── Status ── */
+  .status {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .status.ok { background: var(--success-bg); color: var(--success); }
+  .status.err { background: var(--danger-bg); color: var(--danger); }
+  .status.warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); }
+
+  /* ── Results area ── */
+  .results-area { min-width: 0; }
+
+  .results-empty {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .results-empty .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+
+  .summary-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .summary-bar .stat {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .summary-bar .stat strong {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .summary-bar .divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+  }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .table-scroll {
+    max-height: 560px;
+    overflow: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-raised);
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    z-index: 1;
+  }
+  table td {
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  table tr:last-child td { border-bottom: none; }
+  table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  table tr.row-flag td,
+  table tr.row-flag:nth-child(even) td {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+  }
+  table tr.row-filled td.col-upc,
+  table tr.row-filled td.col-mpn {
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .table-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--surface-raised);
+  }
+  .table-footer .spacer { flex: 1; }
+
+  .credit-footer {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 16px 24px 32px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .credit-footer a { color: var(--text-muted); text-decoration: underline; }
+  .credit-footer a:hover { color: var(--accent); }
+
+  /* ── Warning banner ── */
+  .warning-banner {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--warn-text);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .warning-banner strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <h1>Missing UPC &amp; MFG Tool</h1>
+    <span class="tag">Browser-only</span>
+    <p>Fill missing UPCs and MFG codes in a Salesforce export using a Compass master file. Preview and download the enriched CSV. Nothing leaves your browser.</p>
+  </div>
+</div>
+
+<div class="main">
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+
+    <div class="panel">
+      <h2><span class="panel-num">1</span> Salesforce Export CSV</h2>
+      <div class="file-drop" id="mainDrop">
+        <input id="csvFile" type="file" accept=".csv" />
+        <div class="drop-label">Drop CSV here or <strong>browse</strong></div>
+        <div class="file-name" id="mainFileName"></div>
+      </div>
+      <div class="hint">
+        Auto-detects columns named <code>SKU</code>, <code>UPC</code>, <code>MFG</code>, <code>MPN</code>, etc. Blank, <code>0</code>, or <code>N/A</code> cells count as missing.
+      </div>
+      <div id="mainStatus"></div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="panel-num">2</span> Fill from Compass</h2>
+      <div class="file-drop" id="imuDrop">
+        <input id="imuFile" type="file" accept=".csv" />
+        <div class="drop-label">Drop Compass CSV or <strong>browse</strong></div>
+        <div class="file-name" id="imuFileName"></div>
+      </div>
+      <div class="hint" style="margin-bottom: 10px;">
+        Looks up each SKU in the Compass export and fills missing <strong>UPC</strong> and <strong>MFG code</strong> values. Rows still missing data are highlighted.
+      </div>
+      <div class="btn-group">
+        <button id="fillFromImu" class="primary">Fill UPCs &amp; MFG codes from Compass</button>
+      </div>
+      <div id="imuStatus"></div>
+      <div class="warning-banner">
+        <strong>⚠ Don't open CSVs in Excel.</strong> It silently strips leading zeros and mangles scientific-notation SKUs. Use Google Sheets or import as Text.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Results ── -->
+  <div class="results-area" id="resultsArea">
+    <div class="results-empty">
+      <div class="icon">📋</div>
+      Upload a CSV and choose an action to see results here.
+    </div>
+  </div>
+</div>
+
+<footer class="credit-footer">
+  Built by <a href="https://github.com/caitlinsc">caitlinsc</a> on GitHub
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+/* ── DOM refs ── */
+const csvFileInput    = document.getElementById('csvFile');
+const imuFileInput    = document.getElementById('imuFile');
+const mainFileNameEl  = document.getElementById('mainFileName');
+const imuFileNameEl   = document.getElementById('imuFileName');
+const mainStatusEl    = document.getElementById('mainStatus');
+const imuStatusEl     = document.getElementById('imuStatus');
+const resultsArea     = document.getElementById('resultsArea');
+
+/* ── File-drop cosmetics ── */
+['mainDrop','imuDrop'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', () => el.classList.remove('dragover'));
+});
+csvFileInput.addEventListener('change', () => {
+  mainFileNameEl.textContent = csvFileInput.files[0]?.name || '';
+});
+imuFileInput.addEventListener('change', () => {
+  imuFileNameEl.textContent = imuFileInput.files[0]?.name || '';
+});
+
+/* ── State ── */
+let headers = [];
+let parsedData = null;
+let upcColIdx = -1;
+let mpnColIdx = -1;
+let currentDisplayCount = 20;
+
+/* ── Utilities ── */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setStatus(el, msg, kind) {
+  if (!msg) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="status ${kind||'ok'}">${esc(msg)}</div>`;
+}
+
+function isMissing(cell) {
+  const t = String(cell).trim().toUpperCase();
+  return t === '' || t === '0' || t === 'N/A' || t === 'NA' || t === 'NONE';
+}
+
+function isValidUpc(s) { return /^\d{8,14}$/.test(s); }
+
+function findCol(headerRow, names) {
+  const norm = headerRow.map(c => c.toLowerCase().trim());
+  return norm.findIndex(c => names.includes(c));
+}
+
+function findUpcCol(h) {
+  return findCol(h, ['upc','upc code','upc number','upc-a','upca','barcode','bar code','gtin','gtin-12','gtin-13']);
+}
+
+function findSkuCol(h) {
+  const specific = ['sku','item number','item #','item no','item no.','item code',
+    'product id','product number','product #','product code',
+    'style number','style #','style no','part number','part #'];
+  const generic = ['id','item','product'];
+  let idx = findCol(h, specific);
+  if (idx !== -1) return idx;
+  return findCol(h, generic);
+}
+
+function findMpnCol(h) {
+  return findCol(h, [
+    'manufacturersku','manufacturer sku','manufacturer_sku',
+    'mfg','mfg code','mfg #','mfg number','mfg part','mfg part number','mfg part #',
+    'mfg sku','mfgsku',
+    'manufacturer part number','manufacturer code','manufacturer #',
+    'mpn','mfr part','mfr part number','mfr #','mfr code',
+    'vendor part','vendor part number','vendor #','vendor code',
+    'manuf. part no','manuf part no','manuf. part number',
+    'manufacturer part #','part number','part #','part no','part no.'
+  ]);
+}
+
+function parseFile(file) {
+  return new Promise(resolve => {
+    Papa.parse(file, {
+      skipEmptyLines: true,
+      complete: r => {
+        const rows = r.data;
+        if (rows.length < 2) { resolve({ error: 'File needs a header row + data.' }); return; }
+        const hdr = rows[0];
+        const data = rows.slice(1).filter(row => row.some(c => c !== undefined && c !== ''));
+        resolve({ headers: hdr, rows: data });
+      },
+      error: err => resolve({ error: 'Parse error: ' + err.message })
+    });
+  });
+}
+
+function csvToString(rows) {
+  return rows.map(row => row.map(cell => {
+    if (cell == null) return '';
+    const v = String(cell);
+    if (v.includes(',') || v.includes('"') || v.includes('\n'))
+      return '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  }).join(',')).join('\r\n');
+}
+
+function downloadCsv(data, filename) {
+  const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+/* ── Prepare main CSV ── */
+async function prepareMain(statusEl) {
+  const file = csvFileInput.files[0];
+  if (!file) { setStatus(statusEl, 'Upload a CSV in step 1 first.', 'err'); return false; }
+  const result = await parseFile(file);
+  if (result.error) { setStatus(statusEl, result.error, 'err'); return false; }
+  headers = result.headers;
+  parsedData = result.rows;
+  upcColIdx = findUpcCol(headers);
+  mpnColIdx = findMpnCol(headers);
+  if (upcColIdx === -1 && mpnColIdx === -1) {
+    setStatus(statusEl, 'No UPC or MPN column found. Expected headers like UPC, Barcode, GTIN, MFG, MPN, etc.', 'err');
+    return false;
+  }
+  const parts = [`${parsedData.length} rows loaded`];
+  if (upcColIdx !== -1) parts.push(`UPC → "${headers[upcColIdx]}"`);
+  if (mpnColIdx !== -1) parts.push(`MPN → "${headers[mpnColIdx]}"`);
+  setStatus(statusEl, parts.join('. ') + '.', 'ok');
+  return true;
+}
+
+/* ── Render table ── */
+function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraActions, stats }) {
+  resultsArea.innerHTML = '';
+  if (!rows.length) {
+    resultsArea.innerHTML = `<div class="results-empty"><div class="icon">🔍</div>${esc(title)}: no rows found.</div>`;
+    return;
+  }
+
+  const showing = rows.slice(0, currentDisplayCount);
+
+  /* Summary bar */
+  const bar = document.createElement('div');
+  bar.className = 'summary-bar';
+  let statsHtml = `<div class="stat"><strong>${rows.length}</strong> rows</div>`;
+  if (stats) {
+    if (stats.upcFilled !== undefined) {
+      statsHtml += `<div class="divider"></div><div class="stat">UPC: <strong>${stats.upcFilled}</strong> filled, <strong>${stats.upcMissing}</strong> missing</div>`;
+    }
+    if (stats.mpnFilled !== undefined) {
+      statsHtml += `<div class="divider"></div><div class="stat">MFG: <strong>${stats.mpnFilled}</strong> filled, <strong>${stats.mpnMissing}</strong> missing</div>`;
+    }
+  }
+  if (rows.length > showing.length) {
+    statsHtml += `<div class="divider"></div><div class="stat">Showing <strong>${showing.length}</strong></div>`;
+  }
+  bar.innerHTML = statsHtml;
+  resultsArea.appendChild(bar);
+
+  /* Table */
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const scroll = document.createElement('div');
+  scroll.className = 'table-scroll';
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+  thead.appendChild(hr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const upcI = upcColIdx;
+  const mpnI = mpnColIdx;
+
+  showing.forEach(row => {
+    const tr = document.createElement('tr');
+    const isFlagged = flagRow && flagRow(row);
+    const sku = row[findSkuCol(headers)] || '';
+    const upcFilled = filledUpcSet && filledUpcSet.has(sku);
+    const mpnFilled = filledMpnSet && filledMpnSet.has(sku);
+
+    if (isFlagged) tr.className = 'row-flag';
+    else if (upcFilled || mpnFilled) tr.className = 'row-filled';
+
+    headers.forEach((_, i) => {
+      const td = document.createElement('td');
+      td.textContent = row[i] || '';
+      if (i === upcI && upcFilled) td.className = 'col-upc';
+      if (i === mpnI && mpnFilled) td.className = 'col-mpn';
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  scroll.appendChild(table);
+  wrap.appendChild(scroll);
+
+  /* Footer with actions */
+  const footer = document.createElement('div');
+  footer.className = 'table-footer';
+
+  if (extraActions) {
+    extraActions.forEach(({ label, onClick, primary }) => {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      if (primary) btn.className = 'primary';
+      btn.addEventListener('click', onClick);
+      footer.appendChild(btn);
+    });
+  }
+
+  const spacer = document.createElement('div');
+  spacer.className = 'spacer';
+  footer.appendChild(spacer);
+
+  if (rows.length > currentDisplayCount) {
+    const more = document.createElement('button');
+    more.textContent = `Show more (${Math.min(20, rows.length - currentDisplayCount)} rows)`;
+    more.addEventListener('click', () => {
+      currentDisplayCount += 20;
+      renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraActions });
+    });
+    footer.appendChild(more);
+  }
+
+  wrap.appendChild(footer);
+  resultsArea.appendChild(wrap);
+}
+
+/* ── Fill from IMU ── */
+document.getElementById('fillFromImu').addEventListener('click', async () => {
+  currentDisplayCount = 20;
+  const mainFile = csvFileInput.files[0];
+  const imuFile  = imuFileInput.files[0];
+  if (!mainFile) { setStatus(imuStatusEl, 'Upload your Salesforce CSV in step 1 first.', 'err'); return; }
+  if (!imuFile)  { setStatus(imuStatusEl, 'Upload a Compass export CSV.', 'err'); return; }
+
+  setStatus(imuStatusEl, 'Parsing…', 'ok');
+  const [main, imu] = await Promise.all([parseFile(mainFile), parseFile(imuFile)]);
+  if (main.error) { setStatus(imuStatusEl, 'Main CSV: ' + main.error, 'err'); return; }
+  if (imu.error)  { setStatus(imuStatusEl, 'Compass CSV: ' + imu.error, 'err'); return; }
+
+  const mSkuI = findSkuCol(main.headers);
+  const mUpcI = findUpcCol(main.headers);
+  const mMpnI = findMpnCol(main.headers);
+  const iSkuI = findSkuCol(imu.headers);
+  const iUpcI = findUpcCol(imu.headers);
+  const iMpnI = findMpnCol(imu.headers);
+
+  if (mSkuI === -1) { setStatus(imuStatusEl, 'Main CSV: no SKU column found.', 'err'); return; }
+  if (iSkuI === -1) { setStatus(imuStatusEl, 'Compass CSV: no SKU column found.', 'err'); return; }
+
+  const hasUpc = mUpcI !== -1 && iUpcI !== -1;
+  const hasMpn = mMpnI !== -1 && iMpnI !== -1;
+
+  if (!hasUpc && !hasMpn) {
+    setStatus(imuStatusEl, 'No matching UPC or MPN columns found between the two files.', 'err');
+    return;
+  }
+
+  /* Build lookups from IMU */
+  const upcLookup = new Map();
+  const mpnLookup = new Map();
+  let invalidUpc = 0;
+
+  for (const row of imu.rows) {
+    const sku = String(row[iSkuI] || '').trim();
+    if (!sku) continue;
+
+    if (hasUpc && !upcLookup.has(sku)) {
+      const upc = String(row[iUpcI] || '').trim();
+      if (upc && !isMissing(upc)) {
+        if (isValidUpc(upc)) upcLookup.set(sku, upc);
+        else invalidUpc++;
+      }
+    }
+
+    if (hasMpn && !mpnLookup.has(sku)) {
+      const mpn = String(row[iMpnI] || '').trim();
+      if (mpn && !isMissing(mpn)) mpnLookup.set(sku, mpn);
+    }
+  }
+
+  /* Fill main rows */
+  let upcFilled = 0, mpnFilled = 0, upcStillMissing = 0, mpnStillMissing = 0;
+  const filledUpcPairs = [];   // [sku, upc]
+  const filledMpnPairs = [];   // [sku, mpn]
+  const filledUpcSkus = new Set();
+  const filledMpnSkus = new Set();
+
+  headers = main.headers;
+  upcColIdx = mUpcI;
+  mpnColIdx = mMpnI;
+
+  const enriched = main.rows.map(row => {
+    const out = row.slice();
+    const sku = String(out[mSkuI] || '').trim();
+
+    if (hasUpc) {
+      if (isMissing(out[mUpcI] || '')) {
+        const found = sku ? upcLookup.get(sku) : null;
+        if (found) { out[mUpcI] = found; upcFilled++; filledUpcPairs.push([sku, found]); filledUpcSkus.add(sku); }
+        else upcStillMissing++;
+      }
+    }
+
+    if (hasMpn) {
+      if (isMissing(out[mMpnI] || '')) {
+        const found = sku ? mpnLookup.get(sku) : null;
+        if (found) { out[mMpnI] = found; mpnFilled++; filledMpnPairs.push([sku, found]); filledMpnSkus.add(sku); }
+        else mpnStillMissing++;
+      }
+    }
+
+    return out;
+  });
+
+  parsedData = enriched;
+
+  /* Status message */
+  const msgs = [];
+  if (hasUpc) msgs.push(`UPC: ${upcFilled} filled, ${upcStillMissing} still missing`);
+  if (hasMpn) msgs.push(`MFG code: ${mpnFilled} filled, ${mpnStillMissing} still missing`);
+  if (invalidUpc > 0) msgs.push(`${invalidUpc} invalid UPC value(s) ignored in Compass`);
+  const anyMissing = upcStillMissing > 0 || mpnStillMissing > 0;
+  setStatus(imuStatusEl, msgs.join('. ') + '.', anyMissing ? 'warn' : 'ok');
+
+  /* Flag rows still missing anything */
+  const flagRow = row => {
+    if (hasUpc && isMissing(row[mUpcI] || '')) return true;
+    if (hasMpn && isMissing(row[mMpnI] || '')) return true;
+    return false;
+  };
+
+  /* Download actions */
+  const extraActions = [];
+
+  if (upcFilled > 0 || mpnFilled > 0) {
+    const fullCsv = csvToString([headers, ...enriched]);
+    extraActions.push({
+      label: `↓ Download enriched CSV (${upcFilled + mpnFilled} values filled)`,
+      primary: true,
+      onClick: () => downloadCsv(fullCsv, 'enriched-full.csv')
+    });
+  }
+
+  renderTable({
+    rows: enriched,
+    title: 'CSV with UPCs & MFG codes filled from Compass',
+    flagRow,
+    filledUpcSet: filledUpcSkus,
+    filledMpnSet: filledMpnSkus,
+    extraActions,
+    stats: {
+      ...(hasUpc ? { upcFilled, upcMissing: upcStillMissing } : {}),
+      ...(hasMpn ? { mpnFilled, mpnMissing: mpnStillMissing } : {})
+    }
+  });
+});
+</script>
+</body>
+</html>

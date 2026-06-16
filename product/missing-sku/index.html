@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Missing SKU</title>
+<link rel="icon" href="favicon.ico">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+<style>
+:root {
+--bg: #f7f6f2;
+--surface: #ffffff;
+--border: rgba(0,0,0,0.15);
+--border-strong: rgba(0,0,0,0.3);
+--text: #1f1e1c;
+--text-muted: #5f5e5a;
+--accent: #185FA5;
+--accent-bg: #E6F1FB;
+--danger: #A32D2D;
+--danger-bg: #FCEBEB;
+--success: #0F6E56;
+--success-bg: #E1F5EE;
+--warn-bg: #FAEEDA;
+--warn-text: #854F0B;
+}
+* { box-sizing: border-box; }
+body {
+margin: 0;
+padding: 24px;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+background: var(--bg);
+color: var(--text);
+line-height: 1.5;
+font-size: 14px;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+.subtitle { color: var(--text-muted); margin: 0 0 24px; font-size: 14px; }
+.panel {
+background: var(--surface);
+border: 0.5px solid var(--border);
+border-radius: 12px;
+padding: 20px;
+margin-bottom: 16px;
+}
+.panel h2 {
+font-size: 16px; font-weight: 500; margin: 0 0 14px;
+display: flex; align-items: center; gap: 8px;
+}
+.panel-num {
+display: inline-flex; align-items: center; justify-content: center;
+width: 22px; height: 22px; border-radius: 50%;
+background: var(--accent-bg); color: var(--accent);
+font-size: 12px; font-weight: 500;
+}
+label {
+display: block; font-size: 13px; color: var(--text-muted);
+margin-bottom: 4px;
+}
+input[type="file"] {
+font-size: 13px;
+padding: 6px 0;
+}
+input[type="checkbox"] {
+width: 14px; height: 14px;
+margin-right: 4px;
+cursor: pointer;
+vertical-align: middle;
+}
+button {
+font-family: inherit; font-size: 13px; font-weight: 500;
+padding: 8px 14px; border-radius: 8px; cursor: pointer;
+background: var(--surface); color: var(--text);
+border: 0.5px solid var(--border-strong);
+transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: var(--bg); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primary {
+background: var(--accent); color: white;
+border-color: var(--accent);
+}
+button.primary:hover:not(:disabled) { background: #134B82; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.file-input-row {
+display: flex; gap: 24px; flex-wrap: wrap;
+}
+.file-input-group {
+flex: 1; min-width: 240px;
+}
+.options-inline {
+display: flex; gap: 16px; flex-wrap: wrap;
+margin-top: 4px;
+}
+.options-inline label {
+display: inline-flex; align-items: center; gap: 4px;
+font-weight: normal; color: var(--text);
+font-size: 13px; margin-bottom: 0;
+cursor: pointer;
+}
+.status {
+padding: 10px 12px; border-radius: 8px; font-size: 13px;
+margin-top: 10px;
+}
+.status.ok { background: var(--success-bg); color: var(--success); }
+.status.err { background: var(--danger-bg); color: var(--danger); }
+.status.warn { background: var(--warn-bg); color: var(--warn-text); }
+.summary {
+background: var(--accent-bg); color: var(--accent);
+padding: 10px 14px; border-radius: 8px;
+font-size: 13px; line-height: 1.6;
+margin-bottom: 12px;
+}
+.summary p { margin: 2px 0; }
+table.results {
+width: 100%; border-collapse: collapse;
+font-size: 13px;
+}
+table.results th {
+text-align: left; font-weight: 500; color: var(--text-muted);
+padding: 8px 12px; font-size: 12px;
+border-bottom: 0.5px solid var(--border);
+background: var(--bg);
+position: sticky; top: 0;
+}
+table.results td {
+padding: 6px 12px;
+border-bottom: 0.5px solid var(--border);
+}
+table.results tr:last-child td { border-bottom: none; }
+.table-wrap {
+max-height: 500px; overflow-y: auto;
+border: 0.5px solid var(--border);
+border-radius: 8px;
+background: var(--surface);
+}
+.credit-footer {
+margin-top: 24px;
+padding-top: 16px;
+border-top: 0.5px solid var(--border);
+text-align: center;
+color: var(--text-muted);
+font-size: 12px;
+}
+.credit-footer a { color: var(--text-muted); }
+.credit-footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Missing SKU</h1>
+<p class="subtitle">Upload a file from IMU and one from Salesforce to find SKUs in IMU that are missing from Salesforce.</p>
+
+<div class="panel">
+<h2><span class="panel-num">1</span>Upload files</h2>
+<div class="file-input-row">
+<div class="file-input-group">
+<label for="imuFile">IMU file (Excel)</label>
+<input type="file" id="imuFile" accept=".xls,.xlsx">
+</div>
+<div class="file-input-group">
+<label for="sfFile">Salesforce file (CSV)</label>
+<input type="file" id="sfFile" accept=".csv">
+</div>
+</div>
+</div>
+
+<div class="panel">
+<h2><span class="panel-num">2</span>Matching options</h2>
+<div class="options-inline">
+<label><input type="checkbox" id="caseInsensitive" checked> Case-insensitive</label>
+<label><input type="checkbox" id="trimSpaces" checked> Trim whitespace</label>
+<label><input type="checkbox" id="stripLeadingZeros"> Ignore leading zeros</label>
+</div>
+</div>
+
+<div class="panel">
+<h2><span class="panel-num">3</span>Compare</h2>
+<div class="actions">
+<button class="primary" id="compareBtn" type="button">Compare lists</button>
+<button id="downloadBtn" type="button" disabled>Download missing SKUs CSV</button>
+</div>
+<div id="status"></div>
+<div id="result" style="margin-top: 14px;"></div>
+</div>
+
+</div>
+
+<footer class="credit-footer container">
+Built by <a href="https://github.com/caitlinsc">caitlinsc</a> on GitHub
+</footer>
+
+<script>
+let currentDownloadUrl = null;
+
+function setStatus(msg, kind) {
+const el = document.getElementById('status');
+if (!msg) { el.innerHTML = ''; return; }
+el.innerHTML = `<div class="status ${kind || 'ok'}">${escapeHtml(msg)}</div>`;
+}
+
+function escapeHtml(s) {
+return String(s).replace(/[&<>"']/g, c => ({
+'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
+}
+
+function clearResult() {
+document.getElementById('result').textContent = '';
+const dl = document.getElementById('downloadBtn');
+dl.disabled = true;
+if (currentDownloadUrl) {
+URL.revokeObjectURL(currentDownloadUrl);
+currentDownloadUrl = null;
+}
+}
+
+// Find the SKU column by scanning the first several rows for a header
+function findSkuColumn(rows) {
+const scanLimit = Math.min(rows.length, 10);
+for (let r = 0; r < scanLimit; r++) {
+const row = rows[r] || [];
+for (let c = 0; c < row.length; c++) {
+const cell = row[c];
+if (cell != null && /^\s*sku\s*$/i.test(String(cell))) {
+return { headerRowIndex: r, skuColIndex: c, matchedHeader: String(cell).trim() };
+}
+}
+}
+for (let r = 0; r < scanLimit; r++) {
+const row = rows[r] || [];
+for (let c = 0; c < row.length; c++) {
+const cell = row[c];
+if (cell != null && /sku/i.test(String(cell))) {
+return { headerRowIndex: r, skuColIndex: c, matchedHeader: String(cell).trim() };
+}
+}
+}
+return { headerRowIndex: -1, skuColIndex: 0, matchedHeader: null };
+}
+
+function extractSkus(rows) {
+if (!rows.length) return { skus: [], info: { matchedHeader: null, fellBack: true, skuColIndex: 0 } };
+const { headerRowIndex, skuColIndex, matchedHeader } = findSkuColumn(rows);
+const fellBack = headerRowIndex < 0;
+const startRow = fellBack ? 0 : headerRowIndex + 1;
+const skus = [];
+for (let i = startRow; i < rows.length; i++) {
+const row = rows[i] || [];
+const val = row[skuColIndex];
+if (val == null) continue;
+const s = String(val).trim();
+if (s) skus.push(s);
+}
+return { skus, info: { matchedHeader, fellBack, skuColIndex } };
+}
+
+function readFile(file) {
+return new Promise((resolve, reject) => {
+const name = file.name.toLowerCase();
+const reader = new FileReader();
+reader.onerror = () => reject(new Error('Could not read ' + file.name));
+if (name.endsWith('.csv')) {
+reader.onload = () => {
+const parsed = Papa.parse(reader.result, { skipEmptyLines: true });
+resolve({ rows: parsed.data });
+};
+reader.readAsText(file);
+} else {
+reader.onload = () => {
+const data = new Uint8Array(reader.result);
+const workbook = XLSX.read(data, { type: 'array' });
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+resolve({ rows });
+};
+reader.readAsArrayBuffer(file);
+}
+});
+}
+
+function makeNormalizer() {
+const ci = document.getElementById('caseInsensitive').checked;
+const stripZeros = document.getElementById('stripLeadingZeros').checked;
+const trim = document.getElementById('trimSpaces').checked;
+return (s) => {
+let v = String(s);
+if (trim) v = v.trim();
+if (ci) v = v.toUpperCase();
+if (stripZeros) v = v.replace(/^0+(?=.)/, '');
+return v;
+};
+}
+
+function renderResults(uniqueMissing, imuCount, sfCount, imuInfo, sfInfo) {
+const result = document.getElementById('result');
+result.textContent = '';
+
+const summary = document.createElement('div');
+summary.className = 'summary';
+
+const imuCol = imuInfo.fellBack
+? 'no SKU header found, used first column'
+: `header "${imuInfo.matchedHeader}" (column ${imuInfo.skuColIndex + 1})`;
+const sfCol = sfInfo.fellBack
+? 'no SKU header found, used first column'
+: `header "${sfInfo.matchedHeader}" (column ${sfInfo.skuColIndex + 1})`;
+
+const detected = document.createElement('p');
+detected.textContent = `Detected — IMU: ${imuCol}. Salesforce: ${sfCol}.`;
+summary.appendChild(detected);
+
+const counts = document.createElement('p');
+const strong = document.createElement('strong');
+strong.textContent = String(uniqueMissing.length);
+counts.appendChild(strong);
+counts.appendChild(document.createTextNode(` missing SKU(s) found. (IMU: ${imuCount} rows, Salesforce: ${sfCount} rows)`));
+summary.appendChild(counts);
+
+result.appendChild(summary);
+
+if (imuInfo.fellBack || sfInfo.fellBack) {
+const warn = document.createElement('div');
+warn.className = 'status warn';
+warn.textContent = 'One or both files had no SKU column header. Double-check the detected column above.';
+result.appendChild(warn);
+}
+
+if (!uniqueMissing.length) {
+const p = document.createElement('div');
+p.className = 'status ok';
+p.textContent = 'No missing SKUs found in Salesforce. ✓';
+result.appendChild(p);
+return;
+}
+
+const wrap = document.createElement('div');
+wrap.className = 'table-wrap';
+const table = document.createElement('table');
+table.className = 'results';
+
+const thead = document.createElement('thead');
+const headRow = document.createElement('tr');
+const th = document.createElement('th');
+th.textContent = 'Missing SKU';
+headRow.appendChild(th);
+thead.appendChild(headRow);
+table.appendChild(thead);
+
+const tbody = document.createElement('tbody');
+for (const sku of uniqueMissing) {
+const tr = document.createElement('tr');
+const td = document.createElement('td');
+td.textContent = sku;
+tr.appendChild(td);
+tbody.appendChild(tr);
+}
+table.appendChild(tbody);
+
+wrap.appendChild(table);
+result.appendChild(wrap);
+}
+
+async function compare() {
+clearResult();
+const imuInput = document.getElementById('imuFile');
+const sfInput = document.getElementById('sfFile');
+if (!imuInput.files.length || !sfInput.files.length) {
+setStatus('Please select both files.', 'err');
+return;
+}
+
+const imuName = imuInput.files[0].name.toLowerCase();
+if (!imuName.endsWith('.xls') && !imuName.endsWith('.xlsx')) {
+setStatus('The IMU file must be an Excel file (.xls or .xlsx).', 'err');
+return;
+}
+const sfName = sfInput.files[0].name.toLowerCase();
+if (!sfName.endsWith('.csv')) {
+setStatus('The Salesforce file must be a CSV (.csv).', 'err');
+return;
+}
+
+setStatus('Reading files…', 'ok');
+try {
+const [imuRead, sfRead] = await Promise.all([
+readFile(imuInput.files[0]),
+readFile(sfInput.files[0])
+]);
+
+const imuExtract = extractSkus(imuRead.rows);
+const sfExtract = extractSkus(sfRead.rows);
+
+const normalize = makeNormalizer();
+const sfSet = new Set();
+for (const s of sfExtract.skus) sfSet.add(normalize(s));
+
+const seen = new Set();
+const missing = [];
+for (const original of imuExtract.skus) {
+const key = normalize(original);
+if (!key) continue;
+if (sfSet.has(key)) continue;
+if (seen.has(key)) continue;
+seen.add(key);
+missing.push(original);
+}
+
+renderResults(
+missing,
+imuExtract.skus.length,
+sfExtract.skus.length,
+imuExtract.info,
+sfExtract.info
+);
+
+if (missing.length) {
+const csvContent = 'SKU\n' + missing.map(sku => '"' + sku.replace(/"/g, '""') + '"').join('\n');
+const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+currentDownloadUrl = URL.createObjectURL(blob);
+const downloadBtn = document.getElementById('downloadBtn');
+downloadBtn.disabled = false;
+downloadBtn.onclick = () => {
+const a = document.createElement('a');
+a.href = currentDownloadUrl;
+a.download = 'missing-skus.csv';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+};
+}
+
+setStatus('');
+} catch (err) {
+console.error(err);
+setStatus('Error reading files: ' + err.message, 'err');
+}
+}
+
+document.getElementById('compareBtn').addEventListener('click', compare);
+</script>
+</body>
+</html>

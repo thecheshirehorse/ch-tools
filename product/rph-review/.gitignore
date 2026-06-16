@@ -1,0 +1,59 @@
+# --- Operational data (NEVER commit) ---
+# Weekly RPH inputs and any classification outputs are not source.
+# They contain real Cheshire/Hamshaw business data.
+data/
+*.xls
+*.xlsx
+*.csv
+RPH_*.xls
+RPH_approved_*.csv
+vendor-class-*.xlsx
+
+# --- Local state ---
+# Persisted class rules. User-specific, not shared.
+rules.db
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editor & OS ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Secrets ---
+# Anything resembling credentials. The current code has none, but
+# Tier 2 (OCAPI integration) will, and this saves a future mistake.
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+config.local.*
+
+# --- Allow ---
+# A small example file is fine to commit IF you create one with fake data
+# and name it `*.example.xlsx` or similar. Otherwise everything matching
+# the patterns above is excluded.
+!data/.gitkeep
+!data/README.md

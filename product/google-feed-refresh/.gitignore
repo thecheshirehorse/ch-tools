@@ -1,0 +1,10 @@
+# Output feeds
+*.tsv
+
+# Input XML exports (large files)
+*.xml
+
+# Python
+__pycache__/
+*.pyc
+.venv/

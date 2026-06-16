@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Address Scrubber</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2e3d;
+    --border-active: #4a6cf7;
+    --text: #e4e6ef;
+    --text-dim: #7a7f95;
+    --accent: #4a6cf7;
+    --accent-glow: rgba(74,108,247,0.15);
+    --danger: #ef4444;
+    --danger-glow: rgba(239,68,68,0.12);
+    --success: #22c55e;
+    --success-glow: rgba(34,197,94,0.12);
+    --warn: #f59e0b;
+    --warn-glow: rgba(245,158,11,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', 'SF Mono', 'Fira Code', monospace;
+    padding: 24px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  input:focus { outline: none; border-color: var(--border-active) !important; box-shadow: 0 0 0 3px var(--accent-glow) !important; }
+
+  .container { max-width: 900px; margin: 0 auto; }
+  .header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); transition: all 0.3s;
+  }
+  .status-dot.done { background: var(--success); box-shadow: 0 0 12px var(--success-glow); }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin: 4px 0 28px 22px; }
+
+  .progress { display: flex; gap: 4px; margin-bottom: 32px; }
+  .progress-seg { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+  .progress-seg.active { background: var(--accent); }
+
+  .step { display: none; }
+  .step.visible { display: block; }
+
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 64px 32px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .dropzone.dragover { border-color: var(--accent); background: var(--accent-glow); }
+  .dropzone-icon { font-size: 40px; margin-bottom: 16px; }
+  .dropzone-title { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .dropzone-sub { color: var(--text-dim); font-size: 13px; }
+
+  .card {
+    background: var(--surface); border-radius: 10px; padding: 20px;
+    border: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 12px; }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .card-meta-right { color: var(--text-dim); font-size: 12px; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 6px; font-size: 12px;
+  }
+  .tag-danger { background: var(--danger-glow); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+  .tag-warn { background: var(--warn-glow); border: 1px solid rgba(245,158,11,0.2); color: var(--warn); }
+  .tag-remove { cursor: pointer; opacity: 0.7; }
+  .tag-remove:hover { opacity: 1; }
+  .tag-empty { color: var(--text-dim); font-size: 12px; font-style: italic; }
+
+  .input-row { display: flex; gap: 8px; }
+  .input {
+    flex: 1; padding: 8px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 12px; font-family: inherit;
+  }
+  .input-hint { color: var(--text-dim); font-size: 11px; margin-top: 6px; }
+
+  .btn {
+    padding: 8px 16px; border-radius: 6px; border: none;
+    font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-warn { background: var(--warn); color: #000; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-lg {
+    padding: 14px 24px; border-radius: 8px; font-size: 14px;
+    font-family: 'Space Grotesk', sans-serif; width: 100%;
+  }
+  .btn:disabled { background: var(--border); cursor: not-allowed; opacity: 0.6; }
+
+  .summary-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+  }
+  .summary-bar.has-matches { background: var(--danger-glow); border: 1px solid rgba(239,68,68,0.2); }
+  .summary-bar.no-matches { background: var(--success-glow); border: 1px solid rgba(34,197,94,0.2); }
+  .summary-count { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 28px; }
+  .summary-count.danger { color: var(--danger); }
+  .summary-count.success { color: var(--success); }
+  .summary-label { color: var(--text-dim); font-size: 13px; }
+  .summary-actions { display: flex; gap: 8px; }
+
+  .match-list-header {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .match-list-body { max-height: 400px; overflow-y: auto; }
+  .match-item { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .match-item:last-child { border-bottom: none; }
+  .match-item-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .match-row-label { color: var(--danger); font-weight: 600; }
+  .match-addr {
+    color: var(--text); padding: 8px 12px;
+    background: var(--bg); border-radius: 6px;
+    word-break: break-word; line-height: 1.5;
+  }
+  .match-extra { color: var(--text-dim); margin-top: 6px; font-size: 11px; }
+
+  .done-wrap { text-align: center; padding: 48px; }
+  .done-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--success-glow); border: 2px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 24px;
+  }
+  .done-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 8px; }
+  .done-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing-card { text-align: center; padding: 48px; }
+  .processing-status { color: var(--text-dim); font-size: 13px; margin-top: 12px; }
+
+  .mode-toggle { display: flex; gap: 0; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .mode-btn {
+    flex: 1; padding: 10px 16px; border: none; background: transparent;
+    color: var(--text-dim); font-size: 13px; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 500; transition: all 0.15s;
+  }
+  .mode-btn.active { background: var(--accent-glow); color: var(--accent); }
+
+  .chip {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+    border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+  }
+  .chip.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-row">
+    <div class="status-dot" id="statusDot"></div>
+    <h1>Store Address Scrubber</h1>
+  </div>
+  <p class="subtitle">Find and clear store addresses from customer records</p>
+
+  <div class="progress">
+    <div class="progress-seg active" id="prog0"></div>
+    <div class="progress-seg" id="prog1"></div>
+    <div class="progress-seg" id="prog2"></div>
+    <div class="progress-seg" id="prog3"></div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="step visible" id="stepUpload">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeXml" onclick="setMode('xml')">XML (Salesforce)</button>
+      <button class="mode-btn" id="modeCsv" onclick="setMode('csv')">CSV</button>
+    </div>
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">↑</div>
+      <div class="dropzone-title">Drop your file here</div>
+      <div class="dropzone-sub" id="dropSub">Salesforce customer XML export</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xml,.csv,.tsv" style="display:none">
+  </div>
+
+  <!-- CONFIG -->
+  <div class="step" id="stepConfig">
+    <div class="card">
+      <div class="card-meta">
+        <span class="card-title" style="margin-bottom:0">File loaded</span>
+        <span class="card-meta-right" id="fileMeta"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Store addresses to match</div>
+      <div class="tags" id="addrTags"></div>
+      <div class="input-row">
+        <input class="input" id="newAddrInput" placeholder="e.g. 123 Warehouse Blvd, City, ST">
+        <button class="btn btn-accent" id="addAddrBtn">Add</button>
+      </div>
+    </div>
+
+
+    <div class="card" id="csvFieldsCard" style="display:none">
+      <div class="card-title">Address fields to clear (CSV)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="fieldChips"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Open orders</div>
+      <div style="color:var(--text-dim);font-size:12px;margin-bottom:12px">Upload a ShipStation open orders CSV to protect customers with active orders</div>
+      <div id="openOrdersStatus" style="display:none;margin-bottom:12px">
+        <span class="tag tag-warn" id="openOrdersTag"></span>
+      </div>
+      <div class="input-row">
+        <button class="btn btn-ghost" id="openOrdersBtn" onclick="document.getElementById('openOrdersInput').click()">Upload open orders CSV</button>
+        <input type="file" id="openOrdersInput" accept=".csv,.tsv" style="display:none">
+      </div>
+    </div>
+
+    <button class="btn btn-accent btn-lg" id="scanBtn" disabled>Upload open orders to continue</button>
+  </div>
+
+  <!-- PROCESSING -->
+  <div class="step" id="stepProcessing">
+    <div class="card processing-card">
+      <div><span class="spinner"></span> Processing...</div>
+      <div class="processing-status" id="processStatus">Reading file...</div>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="step" id="stepReview">
+    <div class="summary-bar" id="summaryBar">
+      <div>
+        <div class="summary-count" id="matchCount">0</div>
+        <div class="summary-label" id="matchLabel"></div>
+      </div>
+      <div class="summary-actions">
+        <button class="btn btn-ghost" id="backBtn">← Back</button>
+        <button class="btn btn-danger" id="cleanBtn" style="display:none">Export Clean File</button>
+      </div>
+    </div>
+    <div id="matchResults"></div>
+  </div>
+
+  <!-- DONE -->
+  <div class="step" id="stepDone">
+    <div class="card done-wrap">
+      <div class="done-circle">✓</div>
+      <div class="done-title">Clean file exported</div>
+      <div class="done-sub" id="doneSummary"></div>
+      <button class="btn btn-ghost" id="resetBtn">Process another file</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+var fileRef = null;
+var rawText = "";
+var fileMode = "xml";
+var csvParsed = null;
+var selectedFields = new Set();
+
+var storeAddresses = [
+  "8 Whittemore Farm Road",
+  "8 Whittemore Farm Rd",
+  "402 Geyser Rd",
+  "402 Geyser Road"
+];
+var keywords = [
+  "warehouse", "fulfillment center", "distribution",
+  "store #", "store#", "headquarters", "corp office", "return to sender"
+];
+var matches = [];
+var totalRecords = 0;
+var openOrderNames = new Set();
+var openOrdersFile = null;
+
+// ─── Helpers ───
+function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+var stepNames = ["stepUpload","stepConfig","stepProcessing","stepReview","stepDone"];
+function showStep(name) {
+  var idx = stepNames.indexOf(name);
+  for (var i = 0; i < stepNames.length; i++) {
+    document.getElementById(stepNames[i]).classList.toggle("visible", stepNames[i] === name);
+  }
+  for (var i = 0; i < 4; i++) {
+    document.getElementById("prog" + i).classList.toggle("active", i <= idx);
+  }
+  document.getElementById("statusDot").classList.toggle("done", name === "stepDone");
+}
+
+function setMode(m) {
+  fileMode = m;
+  document.getElementById("modeXml").classList.toggle("active", m === "xml");
+  document.getElementById("modeCsv").classList.toggle("active", m === "csv");
+  document.getElementById("dropSub").textContent = m === "xml"
+    ? "Salesforce customer XML export" : "ShipStation CSV exports, customer lists";
+  document.getElementById("fileInput").accept = m === "xml" ? ".xml" : ".csv,.tsv";
+}
+
+// ─── Surrogate fixer ───
+function fixSurrogates(text) {
+  return text.replace(/&#(\d+);/g, function(match, numStr) {
+    var code = parseInt(numStr, 10);
+    if (code >= 0xD800 && code <= 0xDFFF) return "";
+    return match;
+  });
+}
+
+// ─── Matching ───
+function isStoreMatch(text) {
+  if (!text) return false;
+  var lower = text.toLowerCase();
+  for (var i = 0; i < storeAddresses.length; i++) {
+    if (lower.indexOf(storeAddresses[i].toLowerCase()) !== -1) return true;
+  }
+  for (var i = 0; i < keywords.length; i++) {
+    if (lower.indexOf(keywords[i].toLowerCase()) !== -1) return true;
+  }
+  return false;
+}
+
+function getChildText(parent, tagName) {
+  var children = parent.children;
+  for (var i = 0; i < children.length; i++) {
+    if (children[i].localName === tagName) return children[i].textContent || "";
+  }
+  return "";
+}
+
+function getChildByName(parent, tagName) {
+  var children = parent.children;
+  for (var i = 0; i < children.length; i++) {
+    if (children[i].localName === tagName) return children[i];
+  }
+  return null;
+}
+
+// ─── XML Processing ───
+function processXML(text) {
+  document.getElementById("processStatus").textContent = "Fixing character encoding...";
+  setTimeout(function() {
+    var cleaned = fixSurrogates(text);
+    document.getElementById("processStatus").textContent = "Parsing XML (large files may take a moment)...";
+    setTimeout(function() {
+      try {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(cleaned, "text/xml");
+        var errorNode = doc.querySelector("parsererror");
+        if (errorNode) {
+          alert("XML parse error:\n" + errorNode.textContent.substring(0, 300));
+          showStep("stepConfig");
+          return;
+        }
+        document.getElementById("processStatus").textContent = "Scanning for store addresses...";
+        setTimeout(function() { scanXMLDoc(doc); }, 50);
+      } catch (err) {
+        alert("Error parsing XML: " + err.message);
+        showStep("stepConfig");
+      }
+    }, 50);
+  }, 50);
+}
+
+function scanXMLDoc(doc) {
+  var allAddresses = doc.getElementsByTagName("address");
+  var allCustomers = doc.getElementsByTagName("customer");
+  totalRecords = allCustomers.length;
+  matches = [];
+  skippedMatches = [];
+
+  for (var i = 0; i < allAddresses.length; i++) {
+    var addr = allAddresses[i];
+    var parent = addr.parentNode;
+    if (!parent || parent.localName !== "addresses") continue;
+
+    var addressId = addr.getAttribute("address-id") || "";
+    var address1 = getChildText(addr, "address1");
+    var address2 = getChildText(addr, "address2");
+    var city = getChildText(addr, "city");
+    var state = getChildText(addr, "state-code") || getChildText(addr, "state");
+    var zip = getChildText(addr, "postal-code") || getChildText(addr, "zip");
+    var firstName = getChildText(addr, "first-name");
+    var fullAddr = [address1, address2, city, state, zip].filter(Boolean).join(", ");
+
+    if (isStoreMatch(addressId) || isStoreMatch(fullAddr) || isStoreMatch(firstName)) {
+      var custNode = addr.parentNode;
+      while (custNode && custNode.localName !== "customer") custNode = custNode.parentNode;
+      var customerNo = custNode ? (custNode.getAttribute("customer-no") || "") : "";
+
+      // Check for open order — build customer name from profile first-name + last-name
+      var profileNode = custNode ? getChildByName(custNode, "profile") : null;
+      var custFirstName = profileNode ? getChildText(profileNode, "first-name") : "";
+      var custLastName = profileNode ? getChildText(profileNode, "last-name") : "";
+      var custName = [custFirstName, custLastName].filter(Boolean).join(" ");
+      if (isOpenOrderCustomer(custName)) {
+        skippedMatches.push({
+          customerNo: customerNo,
+          addressId: addressId,
+          fullAddr: fullAddr,
+          firstName: firstName,
+          custName: custName,
+          reason: "Open order"
+        });
+        continue;
+      }
+
+      matches.push({
+        addressNode: addr,
+        customerNo: customerNo,
+        addressId: addressId,
+        fullAddr: fullAddr,
+        firstName: firstName
+      });
+    }
+  }
+
+  window.__xmlDoc = doc;
+  renderMatches();
+  showStep("stepReview");
+}
+
+// ─── CSV Processing ───
+function splitCSVLine(line) {
+  var result = [], current = "", inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (inQ) {
+      if (ch === '"' && line[i+1] === '"') { current += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else current += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { result.push(current.trim()); current = ""; }
+      else current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCSVData(text) {
+  var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+  if (lines.length < 2) return { headers: [], rows: [] };
+  var headers = splitCSVLine(lines[0]);
+  var rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    var vals = splitCSVLine(lines[i]);
+    var obj = { __rowIndex: i - 1 };
+    for (var j = 0; j < headers.length; j++) obj[headers[j]] = vals[j] || "";
+    rows.push(obj);
+  }
+  return { headers: headers, rows: rows };
+}
+
+var ADDR_PATTERNS = [/street/i,/address/i,/addr/i,/line1/i,/line2/i,/line3/i,/city/i,/state/i,/province/i,/zip/i,/postal/i,/country/i,/ship.*to/i,/recipient/i];
+function guessAddressFields(headers) {
+  return headers.filter(function(h) { return ADDR_PATTERNS.some(function(p) { return p.test(h); }); });
+}
+
+function processCSV(text) {
+  document.getElementById("processStatus").textContent = "Scanning CSV...";
+  setTimeout(function() {
+    try {
+      var fields = Array.from(selectedFields);
+      totalRecords = csvParsed.rows.length;
+      matches = [];
+      skippedMatches = [];
+      csvParsed.rows.forEach(function(row) {
+        var full = fields.map(function(f) { return (row[f] || "").trim(); }).filter(Boolean).join(", ");
+        if (isStoreMatch(full)) {
+          // Check for open order by looking for Recipient or Name fields
+          var custName = (row["Recipient"] || row["Name"] || row["Customer Name"] || "").trim();
+          if (isOpenOrderCustomer(custName)) {
+            skippedMatches.push({ row: row, fullAddr: full, rowIndex: row.__rowIndex, custName: custName, reason: "Open order" });
+          } else {
+            matches.push({ row: row, fullAddr: full, rowIndex: row.__rowIndex });
+          }
+        }
+      });
+      renderMatches();
+      showStep("stepReview");
+    } catch (err) {
+      alert("Error processing CSV: " + err.message);
+      showStep("stepConfig");
+    }
+  }, 50);
+}
+
+// ─── Rendering ───
+function renderAddrTags() {
+  var el = document.getElementById("addrTags");
+  if (!storeAddresses.length) { el.innerHTML = '<span class="tag-empty">No addresses — add your store address</span>'; return; }
+  el.innerHTML = storeAddresses.map(function(a, i) {
+    return '<span class="tag tag-danger">' + esc(a) + '<span class="tag-remove" data-idx="' + i + '">×</span></span>';
+  }).join("");
+  el.querySelectorAll(".tag-remove").forEach(function(btn) {
+    btn.onclick = function() { storeAddresses.splice(+btn.dataset.idx, 1); renderAddrTags(); };
+  });
+}
+
+function renderFieldChips() {
+  if (!csvParsed) return;
+  var el = document.getElementById("fieldChips");
+  el.innerHTML = csvParsed.headers.map(function(h) {
+    var sel = selectedFields.has(h);
+    return '<button class="chip' + (sel ? ' selected' : '') + '" data-field="' + esc(h) + '">' + esc(h) + '</button>';
+  }).join(" ");
+  el.querySelectorAll(".chip").forEach(function(btn) {
+    btn.onclick = function() {
+      var f = btn.dataset.field;
+      selectedFields.has(f) ? selectedFields.delete(f) : selectedFields.add(f);
+      renderFieldChips();
+    };
+  });
+}
+
+function renderMatches() {
+  var countEl = document.getElementById("matchCount");
+  var labelEl = document.getElementById("matchLabel");
+  var bar = document.getElementById("summaryBar");
+  var cleanBtn = document.getElementById("cleanBtn");
+  var resultsEl = document.getElementById("matchResults");
+
+  countEl.textContent = matches.length;
+  countEl.className = "summary-count " + (matches.length > 0 ? "danger" : "success");
+  labelEl.textContent = "store address" + (matches.length !== 1 ? "es" : "") + " found across " + totalRecords + " records";
+  bar.className = "summary-bar " + (matches.length > 0 ? "has-matches" : "no-matches");
+  cleanBtn.style.display = matches.length > 0 ? "" : "none";
+
+  if (!matches.length) {
+    resultsEl.innerHTML = '<div class="card" style="text-align:center;padding:40px">' +
+      '<div style="font-size:32px;margin-bottom:12px">✓</div>' +
+      '<div style="font-family:Space Grotesk,sans-serif;font-weight:600">All clear — no store addresses found</div>' +
+      '<div style="color:var(--text-dim);font-size:13px;margin-top:8px">Try adding more addresses or keywords.</div></div>';
+    return;
+  }
+
+  var showing = matches.slice(0, 200);
+  var html = '<div class="card" style="padding:0;overflow:hidden">' +
+    '<div class="match-list-header">Matched Records' +
+    (matches.length > 200 ? ' (showing 200 of ' + matches.length + ')' : '') +
+    '</div><div class="match-list-body">';
+
+  showing.forEach(function(m) {
+    var label, extra = "";
+    if (fileMode === "xml") {
+      label = "Customer #" + esc(m.customerNo);
+      if (m.addressId) extra = '<div class="match-extra">address-id: ' + esc(m.addressId) + '</div>';
+    } else {
+      label = "Row " + (m.rowIndex + 1);
+    }
+    html += '<div class="match-item">' +
+      '<div class="match-item-header"><span class="match-row-label">' + label + '</span></div>' +
+      '<div class="match-addr">' + esc(m.fullAddr) + '</div>' + extra + '</div>';
+  });
+
+  html += '</div></div>';
+
+  // Show skipped matches (open orders)
+  if (skippedMatches.length > 0) {
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-top:20px;border-color:rgba(245,158,11,0.3)">' +
+      '<div class="match-list-header" style="color:var(--warn)">⚠ Skipped — ' + skippedMatches.length +
+      ' match' + (skippedMatches.length !== 1 ? 'es' : '') + ' with open orders (will NOT be removed)</div>' +
+      '<div class="match-list-body">';
+    skippedMatches.slice(0, 100).forEach(function(m) {
+      var label;
+      if (fileMode === "xml") {
+        label = "Customer #" + esc(m.customerNo);
+      } else {
+        label = "Row " + (m.rowIndex + 1);
+      }
+      html += '<div class="match-item">' +
+        '<div class="match-item-header"><span style="color:var(--warn);font-weight:600">' + label + '</span>' +
+        '<span style="color:var(--text-dim);font-size:11px">' + esc(m.custName) + '</span></div>' +
+        '<div class="match-addr">' + esc(m.fullAddr) + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  resultsEl.innerHTML = html;
+}
+
+// ─── Export ───
+function cleanAndExport() {
+  if (fileMode === "xml") exportDeleteXML();
+  else cleanAndExportCSV();
+}
+
+function exportDeleteXML() {
+  // Build a MERGE XML containing affected customers with their
+  // non-store addresses only — store addresses removed by omission.
+
+  var root = window.__xmlDoc.documentElement;
+  var ns = root.getAttribute("xmlns") || "http://www.demandware.com/xml/impex/customer/2006-10-31";
+  var listId = root.getAttribute("list-id") || "";
+
+  // Collect the set of address-ids to remove, grouped by customer-no
+  var removeByCustomer = {};
+  matches.forEach(function(m) {
+    if (!removeByCustomer[m.customerNo]) removeByCustomer[m.customerNo] = new Set();
+    removeByCustomer[m.customerNo].add(m.addressId);
+  });
+
+  var customersAffected = Object.keys(removeByCustomer).length;
+
+  // For each affected customer, find their full <customer> node in the original doc
+  // and rebuild with only the clean addresses
+  var allCustomers = root.getElementsByTagName("customer");
+  var lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push('<customer-list xmlns="' + escXmlAttr(ns) + '"' + (listId ? ' list-id="' + escXmlAttr(listId) + '"' : '') + '>');
+
+  for (var i = 0; i < allCustomers.length; i++) {
+    var cust = allCustomers[i];
+    var custNo = cust.getAttribute("customer-no") || "";
+    if (!removeByCustomer[custNo]) continue;
+
+    var removeSet = removeByCustomer[custNo];
+    var addressesNode = null;
+    for (var j = 0; j < cust.children.length; j++) {
+      if (cust.children[j].localName === "addresses") {
+        addressesNode = cust.children[j];
+        break;
+      }
+    }
+    if (!addressesNode) continue;
+
+    // Collect clean addresses (not in the remove set)
+    var cleanAddresses = [];
+    for (var j = 0; j < addressesNode.children.length; j++) {
+      var addrNode = addressesNode.children[j];
+      if (addrNode.localName !== "address") continue;
+      var aid = addrNode.getAttribute("address-id") || "";
+      if (!removeSet.has(aid)) {
+        // Serialize this address node
+        var serializer = new XMLSerializer();
+        var addrXml = serializer.serializeToString(addrNode);
+        // Remove the namespace declaration that XMLSerializer adds
+        addrXml = addrXml.replace(/ xmlns="[^"]*"/g, "");
+        cleanAddresses.push(addrXml);
+      }
+    }
+
+    lines.push('    <customer customer-no="' + escXmlAttr(custNo) + '">');
+    lines.push('        <addresses>');
+    cleanAddresses.forEach(function(a) {
+      lines.push('            ' + a);
+    });
+    lines.push('        </addresses>');
+    lines.push('    </customer>');
+  }
+
+  lines.push('</customer-list>');
+
+  var output = lines.join("\n");
+  var base = fileRef ? fileRef.name.replace(/\.[^.]+$/, "") : "customers";
+  downloadFile(output, base + "_clean_addresses.xml", "application/xml");
+
+  document.getElementById("doneSummary").textContent =
+    matches.length + " store address" + (matches.length !== 1 ? "es" : "") +
+    " removed across " + customersAffected + " customer" + (customersAffected !== 1 ? "s" : "") +
+    " — import with MERGE mode in Business Manager";
+  showStep("stepDone");
+}
+
+function escXmlAttr(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function cleanAndExportCSV() {
+  var fields = Array.from(selectedFields);
+  var matchIdx = new Set(matches.map(function(m) { return m.rowIndex; }));
+  var escCsv = function(v) {
+    var s = String(v == null ? "" : v);
+    return (s.indexOf(",") !== -1 || s.indexOf('"') !== -1 || s.indexOf("\n") !== -1)
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  var lines = [csvParsed.headers.map(escCsv).join(",")];
+  csvParsed.rows.forEach(function(r) {
+    var row = {};
+    for (var k in r) row[k] = r[k];
+    if (matchIdx.has(r.__rowIndex)) { fields.forEach(function(f) { row[f] = ""; }); }
+    lines.push(csvParsed.headers.map(function(h) { return escCsv(row[h]); }).join(","));
+  });
+  downloadFile(lines.join("\n"), getCleanName("csv"), "text/csv");
+  document.getElementById("doneSummary").textContent =
+    matches.length + " store address" + (matches.length !== 1 ? "es" : "") +
+    " cleared from " + totalRecords + " records";
+  showStep("stepDone");
+}
+
+function getCleanName(ext) {
+  var base = fileRef ? fileRef.name.replace(/\.[^.]+$/, "") : "output";
+  return base + "_cleaned." + ext;
+}
+
+function downloadFile(content, filename, mime) {
+  var blob = new Blob([content], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+}
+
+// ─── Open Orders ───
+var skippedMatches = [];
+
+function parseOpenOrders(text) {
+  var parsed = parseCSVData(text);
+  openOrderNames = new Set();
+  parsed.rows.forEach(function(row) {
+    var name = (row["Recipient"] || "").trim().toLowerCase();
+    if (name) openOrderNames.add(name);
+  });
+  return openOrderNames.size;
+}
+
+function isOpenOrderCustomer(nameStr) {
+  if (!openOrderNames.size || !nameStr) return false;
+  var lower = nameStr.trim().toLowerCase();
+  return openOrderNames.has(lower);
+}
+
+// ─── Event Wiring ───
+var dropzone = document.getElementById("dropzone");
+var fileInput = document.getElementById("fileInput");
+
+// Prevent browser from navigating to dropped files
+document.addEventListener("dragover", function(e) { e.preventDefault(); });
+document.addEventListener("drop", function(e) {
+  if (!dropzone.contains(e.target)) e.preventDefault();
+});
+
+dropzone.onclick = function() { fileInput.click(); };
+dropzone.addEventListener("dragover", function(e) {
+  e.preventDefault(); e.stopPropagation();
+  try { e.dataTransfer.dropEffect = "copy"; } catch(_) {}
+  dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("dragleave", function(e) {
+  e.preventDefault(); dropzone.classList.remove("dragover");
+});
+dropzone.addEventListener("dragenter", function(e) {
+  e.preventDefault(); dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("drop", function(e) {
+  e.preventDefault(); e.stopPropagation();
+  dropzone.classList.remove("dragover");
+  var files = e.dataTransfer && e.dataTransfer.files;
+  if (files && files.length > 0) loadFile(files[0]);
+});
+
+fileInput.addEventListener("change", function() {
+  if (fileInput.files && fileInput.files.length > 0) loadFile(fileInput.files[0]);
+});
+
+document.getElementById("openOrdersInput").addEventListener("change", function() {
+  var f = this.files && this.files[0];
+  if (!f) return;
+  openOrdersFile = f;
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    var count = parseOpenOrders(evt.target.result);
+    document.getElementById("openOrdersStatus").style.display = "";
+    document.getElementById("openOrdersTag").innerHTML = esc(f.name) + " — " + count + " recipients loaded <span class='tag-remove' id='removeOpenOrders'>×</span>";
+    document.getElementById("openOrdersBtn").textContent = "Replace file";
+    document.getElementById("scanBtn").disabled = false;
+    document.getElementById("scanBtn").textContent = "Scan for store addresses →";
+    document.getElementById("removeOpenOrders").onclick = function(e) {
+      e.stopPropagation();
+      openOrderNames = new Set();
+      openOrdersFile = null;
+      document.getElementById("openOrdersStatus").style.display = "none";
+      document.getElementById("openOrdersBtn").textContent = "Upload open orders CSV";
+      document.getElementById("openOrdersInput").value = "";
+      document.getElementById("scanBtn").disabled = true;
+      document.getElementById("scanBtn").textContent = "Upload open orders to continue";
+    };
+  };
+  reader.readAsText(f);
+});
+
+function loadFile(f) {
+  fileRef = f;
+  var name = f.name.toLowerCase();
+  if (name.endsWith(".xml")) setMode("xml");
+  else setMode("csv");
+
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      rawText = evt.target.result;
+
+      if (fileMode === "csv") {
+        csvParsed = parseCSVData(rawText);
+        var guessed = guessAddressFields(csvParsed.headers);
+        selectedFields = new Set(guessed);
+        document.getElementById("fileMeta").textContent =
+          csvParsed.rows.length + " records · " + csvParsed.headers.length + " fields · CSV";
+        document.getElementById("csvFieldsCard").style.display = "";
+        renderFieldChips();
+      } else {
+        var custCount = (rawText.match(/customer-no="/g) || []).length;
+        var addrCount = (rawText.match(/address-id="/g) || []).length;
+        document.getElementById("fileMeta").textContent =
+          custCount + " customers · " + addrCount + " addresses · XML";
+        document.getElementById("csvFieldsCard").style.display = "none";
+      }
+
+      renderAddrTags();
+      matches = [];
+      showStep("stepConfig");
+    } catch(err) {
+      alert("Error loading file: " + err.message);
+    }
+  };
+  reader.onerror = function() { alert("Could not read the file."); };
+  reader.readAsText(f);
+}
+
+// Add address
+document.getElementById("addAddrBtn").onclick = function() {
+  var v = document.getElementById("newAddrInput").value.trim();
+  if (v) { storeAddresses.push(v); document.getElementById("newAddrInput").value = ""; renderAddrTags(); }
+};
+document.getElementById("newAddrInput").onkeydown = function(e) {
+  if (e.key === "Enter") document.getElementById("addAddrBtn").click();
+};
+
+
+// Scan
+document.getElementById("scanBtn").onclick = function() {
+  showStep("stepProcessing");
+  setTimeout(function() {
+    if (fileMode === "xml") processXML(rawText);
+    else processCSV(rawText);
+  }, 100);
+};
+
+// Back
+document.getElementById("backBtn").onclick = function() { showStep("stepConfig"); };
+
+// Clean & Export
+document.getElementById("cleanBtn").onclick = cleanAndExport;
+
+// Reset
+document.getElementById("resetBtn").onclick = function() {
+  fileRef = null; rawText = ""; csvParsed = null; matches = [];
+  selectedFields = new Set(); totalRecords = 0;
+  window.__xmlDoc = null; fileInput.value = "";
+  openOrderNames = new Set(); openOrdersFile = null; skippedMatches = [];
+  document.getElementById("openOrdersStatus").style.display = "none";
+  document.getElementById("openOrdersBtn").textContent = "Upload open orders CSV";
+  document.getElementById("openOrdersInput").value = "";
+  document.getElementById("scanBtn").disabled = true;
+  document.getElementById("scanBtn").textContent = "Upload open orders to continue";
+  showStep("stepUpload");
+};
+</script>
+</body>
+</html>

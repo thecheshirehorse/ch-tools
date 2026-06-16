@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheshire Horse — Rewards Account Creator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#faf9f6;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a3a1a,#2d5a27 60%,#3a6e32);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.header h1{font-size:19px;font-weight:700;letter-spacing:-0.3px}
+.header .sub{font-size:11px;opacity:0.7;margin-top:2px}
+.nums{display:flex;gap:8px}
+.num-box{background:rgba(255,255,255,0.12);border-radius:8px;padding:5px 11px;text-align:center;cursor:pointer;min-width:75px}
+.num-box:hover{background:rgba(255,255,255,0.2)}
+.num-label{display:block;font-size:8px;text-transform:uppercase;letter-spacing:0.5px;opacity:0.7}
+.num-val{display:block;font-size:13px;font-weight:700;font-family:monospace}
+.nav{display:flex;background:#fff;border-bottom:2px solid #e8e5de;overflow:auto}
+.nav button{padding:11px 18px;border:none;background:none;font-size:13px;font-weight:500;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.nav button.active{font-weight:600;color:#2d5a27;border-bottom-color:#2d5a27}
+.section{padding:20px 24px;display:none}
+.section.active{display:block}
+h2{font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:4px}
+.desc{font-size:13px;color:#777;margin-bottom:14px}
+.toast{position:fixed;top:14px;right:14px;background:#2d5a27;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:none}
+.toast.show{display:block}
+/* Buttons */
+.btn{padding:9px 20px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-p{background:#2d5a27;color:#fff}.btn-p:hover{background:#245020}
+.btn-p:disabled{background:#999;cursor:default}
+.btn-g{background:#fff;color:#666;border:1.5px solid #ddd}
+.btn-d{background:#fff;color:#c00;border:1.5px solid #c00;font-size:12px;padding:6px 14px}
+.btn-c{padding:11px 28px;background:#2d5a27;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(45,90,39,0.3)}
+.btn-c:hover{background:#245020}
+/* Import */
+.upload-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.upload-btn{display:inline-block;padding:8px 16px;background:#fff;border:1.5px solid #2d5a27;color:#2d5a27;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer}
+textarea{width:100%;padding:12px;border:1.5px solid #d4d1ca;border-radius:8px;font-size:11px;font-family:monospace;resize:vertical;background:#fff;line-height:1.4}
+.info-box{margin-top:14px;padding:12px;background:#f0efe9;border-radius:8px;border:1px solid #e0ddd5;font-size:12px;color:#777;line-height:1.5}
+.info-box b{color:#555}
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0ddd5}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 9px;background:#2d5a27;color:#fff;text-align:left;font-weight:600;font-size:10px;white-space:nowrap}
+td{padding:6px 9px;border-bottom:1px solid #eee;white-space:nowrap}
+tr:nth-child(even){background:#f8f7f4}
+.tbl-e{padding:2px 7px;background:#eef4fa;color:#1a4a7a;border:1px solid #b0c8e8;border-radius:3px;font-size:10px;cursor:pointer;margin-right:2px}
+.tbl-x{padding:2px 5px;background:#fef0f0;color:#c00;border:1px solid #e8b0b0;border-radius:3px;font-size:11px;cursor:pointer;font-weight:700}
+.empty{text-align:center;padding:36px;color:#aaa}
+/* Edit modal */
+.edit-box{background:#fff;border:1.5px solid #2d5a27;border-radius:10px;padding:18px;margin-bottom:14px;display:none}
+.edit-box.show{display:block}
+.edit-box h3{margin-bottom:14px;font-size:15px}
+.eg{display:flex;flex-wrap:wrap;gap:8px}
+.ef{flex:1 1 calc(50% - 4px);min-width:140px}
+.ef label{display:block;font-size:10px;font-weight:600;color:#555;margin-bottom:2px}
+.ef input,.ef select{width:100%;padding:6px 9px;border:1.5px solid #d4d1ca;border-radius:5px;font-size:12px}
+/* Export cards */
+.cards{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.card{flex:1 1 calc(50% - 7px);min-width:270px;background:#fff;border:1.5px solid #e0ddd5;border-radius:10px;padding:18px;position:relative}
+.card-badge{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.card h3{font-size:14px;margin-bottom:3px}
+.card .cd{font-size:11px;color:#888;margin-bottom:10px}
+.card ol{font-size:11px;color:#555;line-height:2;padding-left:16px;margin-bottom:14px}
+.dl-btn{display:block;width:100%;padding:10px;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none}
+.dl-g{background:#2d5a27}.dl-g:hover{background:#245020}
+.dl-b{background:#1a4a7a}.dl-b:hover{background:#153d65}
+details{margin-top:10px}
+summary{font-size:12px;font-weight:500;color:#555;cursor:pointer;padding:6px 0}
+pre.cp{background:#1a1a1a;color:#a0e8a0;padding:10px;border-radius:8px;font-size:9px;overflow:auto;max-height:120px;font-family:monospace;line-height:1.4;white-space:pre}
+.warn{color:#c00;font-weight:600}
+code{background:#f0efe9;padding:2px 5px;border-radius:3px;font-size:10px}
+input[type="file"]{display:none}
+/* Pipeline */
+.pipeline{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.pipe-col{flex:1 1 220px;min-width:220px;background:#fff;border-radius:10px;border:1.5px solid #e0ddd5;overflow:hidden}
+.pipe-header{padding:10px 14px;color:#fff;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.pipe-body{padding:10px;min-height:60px}
+.batch-card{background:#f8f7f4;border:1px solid #e0ddd5;border-radius:8px;padding:10px;margin-bottom:8px}
+.batch-date{font-size:10px;color:#888;margin-bottom:4px}
+.batch-count{font-size:14px;font-weight:700;margin-bottom:6px}
+.batch-actions{display:flex;gap:6px;flex-wrap:wrap}
+.batch-btn{padding:4px 10px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;border:none;color:#fff}
+.batch-expand{padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#555}
+.complete-toggle{width:100%;text-align:left;background:none;border:none;color:#999;font-size:11px;cursor:pointer;padding:6px 4px;display:flex;align-items:center;gap:6px}
+.complete-toggle:hover{color:#555}
+.complete-collapsed{display:none}
+.batch-card.compact{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;opacity:0.7}
+.batch-card.compact .batch-date{font-size:11px;color:#888;margin:0}
+.batch-card.compact .batch-count{font-size:11px;color:#aaa;margin:0}
+/* Batch detail */
+.batch-detail{margin-top:16px;background:#fff;border:1.5px solid #1a4a7a;border-radius:10px;padding:16px}
+.batch-detail h3{font-size:15px;margin-bottom:12px;color:#1a4a7a}
+.cust-row{display:flex;align-items:flex-start;gap:10px;padding:10px;border-bottom:1px solid #eee;flex-wrap:wrap}
+.cust-row:last-child{border-bottom:none}
+.cust-row.done{opacity:0.5;background:#f5f5f0}
+.cust-info{flex:1;min-width:200px}
+.cust-name{font-weight:600;font-size:13px;margin-bottom:2px}
+.cust-meta{font-size:11px;color:#666;line-height:1.6}
+.cust-meta span{display:inline-block;margin-right:12px}
+.cust-psm{flex:0 0 auto;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.psm-field{font-size:11px;padding:4px 8px;background:#f0efe9;border-radius:4px;max-width:280px;word-break:break-all}
+.psm-label{font-size:9px;text-transform:uppercase;color:#888;font-weight:600;letter-spacing:0.5px}
+.copy-btn{padding:2px 8px;background:#eef4fa;color:#1a4a7a;border:1px solid #b0c8e8;border-radius:3px;font-size:10px;cursor:pointer;margin-left:4px}
+.copy-btn:hover{background:#d4e6f7}
+.check-btn{padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600}
+.check-btn.undone{background:#f0efe9;border:1px solid #ccc;color:#555}
+.check-btn.isdone{background:#2d5a27;border:1px solid #2d5a27;color:#fff}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Cheshire Horse — Rewards Account Creator</h1>
+    <div class="sub">Google Form → Eagle → PSM Pipeline</div>
+  </div>
+  <div class="nums">
+    <div class="num-box" onclick="changeNums()" title="Click to change"><span class="num-label">Swanzey</span><span class="num-val" id="n3"></span></div>
+    <div class="num-box" onclick="changeNums()" title="Click to change"><span class="num-label">Saratoga</span><span class="num-val" id="n5"></span></div>
+    <div class="num-box" style="background:rgba(255,255,255,0.2)"><span class="num-label">Queue</span><span class="num-val" id="qc">0</span></div>
+  </div>
+</div>
+<div class="nav">
+  <button class="active" onclick="go('import')">Import</button>
+  <button onclick="go('review')">Review (<span id="nc">0</span>)</button>
+  <button onclick="go('export')">Export</button>
+  <button onclick="go('pipeline')">Pipeline</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- IMPORT -->
+<div class="section active" id="v-import">
+  <h2>Import from Google Sheet</h2>
+  <p class="desc">Copy rows from your Google Sheet (including header) and paste below, or upload a CSV.</p>
+  <div class="upload-row">
+    <label class="upload-btn">Upload CSV<input type="file" accept=".csv,.tsv,.txt" onchange="handleFile(event)"></label>
+    <span style="font-size:12px;color:#aaa">or paste below</span>
+  </div>
+  <textarea id="pa" rows="10" placeholder="Paste Google Sheet data here (tab or comma separated)..."></textarea>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn btn-p" id="importBtn" onclick="doImport()">Import & Assign Numbers</button>
+    <button class="btn btn-g" onclick="$('pa').value=''">Clear</button>
+  </div>
+  <div class="info-box"><b>Accepts:</b> Raw form responses (First Name/Last Name) or pre-formatted Eagle data (Customer Name). Column order flexible — matched by header name.</div>
+</div>
+
+<!-- REVIEW -->
+<div class="section" id="v-review">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h2>Review Queue</h2>
+    <button class="btn-d" onclick="clearQ()">Clear All</button>
+  </div>
+  <div class="edit-box" id="editBox">
+    <h3 id="editTitle">Edit</h3>
+    <div class="eg">
+      <div class="ef"><label>First Name</label><input id="e-fn"></div>
+      <div class="ef"><label>Last Name</label><input id="e-ln"></div>
+      <div class="ef"><label>Address 1</label><input id="e-a1"></div>
+      <div class="ef"><label>Address 2</label><input id="e-a2"></div>
+      <div class="ef"><label>City</label><input id="e-ci"></div>
+      <div class="ef"><label>State</label><input id="e-st"></div>
+      <div class="ef"><label>Zip</label><input id="e-zp"></div>
+      <div class="ef"><label>Phone</label><input id="e-ph"></div>
+      <div class="ef"><label>Email</label><input id="e-em"></div>
+      <div class="ef"><label>Birthdate</label><input id="e-db"></div>
+      <div class="ef"><label>Interests</label><input id="e-in"></div>
+      <div class="ef"><label>Invoice</label><input id="e-iv"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-p" onclick="saveEdit()">Save</button>
+      <button class="btn btn-g" onclick="cancelEdit()">Cancel</button>
+    </div>
+  </div>
+  <div id="revTbl"></div>
+  <div id="contRow" style="text-align:center;margin-top:18px;display:none">
+    <button class="btn-c" onclick="go('export')">Continue to Export →</button>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<div class="section" id="v-export">
+  <h2>Export for Eagle</h2>
+  <div id="expContent"></div>
+</div>
+
+<!-- PIPELINE -->
+<div class="section" id="v-pipeline">
+  <h2>Pipeline Tracker</h2>
+  <p class="desc">Track batches through the Eagle → PSM workflow. Click a batch to expand details.</p>
+  <div id="pipeContent"></div>
+  <div id="batchDetail"></div>
+</div>
+
+<script>
+let D={nextNumbers:{store3:8051,store5:8085},queue:[],batches:[]};
+let editIdx=null;
+let currentBatch=null;
+const $=id=>document.getElementById(id);
+
+async function init(){
+  const r=await(await fetch('/api/data')).json();
+  D=r;upH();
+}
+function upH(){
+  $('n3').textContent='*9'+D.nextNumbers.store3;
+  $('n5').textContent='*5'+D.nextNumbers.store5;
+  $('qc').textContent=D.queue.length;
+  $('nc').textContent=D.queue.length;
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000)}
+function go(v){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $('v-'+v).classList.add('active');
+  document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('active',['import','review','export','pipeline'][i]===v));
+  if(v==='review')renderRev();
+  if(v==='export')renderExp();
+  if(v==='pipeline')renderPipe();
+}
+function handleFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>$('pa').value=ev.target.result;r.readAsText(f)}
+async function doImport(){
+  const t=$('pa').value.trim();if(!t){toast('Paste data first');return}
+  $('importBtn').disabled=true;
+  const r=await(await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})})).json();
+  $('importBtn').disabled=false;$('pa').value='';
+  let m=`Imported ${r.added} customer${r.added!==1?'s':''}`;
+  if(r.skipped)m+=`, ${r.skipped} skipped`;
+  toast(m);
+  D=await(await fetch('/api/data')).json();upH();
+  if(r.added>0)go('review');
+}
+// Review
+function renderRev(){
+  const c=$('revTbl'),cr=$('contRow');
+  if(!D.queue.length){c.innerHTML='<p class="empty">Queue empty. Import data first.</p>';cr.style.display='none';return}
+  cr.style.display='block';
+  let h='<div class="table-wrap"><table><thead><tr>';
+  ['#','Cust#','Name','City','ST','Zip','Phone','Plan','Email','Interests','Invoice',''].forEach(x=>h+=`<th>${x}</th>`);
+  h+='</tr></thead><tbody>';
+  D.queue.forEach((c,i)=>{
+    h+=`<tr><td>${i+1}</td><td style="font-family:monospace;font-weight:600;color:#2d5a27">${c.customerNumber}</td><td>${c.customerName}</td><td>${c.city}</td><td>${c.state}</td><td style="font-family:monospace">${c.zip}</td><td style="font-family:monospace;font-size:10px">${c.phone}</td><td>${c.categoryPlan}</td><td style="font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis">${c.email||''}</td><td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis">${c.interests||''}</td><td style="font-family:monospace;font-size:10px">${c.invoice||''}</td><td style="white-space:nowrap"><button class="tbl-e" onclick="startEdit(${i})">Edit</button><button class="tbl-x" onclick="delQ(${i})">×</button></td></tr>`;
+  });
+  h+='</tbody></table></div>';c.innerHTML=h;
+}
+function startEdit(i){
+  editIdx=i;const c=D.queue[i];
+  $('editTitle').textContent='Edit: '+c.customerNumber;
+  $('e-fn').value=c.firstName||'';$('e-ln').value=c.lastName||'';
+  $('e-a1').value=c.address1;$('e-a2').value=c.address2;
+  $('e-ci').value=c.city;$('e-st').value=c.state;
+  $('e-zp').value=c.zip;$('e-ph').value=c.phone;
+  $('e-em').value=c.email||'';$('e-db').value=c.birthdate||'';
+  $('e-in').value=c.interests||'';$('e-iv').value=c.invoice||'';
+  $('editBox').classList.add('show');
+}
+async function saveEdit(){
+  await fetch(`/api/queue/${editIdx}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName:$('e-fn').value,lastName:$('e-ln').value,address1:$('e-a1').value,address2:$('e-a2').value,city:$('e-ci').value,state:$('e-st').value,zip:$('e-zp').value,phone:$('e-ph').value,email:$('e-em').value,dob:$('e-db').value,interests:$('e-in').value,invoice:$('e-iv').value})});
+  cancelEdit();D=await(await fetch('/api/data')).json();upH();renderRev();toast('Updated');
+}
+function cancelEdit(){editIdx=null;$('editBox').classList.remove('show')}
+async function delQ(i){
+  await fetch(`/api/queue/${i}`,{method:'DELETE'});
+  D=await(await fetch('/api/data')).json();upH();renderRev();toast('Removed');
+}
+async function clearQ(){
+  if(!D.queue.length)return;if(!confirm('Clear all? This will discard the queue without sending it to the pipeline.'))return;
+  await fetch('/api/queue/clear',{method:'POST'});
+  D=await(await fetch('/api/data')).json();upH();renderRev();toast('Queue cleared');
+}
+// Export
+async function renderExp(){
+  const c=$('expContent');
+  if(!D.queue.length){c.innerHTML='<p class="empty">Nothing to export.</p>';return}
+  const ec=D.queue.filter(x=>x.email).length;
+  const cp=await(await fetch('/api/export/customers/preview')).text();
+  const co=await(await fetch('/api/export/contacts/preview')).text();
+  c.innerHTML=`<div class="cards"><div class="card"><div class="card-badge" style="background:#2d5a27">${D.queue.length}</div><h3>Customer Import CSV</h3><p class="cd">For Eagle Customer Import Designer</p><ol><li>Download CSV</li><li>Open Customer Import Designer</li><li>Open CSV (F3), check "Ignore first record"</li><li>Load Map (F5)</li><li>Verify Output (F10)</li><li>Import (F11)</li></ol><a href="/api/export/customers" class="dl-btn dl-g">Download Customer CSV</a></div><div class="card"><div class="card-badge" style="background:#1a4a7a">${ec}</div><h3>Contacts Import CSV</h3><p class="cd">For Eagle Customer Contacts Import</p><ol><li class="warn">Run Customer Import FIRST</li><li>Download CSV</li><li>Save to <code>C:\\3apps\\temp\\</code></li><li>Open Customer Contacts Import Setup</li><li>Select file → OK → Import</li></ol><a href="/api/export/contacts" class="dl-btn dl-b">Download Contacts CSV</a></div></div><details><summary>Preview Customer CSV</summary><pre class="cp">${esc(cp)}</pre></details><details><summary>Preview Contacts CSV</summary><pre class="cp">${esc(co)}</pre></details><div style="text-align:center;margin-top:20px"><button class="btn-c" onclick="sendToPipeline()">Done Importing → Move to Pipeline</button></div>`;
+}
+async function sendToPipeline(){
+  await fetch('/api/queue/to-batch',{method:'POST'});
+  D=await(await fetch('/api/data')).json();upH();
+  toast('Batch moved to pipeline');go('pipeline');
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+// Pipeline
+async function renderPipe(){
+  const stages=[
+    {id:'eagle',label:'Import to Eagle',color:'#2d5a27'},
+    {id:'psm_waiting',label:'Waiting for PSM Sync',color:'#b8860b'},
+    {id:'psm_action',label:'Add Interests & Points',color:'#1a4a7a'},
+    {id:'complete',label:'Complete',color:'#666'}
+  ];
+  let h='<div class="pipeline">';
+  stages.forEach(s=>{
+    const batches=D.batches.filter(b=>b.stage===s.id);
+    h+=`<div class="pipe-col"><div class="pipe-header" style="background:${s.color}">${s.label}<span>${batches.length}</span></div><div class="pipe-body">`;
+    if(!batches.length)h+='<p style="text-align:center;color:#ccc;font-size:11px;padding:12px">No batches</p>';
+    if(s.id==='complete'&&batches.length){
+      const gid='complete-group';
+      h+=`<button class="complete-toggle" onclick="toggleComplete()">`
+        +`<span id="complete-arrow">▶</span> Show completed (${batches.length})</button>`
+        +`<div id="${gid}" class="complete-collapsed">`;
+      batches.forEach(b=>{
+        h+=`<div class="batch-card compact"><div><div class="batch-date">${b.date}</div><div class="batch-count">${b.customerCount} customer${b.customerCount!==1?'s':''}</div></div>`
+          +`<div class="batch-actions"><button class="batch-expand" onclick="expandBatch('${b.id}')">Details</button>`
+          +`<button class="batch-expand" style="color:#c00;border-color:#c00" onclick="deleteBatch('${b.id}')">Delete</button></div></div>`;
+      });
+      h+=`</div>`;
+    } else {
+      batches.forEach(b=>{
+        const nextStage=stages[stages.findIndex(x=>x.id===s.id)+1];
+        h+=`<div class="batch-card"><div class="batch-date">${b.date}</div><div class="batch-count">${b.customerCount} customer${b.customerCount!==1?'s':''}</div><div class="batch-actions">`;
+        if(nextStage)h+=`<button class="batch-btn" style="background:${nextStage.color}" onclick="advanceBatch('${b.id}')">→ ${nextStage.label}</button>`;
+        h+=`<button class="batch-expand" onclick="expandBatch('${b.id}')">Details</button>`;
+        h+=`</div></div>`;
+      });
+    }
+    h+='</div></div>';
+  });
+  h+='</div>';
+  $('pipeContent').innerHTML=h;
+  if(currentBatch)expandBatch(currentBatch);
+}
+async function advanceBatch(id){
+  await fetch(`/api/batches/${id}/advance`,{method:'POST'});
+  D=await(await fetch('/api/data')).json();renderPipe();toast('Batch advanced');
+}
+async function deleteBatch(id){
+  if(!confirm('Delete this completed batch?'))return;
+  await fetch(`/api/batches/${id}`,{method:'DELETE'});
+  currentBatch=null;$('batchDetail').innerHTML='';
+  D=await(await fetch('/api/data')).json();renderPipe();toast('Batch deleted');
+}
+function expandBatch(id){
+  currentBatch=id;
+  const b=D.batches.find(x=>x.id===id);
+  if(!b){$('batchDetail').innerHTML='';return}
+  const isPSM=b.stage==='psm_action';
+  let h=`<div class="batch-detail"><h3>Batch: ${b.date} — ${b.customerCount} customers</h3>`;
+  b.customers.forEach((c,i)=>{
+    const done=c.psmDone;
+    h+=`<div class="cust-row${done?' done':''}"><div class="cust-info"><div class="cust-name"><span style="font-family:monospace">${c.customerNumber}</span><button class="copy-btn" onclick="copyText('${c.customerNumber}')">Copy</button> — ${c.customerName}</div><div class="cust-meta">`;
+    h+=`<span>📞 ${c.phone}<button class="copy-btn" onclick="copyText('${c.phone}')">Copy</button></span>`;
+    if(c.email)h+=`<span>✉ ${c.email}<button class="copy-btn" onclick="copyText('${c.email}')">Copy</button></span>`;
+    h+=`<span>${c.city}, ${c.state} ${c.zip}</span>`;
+    h+=`</div></div>`;
+    if(isPSM){
+      h+=`<div class="cust-psm">`;
+      if(c.interests)h+=`<div><span class="psm-label">Interests</span><div class="psm-field">${c.interests}<button class="copy-btn" onclick="copyText(\`${c.interests.replace(/`/g,"\\`").replace(/'/g,"\\'")}\`)">Copy</button></div></div>`;
+      if(c.invoice)h+=`<div><span class="psm-label">Invoice</span><div class="psm-field">${c.invoice}<button class="copy-btn" onclick="copyText('${c.invoice}')">Copy</button></div></div>`;
+      h+=`<button class="check-btn ${done?'isdone':'undone'}" onclick="toggleDone('${b.id}',${i})">${done?'✓ Done':'Mark Done'}</button>`;
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  });
+  h+='</div>';
+  $('batchDetail').innerHTML=h;
+}
+async function toggleDone(bid,cidx){
+  await fetch(`/api/batches/${bid}/customer/${cidx}/done`,{method:'POST'});
+  D=await(await fetch('/api/data')).json();expandBatch(bid);
+}
+function toggleComplete(){
+  const g=document.getElementById('complete-group');
+  const a=document.getElementById('complete-arrow');
+  const hidden=g.classList.toggle('complete-collapsed');
+  a.textContent=hidden?'▶':'▼';
+}
+function copyText(t){navigator.clipboard.writeText(t);toast('Copied: '+t)}
+async function changeNums(){
+  const n3=prompt('Next Store 3 (Swanzey):',String(D.nextNumbers.store3));if(!n3)return;
+  const n5=prompt('Next Store 5 (Saratoga):',String(D.nextNumbers.store5));if(!n5)return;
+  await fetch('/api/numbers',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({store3:parseInt(n3),store5:parseInt(n5)})});
+  D.nextNumbers={store3:parseInt(n3),store5:parseInt(n5)};upH();toast('Numbers updated');
+}
+init();
+</script>
+</body>
+</html>

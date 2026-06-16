@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RPH Review · 5/7/26 Concept</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fbf9f3;
+    --ink: #1a1a17;
+    --ink-soft: #4a4641;
+    --ink-faint: #8a857d;
+    --line: #d4cdbf;
+    --line-soft: #e3ddd0;
+    --accent: #8b2a14;        /* burgundy red — Cheshire-ish */
+    --accent-soft: #faeae3;
+    --auto: #2d5a3d;          /* deep green */
+    --auto-soft: #e6f0e8;
+    --drop: #6b6258;          /* warm grey */
+    --drop-soft: #ece8de;
+    --review: #8b6510;        /* mustard */
+    --review-soft: #f7eed8;
+    --serif: 'Newsreader', Georgia, serif;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--serif);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ MASTHEAD ============ */
+  .masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 18px 32px 14px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--paper);
+  }
+  .masthead-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .masthead-title em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 400;
+  }
+  .masthead-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+
+  /* ============ DASHBOARD STRIP ============ */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .summary-cell {
+    padding: 16px 20px;
+    border-right: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .summary-cell:last-child { border-right: none; }
+  .summary-cell:hover { background: #f7f3e9; }
+  .summary-cell.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 3px;
+    background: var(--ink);
+  }
+  .summary-cell .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .summary-cell .count {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+    font-family: var(--serif);
+  }
+  .summary-cell .desc {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .summary-cell.review .count { color: var(--review); }
+  .summary-cell.auto .count { color: var(--auto); }
+  .summary-cell.drop .count { color: var(--drop); }
+  .summary-cell.approved .count { color: var(--accent); }
+
+  /* ============ MAIN LAYOUT ============ */
+  .main {
+    display: grid;
+    grid-template-columns: 380px 1fr 340px;
+    height: calc(100vh - 152px);
+  }
+
+  /* ============ QUEUE ============ */
+  .queue {
+    border-right: 1px solid var(--line);
+    background: var(--paper);
+    overflow-y: auto;
+  }
+  .queue-header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    position: sticky; top: 0;
+    z-index: 2;
+  }
+  .queue-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .queue-title .filter-clear {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .queue-search {
+    margin-top: 8px;
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+  }
+  .queue-search:focus { border-color: var(--ink); }
+
+  .item {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 8px;
+    transition: background 0.1s;
+  }
+  .item:hover { background: #f0ebde; }
+  .item.selected {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding-left: 13px;
+  }
+  .item.decided { opacity: 0.42; }
+  .item.decided .item-desc { text-decoration: line-through; }
+
+  .item-desc {
+    font-family: var(--serif);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink);
+    grid-column: 1 / 2;
+  }
+  .item-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    grid-column: 1 / 2;
+    letter-spacing: 0.02em;
+  }
+  .item-tag {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    align-self: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+  .tag-review { color: var(--review); border-color: var(--review); background: var(--review-soft); }
+  .tag-auto { color: var(--auto); border-color: var(--auto); background: var(--auto-soft); }
+  .tag-drop { color: var(--drop); border-color: var(--drop); background: var(--drop-soft); }
+  .tag-approved { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .tag-skipped { color: var(--ink-faint); border-color: var(--ink-faint); background: transparent; }
+
+  /* ============ DETAIL ============ */
+  .detail {
+    padding: 32px 48px;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .detail-empty {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 16px;
+  }
+  .detail-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .detail-headline {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .detail-sub {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+  }
+
+  .verdict {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .verdict-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .verdict-icon.auto { background: var(--auto-soft); color: var(--auto); border: 1px solid var(--auto); }
+  .verdict-icon.review { background: var(--review-soft); color: var(--review); border: 1px solid var(--review); }
+  .verdict-icon.drop { background: var(--drop-soft); color: var(--drop); border: 1px solid var(--drop); }
+  .verdict-text { flex: 1; }
+  .verdict-text strong { font-weight: 600; }
+  .verdict-text .reason {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .field {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+  .field-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 3px;
+  }
+  .field-value {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .field-value.mono { font-family: var(--mono); font-size: 13px; }
+  .field-value.empty { color: var(--ink-faint); font-style: italic; }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn-primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .btn-primary:hover { background: #6a1f0e; border-color: #6a1f0e; color: var(--paper); }
+  .btn-skip { color: var(--ink-soft); border-color: var(--line); }
+  .btn-skip:hover { background: var(--ink-soft); color: var(--paper); border-color: var(--ink-soft); }
+
+  .keyboard-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+  .keyboard-hint kbd {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    margin: 0 2px;
+  }
+
+  .class-rule-box {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: var(--paper);
+    border: 1px dashed var(--ink-soft);
+  }
+  .class-rule-box-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .class-rule-box-body {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .class-rule-box-body code {
+    font-family: var(--mono);
+    background: var(--bg);
+    padding: 1px 5px;
+    font-size: 12px;
+  }
+  .class-rule-actions { display: flex; gap: 6px; }
+  .class-rule-actions .btn { padding: 6px 12px; font-size: 10px; }
+
+  /* ============ SIDEBAR (LIBRARY) ============ */
+  .sidebar {
+    border-left: 1px solid var(--line);
+    background: var(--paper);
+    overflow-y: auto;
+    padding: 20px 18px;
+  }
+  .sidebar-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .sidebar-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+  }
+  .rule-section { margin-bottom: 20px; }
+  .rule-section h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .rule {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+  .rule-class {
+    font-family: var(--mono);
+    color: var(--ink);
+  }
+  .rule-class .code { font-weight: 600; }
+  .rule-class .name { color: var(--ink-soft); margin-left: 6px; }
+  .rule-x {
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 0 4px;
+  }
+  .rule-x:hover { color: var(--accent); }
+  .rule-empty {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .pub-section {
+    border-top: 2px solid var(--ink);
+    padding-top: 16px;
+    margin-top: 24px;
+  }
+  .pub-bar {
+    background: var(--accent);
+    color: var(--paper);
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+  .pub-bar .pub-count {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .pub-bar .pub-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .pub-export {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+  }
+  .pub-export:hover { background: #000; }
+  .pub-export:disabled {
+    background: var(--line);
+    color: var(--ink-faint);
+    cursor: not-allowed;
+  }
+
+  /* ============ MISC ============ */
+  .ornament {
+    text-align: center;
+    color: var(--ink-faint);
+    margin: 12px 0;
+    font-family: var(--serif);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div>
+    <div class="masthead-title">The RPH Daily &middot; <em>Review</em></div>
+  </div>
+  <div class="masthead-meta">
+    Vol. I &middot; Issue 5/7/26 &middot; 215 SKUs &middot; Cheshire Horse, Salesforce
+  </div>
+</header>
+
+<div class="summary" id="summary"></div>
+
+<div class="main">
+  <aside class="queue">
+    <div class="queue-header">
+      <div class="queue-title">
+        <span id="queue-label">Today's Queue</span>
+        <span class="filter-clear" id="filter-clear" style="display:none">clear filter</span>
+      </div>
+      <input type="text" class="queue-search" id="search" placeholder="Search SKU, vendor, description...">
+    </div>
+    <div id="queue-list"></div>
+  </aside>
+
+  <main class="detail" id="detail">
+    <div class="detail-empty">Select an item from the queue to begin review.</div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="sidebar-title">Class Rule Library</div>
+    <div class="sidebar-sub">Persistent decisions</div>
+
+    <div class="rule-section">
+      <h4>Always upload <span style="float:right; color: var(--auto)" id="upload-count">0</span></h4>
+      <div id="rules-upload"><div class="rule-empty">No rules yet</div></div>
+    </div>
+
+    <div class="rule-section">
+      <h4>Always skip <span style="float:right; color: var(--drop)" id="skip-count">0</span></h4>
+      <div id="rules-skip"><div class="rule-empty">No rules yet</div></div>
+    </div>
+
+    <div class="pub-section">
+      <div class="pub-bar">
+        <div class="pub-count" id="pub-count">0</div>
+        <div class="pub-label">Ready to publish</div>
+      </div>
+      <button class="pub-export" id="pub-export" disabled>Export Batch CSV</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ============================================================
+// DATA — embedded from today's RPH (5/7/26) + Cheshire enrichment
+// ============================================================
+window.RPH_DATA = [{"item":"268J","desc":"2x6-8' KD SPRUCE J-GRADE","mfg_part":"","upc":"","vendor":"BLANK","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"11","dept_name":"LUMBER","class_code":"011","class_name":"KD SPRUCE / FIR FRAMING LUMBER","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"420967060","desc":"DISCS, RES FIB 9 X 7/8  60G","mfg_part":"420967060","upc":"","vendor":"VIRGINIA ABRASIVE CORPORATION","date_added":"2026-05-05","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"150","class_name":"HAND/POWER SANDING ABRASI","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"42097060","desc":"DISCS, RES FIB 9 X 7/8  60G","mfg_part":"42097060","upc":"","vendor":"VIRGINIA ABRASIVE CORPORATION","date_added":"2026-05-05","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"150","class_name":"HAND/POWER SANDING ABRASI","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"42097080","desc":"DISCS, RES FIB 9 X 7/8  80G","mfg_part":"42097080","upc":"","vendor":"VIRGINIA ABRASIVE CORPORATION","date_added":"2026-05-05","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"150","class_name":"HAND/POWER SANDING ABRASI","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"42097120","desc":"DISCS, RES RIB 9 X 7/8  120G","mfg_part":"42097120","upc":"","vendor":"VIRGINIA ABRASIVE CORPORATION","date_added":"2026-05-05","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"150","class_name":"HAND/POWER SANDING ABRASI","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"T757105","desc":"SPRING, FILTER SUPPORT","mfg_part":"757105","upc":"","vendor":"WAGNER SPRAY TECH CORP. /TITAN TOOL","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"172","class_name":"PAINT SPRAYERS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"T805233A","desc":"FLUID SECTION ASSY SERVICE KIT","mfg_part":"805233A","upc":"","vendor":"WAGNER SPRAY TECH CORP. /TITAN TOOL","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"01","dept_name":"PAINT & CLEANING SUPPLIES","class_code":"172","class_name":"PAINT SPRAYERS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6075667","desc":"GRL PRS SS BRW/SLV 5\"","mfg_part":"00810142775335","upc":"810142775335","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":79.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"629","class_name":"COOKWARE","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6075671","desc":"CHF PN SS SLV 3QT","mfg_part":"00810142774154","upc":"810142774154","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":179.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"629","class_name":"COOKWARE","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6075676","desc":"STCK PT SS SLV 8QT","mfg_part":"00810142774208","upc":"810142774208","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":249.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"629","class_name":"COOKWARE","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6093648","desc":"FRYING PAN 5-PLY 10\"","mfg_part":"00810142774093","upc":"810142774093","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":139.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"629","class_name":"COOKWARE","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6084029","desc":"PIZZA CUTTER SS 9\"","mfg_part":"AD1600","upc":"505659160205","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":44.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"645","class_name":"KITCHEN GADGETS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6089496","desc":"NS 3PK CUT GLOVE RD/BLK","mfg_part":"48-22-8907R","upc":"45242538157","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":21.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"684","class_name":"LATEX GLOVES","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"6089497","desc":"NS 3PK CUT GLVS RD/BLK X","mfg_part":"48-22-8908R","upc":"45242538164","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":21.99,"dept_code":"06","dept_name":"HOUSEWARES/APPLIANCES","class_code":"684","class_name":"LATEX GLOVES","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"11251201617","desc":"AIR FILTER , FLEECE","mfg_part":"11251201617","upc":"","vendor":"STIHL NORTHEAST","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"707","class_name":"CHAIN SAWS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"11251210804","desc":"COVER PLATE","mfg_part":"11251210804","upc":"","vendor":"STIHL NORTHEAST","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"707","class_name":"CHAIN SAWS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"11251290900","desc":"GASKET","mfg_part":"11251290900","upc":"","vendor":"STIHL NORTHEAST","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"707","class_name":"CHAIN SAWS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"11281214802","desc":"PUMP DIAPHRAM","mfg_part":"11281214802","upc":"","vendor":"STIHL NORTHEAST","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"707","class_name":"CHAIN SAWS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"999696655","desc":"TUK FX651V-730V 10W40","mfg_part":"999696655","upc":"999696655","vendor":"KAWAKSKI MOTORS CORP. USA","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"999696671","desc":"TUK FX651V-730V 10W 40","mfg_part":"999696671","upc":"999696671","vendor":"KAWAKSKI MOTORS CORP. USA","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BC6697263","desc":"SPEED CONTROL GASKET","mfg_part":"","upc":"6697263","vendor":"BOBCAT","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BC7000909","desc":"INTAKE MANIFOLD GASKET","mfg_part":"7000909","upc":"","vendor":"BOBCAT","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BC7412812","desc":"GASKET SEAL","mfg_part":"7412812","upc":"","vendor":"BOBCAT","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BC7508146","desc":"CLEVIS PIN","mfg_part":"7508146","upc":"","vendor":"BOBCAT","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"735","class_name":"POWER EQUIPMENT PARTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"7509185D","desc":"ZAREBA COPPER GROUND ROD 6'","mfg_part":"A-7","upc":"17051600707","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-05","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"07","dept_name":"LAWN/GARDEN/OUTDOOR POWER","class_code":"789","class_name":"AGRICULTURAL FENCE","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8093918","desc":"OUTDR PZA OVN LQD PRPNE","mfg_part":"GAPBNUS1624","upc":"505659160377","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":999.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8093919","desc":"OUTDR PIZZA OVEN BONE","mfg_part":"GAPBNUS1424","upc":"505659160372","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":699.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113790","desc":"OTDR PIZZA OVEN ARC 19\"","mfg_part":"GAPOBUS1425","upc":"505659160723","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":799.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113791","desc":"OTDR PIZZA OVN ARC XL 21","mfg_part":"GAPOBUS1624","upc":"505659160382","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":999.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8127355","desc":"PIZZA OVEN DOME XL BLK","mfg_part":"GMPOBUS1825","upc":"505659160837","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":2799.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8127356","desc":"PIZZA OVEN DOME BLK","mfg_part":"GMPOBUS1625","upc":"505659160815","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":2299.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8127357","desc":"PIZZA OVEN DOME XL BNE","mfg_part":"GMPBNUS1825","upc":"505659160826","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":2799.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8127358","desc":"PIZZA OVEN DOME BONE","mfg_part":"GMPBNUS1625","upc":"505659160804","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":2299.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8127359","desc":"PIZZA OVEN ARC LITE BLK","mfg_part":"GAPOBUS1226","upc":"505659160991","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":399.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8138586","desc":"WOOD PELLET GRDL 480SQIN","mfg_part":"RT-480SS","upc":"810179692070","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":749.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8140569","desc":"OTDR PZ OVN GS/WD OF-BLK","mfg_part":"GMNOBUS1826","upc":"505659160909","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":2999.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"868","class_name":"GRILLS & BBQ","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8085367","desc":"GRILL COVER POLY BLK 1PK","mfg_part":"AR1583","upc":"505659160188","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":59.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8098810","desc":"GRILL STAND ALUMINUM 48\"","mfg_part":"AA1786","upc":"505659160423","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":299.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8098811","desc":"GRILL STAND ALUMINUM 24\"","mfg_part":"AA1784","upc":"505659160421","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113782","desc":"PIZZA OVEN BASE ALUM 1PK","mfg_part":"AT1900","upc":"505659160644","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":299.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113785","desc":"CUTTING BOARD SS BLK/BRW","mfg_part":"AT1904","upc":"505659160648","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113787","desc":"GRILL PREP TRAY SS 1PK","mfg_part":"AT1906","upc":"505659160650","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":89.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113788","desc":"PIZZA PEEL AL GRY 14.17\"","mfg_part":"AT1963","upc":"505659160785","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":69.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8113789","desc":"PIZZA PEEL AL SLV 6.69\"","mfg_part":"AT1965","upc":"505659160787","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":89.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8115318","desc":"GRLL CVR/CARY BG TRD BLK","mfg_part":"AT1902","upc":"505659160646","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8124052","desc":"PIZZA PEEL TL AL BLCK 14","mfg_part":"AD2078","upc":"505659160953","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":79.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128276","desc":"PIZZA PEEL PRO AL XL","mfg_part":"AD1934","upc":"505659160719","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128277","desc":"PZA PEEL/SRVR ACAC WD XL","mfg_part":"AD1782","upc":"505659160415","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":59.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128596","desc":"DOME ROPE DR AL BLK","mfg_part":"AM1993","upc":"5056591608632","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":124.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128600","desc":"DOME ROPE DR AL GN 2 BLK","mfg_part":"AM1991","upc":"5056591608618","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128601","desc":"PIZ OVN CVR BRW XL 11\"","mfg_part":"AM1983","upc":"5056591608533","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":89.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8128602","desc":"PIZ OVN CVR BRW 11\"","mfg_part":"AM1981","upc":"5056591608519","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":79.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8139725","desc":"RAMBLER 18 OZ BOTTLE CHU","mfg_part":"21071508908","upc":"","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":32.0,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"871","class_name":"COOLERS AND JUGS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8028507","desc":"NECTAR FEEDER WINE 24OZ","mfg_part":"9102-2","upc":"78978694521","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":28.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"877","class_name":"BIRD PRODUCTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9084136","desc":"BIRD FDR CACTUS 32OZ","mfg_part":"9111-2","upc":"78978602021","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":33.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"877","class_name":"BIRD PRODUCTS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT06375001","desc":"LEMIEUX VECTOR CNTRL STIRRUP ALM","mfg_part":"IT06375001","upc":"5063240080152","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":299.95,"retail_price":299.95,"dept_code":"31","dept_name":"TACK","class_code":"C01","class_name":"ENGLISH SADDLES & ACC","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT06382001","desc":"LEMIEUX VECTOR BLNC STIRRUP ALM","mfg_part":"IT06382001","upc":"5063240080213","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":299.95,"retail_price":299.95,"dept_code":"31","dept_name":"TACK","class_code":"C01","class_name":"ENGLISH SADDLES & ACC","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"191756","desc":"SHIRES FLEECE LINED GIRTH BRN 56","mfg_part":"1917BROWN56","upc":"","vendor":"SHIRES EQUESTRIAN INC","date_added":"2026-05-01","closeout":false,"list_price":51.99,"retail_price":51.99,"dept_code":"31","dept_name":"TACK","class_code":"C03","class_name":"ENGLISH FITTINGS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"191758","desc":"SHIRES FLEECE LINED GIRTH BRN 58","mfg_part":"1917BROWN58","upc":"","vendor":"SHIRES EQUESTRIAN INC","date_added":"2026-05-01","closeout":false,"list_price":51.99,"retail_price":51.99,"dept_code":"31","dept_name":"TACK","class_code":"C03","class_name":"ENGLISH FITTINGS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"88505WH38","desc":"SHIRES SUPAFLC GIRTH SLV WH 38\"","mfg_part":"88505 WH 38","upc":"","vendor":"SHIRES EQUESTRIAN INC","date_added":"2026-05-01","closeout":false,"list_price":27.99,"retail_price":27.99,"dept_code":"31","dept_name":"TACK","class_code":"C03","class_name":"ENGLISH FITTINGS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"D55009HTBK","desc":"PRI CTN QUILT DRSG PAD HT/BLK","mfg_part":"D55009-HT/BLK","upc":"635744509320","vendor":"PACIFIC RIM INTERNATIONAL INC.","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":54.95,"dept_code":"31","dept_name":"TACK","class_code":"C07","class_name":"ENGLISH SADDLE PADS","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT04866005","desc":"LEMIEUX PROSORB 1/2 PAD 2PT BK L","mfg_part":"IT04866005","upc":"5063240030928","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":199.95,"retail_price":199.95,"dept_code":"31","dept_name":"TACK","class_code":"C07","class_name":"ENGLISH SADDLE PADS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT04867004","desc":"LEMIEUX PROSORB 1/2 PAD 2PT WH L","mfg_part":"IT04867005","upc":"5063240030942","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":199.95,"retail_price":199.95,"dept_code":"31","dept_name":"TACK","class_code":"C07","class_name":"ENGLISH SADDLE PADS","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9180TEMD","desc":"PC SPUR STRAPS TWIST EMD/BUR WMN","mfg_part":"9180T-EMD","upc":"782146384809","vendor":"PROFESSIONAL'S CHOICE MED., INC.","date_added":"2026-04-30","closeout":false,"list_price":46.95,"retail_price":46.95,"dept_code":"31","dept_name":"TACK","class_code":"C12","class_name":"WESTERN TACK","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9180TORC","desc":"PC SPUR STRAPS TWIST ORC/BUR WMN","mfg_part":"9180T-ORC","upc":"782146384816","vendor":"PROFESSIONAL'S CHOICE MED., INC.","date_added":"2026-04-30","closeout":false,"list_price":46.95,"retail_price":46.95,"dept_code":"31","dept_name":"TACK","class_code":"C12","class_name":"WESTERN TACK","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"20750003","desc":"BOT ROYAL FETLOCK BOOTS BLK FULL","mfg_part":"20750003","upc":"","vendor":"BACK ON TRACK BOT LLC","date_added":"2026-05-04","closeout":false,"list_price":50.0,"retail_price":50.0,"dept_code":"31","dept_name":"TACK","class_code":"C16","class_name":"HORSE BOOTS & LEGGING","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"A71466L","desc":"ARIAT KIRBY PRO SHIRT NTCKT B LG","mfg_part":"10071466","upc":"197318777240","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-04","closeout":false,"list_price":59.99,"retail_price":59.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C31","class_name":"CASUAL APPAREL","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"A71466M","desc":"ARIAT KIRBY PRO SHIRT NTCKT B MD","mfg_part":"10071466","upc":"197318777271","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-04","closeout":false,"list_price":59.99,"retail_price":59.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C31","class_name":"CASUAL APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"A71466S","desc":"ARIAT KIRBY PRO SHIRT NTCKT B SM","mfg_part":"10071466","upc":"197318777264","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-04","closeout":false,"list_price":59.99,"retail_price":59.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C31","class_name":"CASUAL APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"A71466XL","desc":"ARIAT KIRBY PRO SHIRT NTCKT B XL","mfg_part":"10071466","upc":"","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-04","closeout":false,"list_price":59.99,"retail_price":59.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C31","class_name":"CASUAL APPAREL","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"A71466XS","desc":"ARIAT KIRBY PRO SHIRT NTCKT B XS","mfg_part":"10071466","upc":"197318777257","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-04","closeout":false,"list_price":59.99,"retail_price":59.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C31","class_name":"CASUAL APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AV102XXS","desc":"RJ AVA SHOW SHIRT WHITE XXS","mfg_part":"AV102","upc":"802760488261","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":69.0,"retail_price":69.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AVJ102XXS","desc":"RJ AVA JR SHOW SHIRT WHITE XXS","mfg_part":"AVJ102","upc":"802760488650","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":59.0,"retail_price":59.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BRK894L","desc":"RJ BROOKE SHOW SHIRT LAVENDER LG","mfg_part":"BRK894","upc":"802760521159","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":125.0,"retail_price":119.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BRK894M","desc":"RJ BROOKE SHOW SHIRT LAVENDER MD","mfg_part":"BRK894","upc":"802760521142","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":125.0,"retail_price":119.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BRK894S","desc":"RJ BROOKE SHOW SHIRT LAVENDER SM","mfg_part":"BRK894","upc":"802760521135","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":125.0,"retail_price":119.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"BRK894XS","desc":"RJ BROOKE SHOW SHIRT LAVENDER XS","mfg_part":"BRK894","upc":"802760521128","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":125.0,"retail_price":119.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"E32029LAPUL","desc":"EQ LENA KIDS SS QTR ZIP LAV LG","mfg_part":"E32029-LAPU","upc":"8404138310260","vendor":"FINNTACK USA, LLC","date_added":"2026-05-05","closeout":false,"list_price":34.99,"retail_price":34.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"E32029LAPUM","desc":"EQ LENA KIDS SS QTR ZIP LAV MD","mfg_part":"E32029-LAPU","upc":"840413831019","vendor":"FINNTACK USA, LLC","date_added":"2026-05-05","closeout":false,"list_price":34.99,"retail_price":34.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"E32029LAPUS","desc":"EQ LENA KIDS SS QTR ZIP LAV SM","mfg_part":"E32029-LAPU","upc":"840413831002","vendor":"FINNTACK USA, LLC","date_added":"2026-05-05","closeout":false,"list_price":34.99,"retail_price":34.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"E32029LAPUXL","desc":"EQ LENA KIDS SS QTR ZIP LAV XLG","mfg_part":"E32029-LAPU","upc":"840413831033","vendor":"FINNTACK USA, LLC","date_added":"2026-05-05","closeout":false,"list_price":34.99,"retail_price":34.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102L","desc":"RJ SOFIA SHOW SHIRT WHITE LG","mfg_part":"SF102","upc":"802760488230","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102M","desc":"RJ SOFIA SHOW SHIRT WHITE MD","mfg_part":"SF102","upc":"802760488223","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102S","desc":"RJ SOFIA SHOW SHIRT WHITE SM","mfg_part":"SF102","upc":"802760488216","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102XL","desc":"RJ SOFIA SHOW SHIRT WHITE XL","mfg_part":"SF102","upc":"802760488247","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102XS","desc":"RJ SOFIA SHOW SHIRT WHITE XS","mfg_part":"SF102","upc":"802760488209","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"SF102XXS","desc":"RJ SOFIA SHOW SHIRT WHITE XXS","mfg_part":"SF102","upc":"802760488193","vendor":"RJ CLASSICS","date_added":"2026-04-30","closeout":false,"list_price":75.0,"retail_price":74.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C32","class_name":"ENGLISH SHOW APPAREL","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AGS04320","desc":"RAYLN LEATHER SHINE SPONGE","mfg_part":"04320","upc":"","vendor":"JUSTIN BLAIR & COMPANY","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":3.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C35","class_name":"SHOES, BOOTS, & ACC","qoh_cheshire":12.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AGS21971","desc":"RAYLN SUEDE CARE BRUSH KIT","mfg_part":"21971","upc":"","vendor":"JUSTIN BLAIR & COMPANY","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":8.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C35","class_name":"SHOES, BOOTS, & ACC","qoh_cheshire":6.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AGS21991","desc":"RAYLN POLISH DAUBER","mfg_part":"21991","upc":"","vendor":"JUSTIN BLAIR & COMPANY","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":6.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C35","class_name":"SHOES, BOOTS, & ACC","qoh_cheshire":6.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"S9896L","desc":"SHIRES HEEL RISERS LARGE","mfg_part":"9896 LARGE","upc":"","vendor":"SHIRES EQUESTRIAN INC","date_added":"2026-05-01","closeout":false,"list_price":6.99,"retail_price":6.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C35","class_name":"SHOES, BOOTS, & ACC","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"S9896S","desc":"SHIRES HEEL RISERS SMALL","mfg_part":"9896 SMALL","upc":"","vendor":"SHIRES EQUESTRIAN INC","date_added":"2026-05-01","closeout":false,"list_price":6.99,"retail_price":6.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C35","class_name":"SHOES, BOOTS, & ACC","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"841400","desc":"EQUIVISOR VUE BLACK 4.5\"","mfg_part":"841400","upc":"601956632149","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":58.0,"retail_price":58.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"931100","desc":"EQUIVISOR ORIG SHORTY 3\" BLK","mfg_part":"931100","upc":"601956631951","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":44.0,"retail_price":44.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9409000000","desc":"EQUIVISOR ORIGINAL BLACK","mfg_part":"9409000000","upc":"603709940907","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":46.0,"retail_price":46.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":4.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9409000008","desc":"EQUIVISOR ORIGINAL LEOPARD & BLK","mfg_part":"9409000008","upc":"603709949320","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":46.0,"retail_price":46.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"940907","desc":"EQUIVISOR ORIGINAL ORANGE","mfg_part":"940907","upc":"601956632040","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":46.0,"retail_price":46.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"9409300000","desc":"EQUIVISOR ORIGINAL NATURAL JUTE","mfg_part":"9409300000","upc":"603709949306","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":47.8,"retail_price":47.8,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"941115","desc":"EQUIVISOR GLITZ BLK W/ BLK GLITT","mfg_part":"941115","upc":"601956632088","vendor":"EQUIVISOR","date_added":"2026-05-05","closeout":false,"list_price":49.8,"retail_price":49.8,"dept_code":"32","dept_name":"CLOTHING","class_code":"C37","class_name":"HELMETS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"HG222166","desc":"HERITAGE SPECTRUM GLOVE BK 6","mfg_part":"HG222-16","upc":"810143912791","vendor":"JPC EQUESTRIAN INC.","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":36.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"HG222167","desc":"HERITAGE SPECTRUM GLOVE BK 7","mfg_part":"HG222-16","upc":"810143912807","vendor":"JPC EQUESTRIAN INC.","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":36.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"HG222168","desc":"HERITAGE SPECTRUM GLOVE BK 8","mfg_part":"HG222-16","upc":"810143912814","vendor":"JPC EQUESTRIAN INC.","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":36.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"HG222169","desc":"HERITAGE SPECTRUM GLOVE BK 9","mfg_part":"HG222-16","upc":"810143912821","vendor":"JPC EQUESTRIAN INC.","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":36.99,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT03775002","desc":"LM PRO MESH GLOVE BROWN XS","mfg_part":"IT03775002","upc":"5056252393730","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":49.95,"retail_price":49.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT03775003","desc":"LM PRO MESH GLOVE BROWN SM","mfg_part":"IT03775003","upc":"5056252393747","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":49.95,"retail_price":49.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT03775005","desc":"LM PRO MESH GLOVE BROWN LG","mfg_part":"IT03775005","upc":"5056252393761","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":49.95,"retail_price":49.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"IT03775006","desc":"LM PRO MESH GLOVE BROWN XL","mfg_part":"IT03775006","upc":"5056252393778","vendor":"LEMIEUX LTD","date_added":"2026-05-05","closeout":false,"list_price":49.95,"retail_price":49.95,"dept_code":"32","dept_name":"CLOTHING","class_code":"C39","class_name":"GLOVES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT5003TAL","desc":"DT MNS LITE WILLOUGHBY TAUPE LG","mfg_part":"5003-TAUPE-LG","upc":"642249186932","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT5003TAM","desc":"DT MNS LITE WILLOUGHBY TAUPE MED","mfg_part":"5003-TAUPE-MED","upc":"642249186949","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT5003TAXL","desc":"DT MNS LITE WILLOUGHBY TAUPE XL","mfg_part":"5003-TAUPE-XL","upc":"642249186956","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6066FOL","desc":"DT MNS ANIMAL HAUS CREW FORST LG","mfg_part":"6066-FOREST-LG","upc":"642249210477","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6066FOM","desc":"DT MNS ANIMAL HAUS CREW FORST MD","mfg_part":"6066-FOREST-ME","upc":"642249210460","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6066FOXL","desc":"DT MNS ANIMAL HAUS CREW FORST XL","mfg_part":"6066-FOREST-XL","upc":"642249210484","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6104CHL","desc":"DT LDS BLOSSOM LITE CREW CHAR LG","mfg_part":"6104-CHAR-LG","upc":"642249210279","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6104CHM","desc":"DT LDS BLOSSOM LITE CREW CHAR MD","mfg_part":"6104-CHAR-MD","upc":"642249210262","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6104CHS","desc":"DT LDS BLOSSOM LITE CREW CHAR SM","mfg_part":"6104-CHAR-SM","upc":"642249210255","vendor":"CABOT HOSIERY MILLS","date_added":"2026-04-30","closeout":false,"list_price":25.0,"retail_price":25.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6121ASM","desc":"DT LDS  BIRDS LITE CREW ASH MD","mfg_part":"6121-ASH-M","upc":"642249226041","vendor":"CABOT HOSIERY MILLS","date_added":"2026-05-01","closeout":false,"list_price":24.0,"retail_price":24.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":6.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6132DTL","desc":"DT MNS WOOL'D WEST CREW TEAL LG","mfg_part":"6132-DKTEAL-L","upc":"642249236262","vendor":"CABOT HOSIERY MILLS","date_added":"2026-05-01","closeout":false,"list_price":24.0,"retail_price":24.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6132DTM","desc":"DT MNS WOOL'D WEST CREW TEAL MD","mfg_part":"6132-DKTEAL-M","upc":"642249236255","vendor":"CABOT HOSIERY MILLS","date_added":"2026-05-01","closeout":false,"list_price":24.0,"retail_price":24.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"DT6132DTXL","desc":"DT MNS WOOL'D WEST CREW TEAL XL","mfg_part":"6132-DKTEAL-XL","upc":"642249236279","vendor":"CABOT HOSIERY MILLS","date_added":"2026-05-01","closeout":false,"list_price":24.0,"retail_price":24.0,"dept_code":"32","dept_name":"CLOTHING","class_code":"C40","class_name":"MISC CLOTHING","qoh_cheshire":3.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AKBOON3","desc":"ANTLER KING BOONER BUFFET 3LB","mfg_part":"AKBOON3","upc":"","vendor":"KALMBACH FEEDS","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":25.8,"dept_code":"30","dept_name":"FEED AND SUPPLEMENTS","class_code":"C50","class_name":"FEED","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"AKFWS17","desc":"ANTLER KING FALL WNTER SPRNG 17#","mfg_part":"AKFWS17","upc":"","vendor":"KALMBACH FEEDS","date_added":"2026-05-04","closeout":false,"list_price":0.0,"retail_price":26.1,"dept_code":"30","dept_name":"FEED AND SUPPLEMENTS","class_code":"C50","class_name":"FEED","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"NCPP","desc":"NC ORG POWER PELLET LAYER 40lb","mfg_part":"F40-LAYER-PWR","upc":"","vendor":"NEW COUNTRY ORGANICS","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":43.75,"dept_code":"30","dept_name":"FEED AND SUPPLEMENTS","class_code":"C50","class_name":"FEED","qoh_cheshire":0.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"CBDFX600","desc":"CBDFX CBD SOFT CHEWS 600mg 30ct","mfg_part":"","upc":"812577038665","vendor":"COOL BLUE DISTRIBUTION","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":33.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C51","class_name":"SUPPLEMENTS","qoh_cheshire":6.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"1737310","desc":"EPONA GLOSSY GROOMER DEEP TEAL","mfg_part":"17373-10","upc":"757475562136","vendor":"EPONA LTD","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":10.95,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C55","class_name":"GROOMING SUPPLIES","qoh_cheshire":12.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"1737312","desc":"EPONA GLOSSY GROOMER NOBLE BLUE","mfg_part":"17373-12","upc":"757475667008","vendor":"EPONA LTD","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":10.95,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C55","class_name":"GROOMING SUPPLIES","qoh_cheshire":12.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8100609D","desc":"MYFAMILY FOOD CHICKEN","mfg_part":"CHCHICKEN","upc":"8051938216676","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8100615D","desc":"MYFAMILY FOOD FRIES","mfg_part":"CHFRIES","upc":"8051938216607","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8100617D","desc":"MYFAMILY FOOD ICE CREAM","mfg_part":"CHICECREAM","upc":"8051938216621","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8100619D","desc":"MYFAMILY FOOD STEAK","mfg_part":"CHSTEAK","upc":"8051938216652","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101135D","desc":"MYFAMILY NFL NE PATRIOTS","mfg_part":"NFLPATR","upc":"8051938214979","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":24.99,"retail_price":24.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":4.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101533","desc":"MYFAMILY FOOD BEER","mfg_part":"CHBEER","upc":"8051938216706","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":4.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101534D","desc":"MYFAMILY FOOD PIZZA","mfg_part":"CHPIZZA","upc":"8051938216614","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":21.99,"retail_price":21.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":4.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101663D","desc":"MEMOPET LEASH FLAT BLACK 6FT","mfg_part":"7506","upc":"8051938219325","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101671D","desc":"MEMOPET LEASH FLAT BLUE 6FT","mfg_part":"7536","upc":"8051938219271","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101752D","desc":"MYFAMILY MEMOPET COLLAR BL MD","mfg_part":"3010","upc":"8051938210964","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101753D","desc":"MYFAMILY MEMOPET COLLAR BL LG","mfg_part":"3011","upc":"8051938210971","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101761D","desc":"MYFAMILY MEMOPET COLLAR BLK XS","mfg_part":"3022","upc":"8051938213736","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101764D","desc":"MYFAMILY MEMOPET COLLAR BL XS","mfg_part":"3031","upc":"8051938213934","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101770D","desc":"MEMOPET LEASH ROPE BLACK 4FT","mfg_part":"7000","upc":"8051938211046","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":24.99,"retail_price":24.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101783D","desc":"MEMOPET LEASH ROPE BLUE 6FT","mfg_part":"7018","upc":"8051938211312","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":24.99,"retail_price":24.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101795D","desc":"MYFAMILY MEMOPET COLLAR BL SM","mfg_part":"3009","upc":"8051938210957","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101797D","desc":"MYFAMILY MEMOPET COLLAR BLK LG","mfg_part":"3002","upc":"8051938210889","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101798D","desc":"MYFAMILY MEMOPET COLLAR BLK SM","mfg_part":"3000","upc":"8051938210865","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"8101799D","desc":"MYFAMILY MEMOPET COLLAR BLK MD","mfg_part":"3001","upc":"8051938210872","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":19.99,"retail_price":19.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB13","desc":"MYFAMILY BSC ALUM SML CIRCLE BLU","mfg_part":"MFB13","upc":"8055960251681","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB18","desc":"MYFAMILY BSC ALUM BIG CIRCLE BLU","mfg_part":"MFB18","upc":"8055960251735","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB33","desc":"MYFAMILY BSC ALUM SML CIRCLE BLK","mfg_part":"MFB33","upc":"8055960254255","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB34","desc":"MYFAMILY BSC ALUM BIG CIRCLE BLK","mfg_part":"MFB34","upc":"8055960254262","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB39","desc":"MYFAMILY BSC ALUM SML CIRCLE GRN","mfg_part":"MFB39","upc":"8055960254316","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB40","desc":"MYFAMILY BSC ALUM BIG CIRCLE GRN","mfg_part":"MFB40","upc":"8055960254323","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB57","desc":"MYFAMILY BSC ALUM SML CIRCLE GRY","mfg_part":"MFB57","upc":"8055960258314","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"MFB62","desc":"MYFAMILY BSC ALUM BIG CIRCLE GRY","mfg_part":"MFB62","upc":"8055960258369","vendor":"MY FAMILY USA INC","date_added":"2026-05-06","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"33","dept_name":"SUPPLIES","class_code":"C58","class_name":"PET SUPPLIES","qoh_cheshire":5.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"WG22138120SNV","desc":"WRANGLER STHWST DUAL TOTE NAVY","mfg_part":"WG2213-8120S","upc":"717019732432","vendor":"MONTANA WEST","date_added":"2026-04-30","closeout":false,"list_price":58.5,"retail_price":58.5,"dept_code":"34","dept_name":"GIFTS (NON TACK)","class_code":"C70","class_name":"GIFTS & TOYS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"WG2213W006NV","desc":"WRANGLER STHWST WALLET NAVY","mfg_part":"WG2213-W006","upc":"717019732494","vendor":"MONTANA WEST","date_added":"2026-04-30","closeout":false,"list_price":36.0,"retail_price":36.0,"dept_code":"34","dept_name":"GIFTS (NON TACK)","class_code":"C70","class_name":"GIFTS & TOYS","qoh_cheshire":2.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"WG3908110CM","desc":"WRANGLER WORK TOTE CAMEL","mfg_part":"WG390-8110CM","upc":"717710507100","vendor":"MONTANA WEST","date_added":"2026-04-30","closeout":false,"list_price":72.0,"retail_price":72.0,"dept_code":"34","dept_name":"GIFTS (NON TACK)","class_code":"C70","class_name":"GIFTS & TOYS","qoh_cheshire":1.0,"bucket":"review_class","bucket_label":"Review \u00b7 Class rule needed"},{"item":"84000189","desc":"S&C D RAW BLEND RED MEAT SMB 3","mfg_part":"84000189","upc":"","vendor":"PET FOOD EXPERTS INC.","date_added":"2026-05-04","closeout":false,"list_price":29.99,"retail_price":29.99,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003441137001","desc":"ARIAT REMUDA BOMBER BRN 9.5","mfg_part":"10019906","upc":"","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":199.95,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003441230001","desc":"WRANGLER CONVERT FL TL BRN","mfg_part":"WG169-9112","upc":"","vendor":"MONTANA WEST","date_added":"2026-04-30","closeout":false,"list_price":0.0,"retail_price":85.5,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003441447001","desc":"SWIFFER CLOTH MOP REFILL HDPET","mfg_part":"80810498","upc":"","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-01","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":1.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003442189001","desc":"HERM SPRENGER PDED HACKA-BLK","mfg_part":"4214400055","upc":"","vendor":"HERM. SPRENGER","date_added":"2026-05-04","closeout":false,"list_price":153.9,"retail_price":153.9,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003442252001","desc":"NW NAT FZN TURKEY NECKS 4PK","mfg_part":"70838400","upc":"","vendor":"PET FOOD EXPERTS INC.","date_added":"2026-05-04","closeout":false,"list_price":11.99,"retail_price":11.99,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003442354001","desc":"WHOLISTIC ORG DIGEST ALL PL 8O","mfg_part":"WHO00157","upc":"853674001572","vendor":"VERMONT PET FOOD & SUPPLY","date_added":"2026-05-05","closeout":false,"list_price":49.99,"retail_price":49.99,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":1.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003442382001","desc":"ARIAT MNS LOGO SFTSHL VEST 2X","mfg_part":"BLACK-10062587","upc":"","vendor":"ARIAT INTERNATIONAL INC.","date_added":"2026-05-05","closeout":false,"list_price":119.95,"retail_price":119.95,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"ZZ003442443001","desc":"WEAVER NYLON COW NECK STRAP SM","mfg_part":"80305-40-00","upc":"","vendor":"WEAVER LEATHER INC.","date_added":"2026-05-05","closeout":false,"list_price":15.79,"retail_price":15.79,"dept_code":"31","dept_name":"TACK","class_code":"C20","class_name":"CHESHIRE HORSE SPECIAL ORDERS","qoh_cheshire":0.0,"bucket":"auto_c20","bucket_label":"Auto \u00b7 C20 Special Order"},{"item":"DP154415","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465550","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154416","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465567","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154422","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465628","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154430","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465703","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154441","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465819","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154454","desc":"SaveOnNinjaFrostVault","mfg_part":"","upc":"90465949","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154456","desc":"SaveOnMilwaukeeOutdrTools","mfg_part":"","upc":"90465963","vendor":"BLANK","date_added":"2026-05-02","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154459","desc":"BuyGozneyArcGetFreeCover","mfg_part":"","upc":"90465994","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154472","desc":"SaveOnPerkyPetBirdFeeders","mfg_part":"","upc":"90466120","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154474","desc":"SaveOnRecteqSmokeStone","mfg_part":"","upc":"90466144","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154477","desc":"SaveOnPerkyPetBirdFeeders","mfg_part":"","upc":"90466175","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154481","desc":"SaveOnSelectMadeInCookwar","mfg_part":"","upc":"90466212","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154482","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466229","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154483","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466236","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154484","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466243","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154486","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466250","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154487","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466267","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154488","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466274","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154491","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466281","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154492","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466298","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154493","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466304","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154494","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466311","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP154495","desc":"SaveOnSlctMadeInCookware","mfg_part":"","upc":"90466328","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H1","dept_name":"COUPONS AND CERTIFICATES","class_code":"HH1","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148885","desc":"SaveOnGozneyPizzaDoughMix","mfg_part":"","upc":"90410307","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148893","desc":"SaveOnGozneyDoughScrapper","mfg_part":"","upc":"90410383","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148910","desc":"SaveOnGozneyDoughCutter","mfg_part":"","upc":"90410550","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148912","desc":"SaveOnGozneyPelletFuel","mfg_part":"","upc":"90410574","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148920","desc":"SaveOnGozneyPizzaAccessor","mfg_part":"","upc":"90410659","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148921","desc":"SaveOnGozneyPizzaCutter","mfg_part":"","upc":"90410666","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148928","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410734","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148930","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410758","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148933","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410789","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148937","desc":"SaveGozneyAccessories","mfg_part":"","upc":"90410826","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148939","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410840","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148944","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410895","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148946","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410918","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148948","desc":"SaveOnGozneyAccessories","mfg_part":"","upc":"90410932","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148950","desc":"SaveOnGozneyRoccbox","mfg_part":"","upc":"90410956","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148952","desc":"SaveOnGozneyTread","mfg_part":"","upc":"90410970","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148954","desc":"SaveOnGozneyTread","mfg_part":"","upc":"90410994","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148956","desc":"SaveOnGozneyArc","mfg_part":"","upc":"90411014","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148970","desc":"SaveOnGozneyArcPizzaOven","mfg_part":"","upc":"90411151","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148992","desc":"SaveOnGozneyArcPizzaOven","mfg_part":"","upc":"90411373","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148994","desc":"SaveOnGozneyPizzaOven","mfg_part":"","upc":"90411397","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP148996","desc":"BuyGoznyOvnGetCvrDoorPeel","mfg_part":"","upc":"90411410","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP149000","desc":"BuyGoznyOvnGetCvrDoorPeel","mfg_part":"","upc":"90411458","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"DP149019","desc":"$13.99MlwkeeGloves3Pack","mfg_part":"","upc":"90411649","vendor":"BLANK","date_added":"2026-05-06","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"H2","dept_name":"HHC COUPONS AND CERTIFICATES","class_code":"HH2","class_name":"ACE COUPON/CREDIT ITEMS","qoh_cheshire":0.0,"bucket":"drop_coupon","bucket_label":"Drop \u00b7 Coupon"},{"item":"8085368","desc":"WOOD BURNER SS","mfg_part":"AR1584","upc":"505659160189","vendor":"GOZNEY GROUP LTD","date_added":"2026-05-06","closeout":true,"list_price":0.0,"retail_price":99.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"drop_closeout","bucket_label":"Drop \u00b7 Closeout"},{"item":"8088241","desc":"PIZZA  ACCSRY KIT 12.21\"","mfg_part":"AR1591","upc":"505659160196","vendor":"ACE HARDWARE CORPORATION","date_added":"2026-05-06","closeout":true,"list_price":0.0,"retail_price":59.99,"dept_code":"08","dept_name":"AUTO/PET/SPORTS","class_code":"869","class_name":"BBQ TOOLS/PARTS/ACCS","qoh_cheshire":0.0,"bucket":"drop_closeout","bucket_label":"Drop \u00b7 Closeout"},{"item":"SHIP20","desc":"SHIPPING CHARGE","mfg_part":"","upc":"","vendor":"BLANK","date_added":"2026-05-01","closeout":false,"list_price":0.0,"retail_price":0.0,"dept_code":"80","dept_name":"DELIVERY CHARGES","class_code":"M93","class_name":"NON CLASSIFIED ITEMS","qoh_cheshire":0.0,"bucket":"drop_delivery","bucket_label":"Drop \u00b7 Delivery/System"}];
+
+// ============================================================
+// STATE
+// ============================================================
+// In live mode (served by the Flask app), use server-injected state.
+// In standalone demo mode (file:// open), fall back to the embedded RPH_DATA.
+const _liveMode = !!window.LIVE_MODE;
+const _initialRecords = _liveMode ? window.LIVE_STATE.records : window.RPH_DATA;
+const _initialRules = _liveMode ? (window.LIVE_STATE.rules || {}) : {};
+const _initialDecisions = _liveMode ? (window.LIVE_STATE.decisions || {}) : {};
+
+const state = {
+  items: _initialRecords.map(r => ({
+    ...r,
+    decision: _initialDecisions[r.item] || null,  // hydrate prior decisions
+  })),
+  classRules: {..._initialRules},  // class_code -> 'upload' | 'skip'
+  selectedIdx: null,
+  filter: null,
+  search: '',
+};
+
+// Persist a decision to the server (no-op in standalone demo mode).
+async function persistDecision(item, decision) {
+  if (!_liveMode) return;
+  try {
+    await fetch('/api/decide', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item, decision}),
+    });
+  } catch (err) {
+    console.warn('Failed to persist decision:', err);
+  }
+}
+
+// Persist a class rule to the server (no-op in standalone demo mode).
+async function persistRule(class_code, kind) {
+  if (!_liveMode) return;
+  try {
+    await fetch('/api/rule', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({class_code, kind}),
+    });
+  } catch (err) {
+    console.warn('Failed to persist rule:', err);
+  }
+}
+
+// Apply class rules to compute effective decision for review items
+function effectiveDecision(item) {
+  if (item.decision) return item.decision;
+  // Auto-buckets get implicit decisions
+  if (item.bucket === 'auto_c20') return 'approve';
+  if (item.bucket.startsWith('drop_')) return 'skip';
+  // Check class rule
+  if (item.class_code && state.classRules[item.class_code]) {
+    return state.classRules[item.class_code] === 'upload' ? 'approve' : 'skip';
+  }
+  return null;
+}
+
+function pendingReview(item) {
+  return item.bucket.startsWith('review_') && effectiveDecision(item) === null;
+}
+
+// ============================================================
+// RENDER: SUMMARY STRIP
+// ============================================================
+function renderSummary() {
+  const cells = [
+    { key: 'review_class',    label: 'Pending Review',    cls: 'review',   desc: 'Need your eyes' },
+    { key: 'auto_c20',        label: 'Auto · C20',        cls: 'auto',     desc: 'Special orders' },
+    { key: 'drop_coupon',     label: 'Drop · Coupon',     cls: 'drop',     desc: 'H1 / H2' },
+    { key: 'drop_closeout',   label: 'Drop · Closeout',   cls: 'drop',     desc: 'Marked Y' },
+    { key: 'drop_delivery',   label: 'Drop · Delivery',   cls: 'drop',     desc: 'Dept 80' },
+    { key: '__approved__',    label: 'Decided',           cls: 'approved', desc: 'You + auto' },
+  ];
+
+  const counts = {};
+  for (const c of cells) counts[c.key] = 0;
+
+  for (const item of state.items) {
+    if (item.bucket === 'review_class' && pendingReview(item)) counts['review_class']++;
+    else if (counts[item.bucket] !== undefined) counts[item.bucket]++;
+    if (effectiveDecision(item)) counts['__approved__']++;
+  }
+
+  const html = cells.map(c => `
+    <div class="summary-cell ${c.cls} ${state.filter === c.key ? 'active' : ''}" data-filter="${c.key}">
+      <div class="label">${c.label}</div>
+      <div class="count">${counts[c.key]}</div>
+      <div class="desc">${c.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('summary').innerHTML = html;
+  document.querySelectorAll('.summary-cell').forEach(el => {
+    el.onclick = () => {
+      const f = el.dataset.filter;
+      state.filter = (state.filter === f) ? null : f;
+      renderAll();
+    };
+  });
+}
+
+// ============================================================
+// RENDER: QUEUE
+// ============================================================
+function getFilteredItems() {
+  let items = state.items;
+
+  if (state.filter === '__approved__') {
+    items = items.filter(i => effectiveDecision(i) !== null);
+  } else if (state.filter === 'review_class') {
+    items = items.filter(i => i.bucket === 'review_class' && pendingReview(i));
+  } else if (state.filter) {
+    items = items.filter(i => i.bucket === state.filter);
+  } else {
+    // Default: show pending review + auto items not yet decided
+    items = items.filter(i =>
+      pendingReview(i) ||
+      (i.bucket === 'auto_c20' && !i.decision) ||
+      effectiveDecision(i) !== null
+    );
+  }
+
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    items = items.filter(i =>
+      (i.item || '').toLowerCase().includes(q) ||
+      (i.desc || '').toLowerCase().includes(q) ||
+      (i.vendor || '').toLowerCase().includes(q) ||
+      (i.class_code || '').toLowerCase().includes(q) ||
+      (i.class_name || '').toLowerCase().includes(q)
+    );
+  }
+
+  return items;
+}
+
+function renderQueue() {
+  const items = getFilteredItems();
+  const list = document.getElementById('queue-list');
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="ornament">— nothing here —</div>';
+    return;
+  }
+
+  list.innerHTML = items.map((item, idx) => {
+    const realIdx = state.items.indexOf(item);
+    const decided = effectiveDecision(item);
+    const tagClass = decided === 'approve' ? 'tag-approved'
+                   : decided === 'skip' ? 'tag-skipped'
+                   : item.bucket.startsWith('review_') ? 'tag-review'
+                   : item.bucket.startsWith('drop_') ? 'tag-drop'
+                   : 'tag-auto';
+    const tagText = decided === 'approve' ? 'Approved'
+                  : decided === 'skip' ? 'Skipped'
+                  : item.bucket === 'review_class' ? 'Review'
+                  : item.bucket === 'auto_c20' ? 'C20'
+                  : item.bucket === 'drop_coupon' ? 'Coupon'
+                  : item.bucket === 'drop_closeout' ? 'Closeout'
+                  : item.bucket === 'drop_delivery' ? 'Delivery'
+                  : 'Review';
+
+    const meta = `${item.item} · ${item.vendor || '—'}${item.class_code ? ' · ' + item.class_code : ''}`;
+    const klass = `item ${state.selectedIdx === realIdx ? 'selected' : ''} ${decided ? 'decided' : ''}`;
+    return `
+      <div class="${klass}" data-idx="${realIdx}">
+        <div class="item-desc">${escapeHtml(item.desc || '(no description)')}</div>
+        <div class="item-meta">${escapeHtml(meta)}</div>
+        <span class="item-tag ${tagClass}">${tagText}</span>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.item').forEach(el => {
+    el.onclick = () => selectItem(parseInt(el.dataset.idx));
+  });
+
+  // Queue header label
+  let lbl = "Today's Queue";
+  if (state.filter === 'review_class') lbl = 'Pending Review';
+  else if (state.filter === '__approved__') lbl = 'Decided';
+  else if (state.filter === 'auto_c20') lbl = 'Auto · C20';
+  else if (state.filter === 'drop_coupon') lbl = 'Coupons';
+  else if (state.filter === 'drop_closeout') lbl = 'Closeouts';
+  else if (state.filter === 'drop_delivery') lbl = 'Delivery / System';
+  document.getElementById('queue-label').textContent = `${lbl} · ${items.length}`;
+  document.getElementById('filter-clear').style.display = state.filter ? 'inline' : 'none';
+}
+
+// ============================================================
+// RENDER: DETAIL PANE
+// ============================================================
+function renderDetail() {
+  const detail = document.getElementById('detail');
+  if (state.selectedIdx === null) {
+    detail.innerHTML = '<div class="detail-empty">Select an item from the queue to begin review.</div>';
+    return;
+  }
+  const item = state.items[state.selectedIdx];
+  const decided = effectiveDecision(item);
+
+  // Verdict line
+  let verdictHtml = '';
+  if (item.bucket === 'auto_c20') {
+    verdictHtml = `
+      <div class="verdict">
+        <div class="verdict-icon auto">A</div>
+        <div class="verdict-text">
+          <strong>Auto-upload:</strong> Class C20 (Cheshire Horse Special Orders)
+          <span class="reason">Buyer-flagged Cheshire item. Goes straight to Salesforce.</span>
+        </div>
+      </div>`;
+  } else if (item.bucket === 'drop_coupon') {
+    verdictHtml = `
+      <div class="verdict">
+        <div class="verdict-icon drop">D</div>
+        <div class="verdict-text">
+          <strong>Auto-drop:</strong> Coupon / promo (Dept ${escapeHtml(item.dept_code)})
+          <span class="reason">Coupons aren't products — they don't belong on the site.</span>
+        </div>
+      </div>`;
+  } else if (item.bucket === 'drop_closeout') {
+    verdictHtml = `
+      <div class="verdict">
+        <div class="verdict-icon drop">D</div>
+        <div class="verdict-text">
+          <strong>Auto-drop:</strong> Marked closeout
+          <span class="reason">Store Closeout flag = Y. Won't be re-stocked.</span>
+        </div>
+      </div>`;
+  } else if (item.bucket === 'drop_delivery') {
+    verdictHtml = `
+      <div class="verdict">
+        <div class="verdict-icon drop">D</div>
+        <div class="verdict-text">
+          <strong>Auto-drop:</strong> Delivery / system SKU (Dept 80)
+          <span class="reason">Internal accounting item, not a product.</span>
+        </div>
+      </div>`;
+  } else {
+    // Review needed
+    const ruleHit = item.class_code && state.classRules[item.class_code];
+    if (ruleHit) {
+      verdictHtml = `
+        <div class="verdict">
+          <div class="verdict-icon ${ruleHit === 'upload' ? 'auto' : 'drop'}">${ruleHit === 'upload' ? 'A' : 'D'}</div>
+          <div class="verdict-text">
+            <strong>Class rule:</strong> ${ruleHit === 'upload' ? 'Always upload' : 'Always skip'} class ${item.class_code} ${escapeHtml(item.class_name)}
+            <span class="reason">Decided previously. Override below if needed.</span>
+          </div>
+        </div>`;
+    } else {
+      verdictHtml = `
+        <div class="verdict">
+          <div class="verdict-icon review">?</div>
+          <div class="verdict-text">
+            <strong>Needs your judgment.</strong>
+            <span class="reason">No class rule for ${escapeHtml(item.class_code || '?')} ${escapeHtml(item.class_name || '')} yet.</span>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Field grid
+  const fields = [
+    ['SKU',           item.item,           'mono'],
+    ['UPC',           item.upc,            'mono'],
+    ['MFG Part #',    item.mfg_part,       'mono'],
+    ['Vendor',        item.vendor,         ''],
+    ['Department',    item.dept_code ? `${item.dept_code} · ${item.dept_name}` : '', ''],
+    ['Class',         item.class_code ? `${item.class_code} · ${item.class_name}` : '', ''],
+    ['QOH (Cheshire)', item.qoh_cheshire.toString(), 'mono'],
+    ['Date Added',    item.date_added,     'mono'],
+    ['List Price',    item.list_price ? `$${item.list_price.toFixed(2)}` : '', 'mono'],
+    ['Retail Price',  item.retail_price ? `$${item.retail_price.toFixed(2)}` : '', 'mono'],
+  ];
+  const fieldsHtml = fields.map(([lbl, val, cls]) => `
+    <div class="field">
+      <div class="field-label">${lbl}</div>
+      <div class="field-value ${cls} ${!val ? 'empty' : ''}">${escapeHtml(val || '—')}</div>
+    </div>
+  `).join('');
+
+  // Action buttons depend on whether this is a manual review item
+  let actionsHtml = '';
+  let classRuleBox = '';
+  if (item.bucket.startsWith('review_')) {
+    const isApproved = item.decision === 'approve';
+    const isSkipped = item.decision === 'skip';
+    actionsHtml = `
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-approve">${isApproved ? '✓ Approved' : 'Approve · Upload'}</button>
+        <button class="btn btn-skip" id="btn-skip">${isSkipped ? '✗ Skipped' : 'Skip'}</button>
+        <button class="btn" id="btn-clear">Clear</button>
+      </div>
+      <div class="keyboard-hint">
+        <kbd>A</kbd> approve &nbsp; <kbd>S</kbd> skip &nbsp; <kbd>↓</kbd>/<kbd>↑</kbd> navigate
+      </div>
+    `;
+
+    if (item.class_code) {
+      const existingRule = state.classRules[item.class_code];
+      classRuleBox = `
+        <div class="class-rule-box">
+          <div class="class-rule-box-title">Persist a class rule</div>
+          <div class="class-rule-box-body">
+            Apply this decision to <strong>every future SKU</strong> in class
+            <code>${escapeHtml(item.class_code)} · ${escapeHtml(item.class_name)}</code>.
+            ${existingRule ? `<br><em>Current rule: <strong>${existingRule}</strong></em>` : ''}
+          </div>
+          <div class="class-rule-actions">
+            <button class="btn" id="rule-upload">Always upload this class</button>
+            <button class="btn" id="rule-skip">Always skip this class</button>
+            ${existingRule ? '<button class="btn" id="rule-remove">Remove rule</button>' : ''}
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    // Auto-decided items can still be overridden
+    actionsHtml = `
+      <div class="actions">
+        <button class="btn" id="btn-override">Override decision</button>
+      </div>
+    `;
+  }
+
+  detail.innerHTML = `
+    <div class="detail-eyebrow">${escapeHtml(item.bucket_label)}</div>
+    <h1 class="detail-headline">${escapeHtml(item.desc || '(no description)')}</h1>
+    <div class="detail-sub">SKU ${escapeHtml(item.item)} &middot; ${escapeHtml(item.vendor || 'no vendor')}</div>
+    ${verdictHtml}
+    <div class="fields">${fieldsHtml}</div>
+    ${actionsHtml}
+    ${classRuleBox}
+  `;
+
+  // Wire up buttons
+  const approve = document.getElementById('btn-approve');
+  const skip = document.getElementById('btn-skip');
+  const clear = document.getElementById('btn-clear');
+  const override = document.getElementById('btn-override');
+  if (approve) approve.onclick = () => decide('approve');
+  if (skip) skip.onclick = () => decide('skip');
+  if (clear) clear.onclick = () => decide(null);
+  if (override) override.onclick = () => {
+    const verdict = item.bucket === 'auto_c20' ? 'skip' : 'approve';
+    item.decision = verdict;
+    persistDecision(item.item, verdict);
+    renderAll();
+  };
+  const ruleU = document.getElementById('rule-upload');
+  const ruleS = document.getElementById('rule-skip');
+  const ruleR = document.getElementById('rule-remove');
+  if (ruleU) ruleU.onclick = () => setClassRule(item.class_code, 'upload');
+  if (ruleS) ruleS.onclick = () => setClassRule(item.class_code, 'skip');
+  if (ruleR) ruleR.onclick = () => removeClassRule(item.class_code);
+}
+
+// ============================================================
+// RENDER: SIDEBAR (rule library + publish)
+// ============================================================
+function renderSidebar() {
+  const upload = [], skip = [];
+  for (const [code, kind] of Object.entries(state.classRules)) {
+    // Look up the class name from any item
+    const itm = state.items.find(i => i.class_code === code);
+    const name = itm ? itm.class_name : '';
+    (kind === 'upload' ? upload : skip).push({ code, name });
+  }
+  upload.sort((a,b) => a.code.localeCompare(b.code));
+  skip.sort((a,b) => a.code.localeCompare(b.code));
+
+  const renderList = (rules) => {
+    if (rules.length === 0) return '<div class="rule-empty">No rules yet</div>';
+    return rules.map(r => `
+      <div class="rule">
+        <div class="rule-class"><span class="code">${escapeHtml(r.code)}</span><span class="name">${escapeHtml(r.name)}</span></div>
+        <span class="rule-x" data-code="${escapeHtml(r.code)}">×</span>
+      </div>
+    `).join('');
+  };
+
+  document.getElementById('rules-upload').innerHTML = renderList(upload);
+  document.getElementById('rules-skip').innerHTML = renderList(skip);
+  document.getElementById('upload-count').textContent = upload.length;
+  document.getElementById('skip-count').textContent = skip.length;
+
+  document.querySelectorAll('.rule-x').forEach(el => {
+    el.onclick = () => removeClassRule(el.dataset.code);
+  });
+
+  // Publish bar
+  const approvedCount = state.items.filter(i => effectiveDecision(i) === 'approve').length;
+  document.getElementById('pub-count').textContent = approvedCount;
+  const exportBtn = document.getElementById('pub-export');
+  exportBtn.disabled = approvedCount === 0;
+  exportBtn.onclick = exportApproved;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function selectItem(idx) {
+  state.selectedIdx = idx;
+  renderQueue();
+  renderDetail();
+}
+
+function decide(verdict) {
+  if (state.selectedIdx === null) return;
+  const item = state.items[state.selectedIdx];
+  item.decision = verdict;
+  persistDecision(item.item, verdict);  // fire-and-forget; UI updates immediately
+  // Auto-advance to next pending review
+  if (verdict !== null) {
+    advanceToNextPending();
+  }
+  renderAll();
+}
+
+function advanceToNextPending() {
+  const items = getFilteredItems();
+  const curRealIdx = state.selectedIdx;
+  const curIdxInList = items.findIndex(i => state.items.indexOf(i) === curRealIdx);
+  for (let i = curIdxInList + 1; i < items.length; i++) {
+    if (pendingReview(items[i])) {
+      state.selectedIdx = state.items.indexOf(items[i]);
+      return;
+    }
+  }
+  // Wrap or stay
+  for (let i = 0; i < curIdxInList; i++) {
+    if (pendingReview(items[i])) {
+      state.selectedIdx = state.items.indexOf(items[i]);
+      return;
+    }
+  }
+}
+
+function setClassRule(code, kind) {
+  state.classRules[code] = kind;
+  persistRule(code, kind);
+  renderAll();
+}
+function removeClassRule(code) {
+  delete state.classRules[code];
+  persistRule(code, null);
+  renderAll();
+}
+
+function exportApproved() {
+  const approved = state.items.filter(i => effectiveDecision(i) === 'approve');
+  const headers = ['Item Number', 'Description', 'Vendor', 'UPC', 'MFG Part #', 'Department', 'Class', 'List Price', 'Retail Price', 'QOH Cheshire', 'Decision Source'];
+  const rows = approved.map(i => [
+    i.item,
+    i.desc,
+    i.vendor,
+    i.upc,
+    i.mfg_part,
+    i.dept_code + ' ' + i.dept_name,
+    i.class_code + ' ' + i.class_name,
+    i.list_price,
+    i.retail_price,
+    i.qoh_cheshire,
+    i.decision === 'approve' ? 'manual' : i.bucket === 'auto_c20' ? 'auto C20' : 'class rule',
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(cell => {
+    const s = String(cell ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `RPH_approved_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (state.selectedIdx === null) return;
+  const item = state.items[state.selectedIdx];
+
+  if (e.key === 'a' || e.key === 'A') {
+    if (item.bucket.startsWith('review_')) decide('approve');
+  } else if (e.key === 's' || e.key === 'S') {
+    if (item.bucket.startsWith('review_')) decide('skip');
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const items = getFilteredItems();
+    const cur = items.findIndex(i => state.items.indexOf(i) === state.selectedIdx);
+    if (cur < items.length - 1) selectItem(state.items.indexOf(items[cur + 1]));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const items = getFilteredItems();
+    const cur = items.findIndex(i => state.items.indexOf(i) === state.selectedIdx);
+    if (cur > 0) selectItem(state.items.indexOf(items[cur - 1]));
+  }
+});
+
+// ============================================================
+// SEARCH + FILTER CLEAR
+// ============================================================
+document.getElementById('search').addEventListener('input', (e) => {
+  state.search = e.target.value;
+  renderQueue();
+});
+document.getElementById('filter-clear').onclick = () => {
+  state.filter = null;
+  renderAll();
+};
+
+// ============================================================
+// MAIN RENDER
+// ============================================================
+function renderAll() {
+  renderSummary();
+  renderQueue();
+  renderDetail();
+  renderSidebar();
+}
+
+// Auto-select first review item on load
+const firstReview = state.items.findIndex(i => pendingReview(i));
+if (firstReview >= 0) state.selectedIdx = firstReview;
+
+renderAll();
+</script>
+</body>
+</html>

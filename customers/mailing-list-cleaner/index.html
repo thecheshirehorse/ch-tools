@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mailing List Cleaner</title>
+<link rel="icon" href="favicon.ico">
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.15);
+    --border-strong: rgba(0,0,0,0.3);
+    --text: #1f1e1c;
+    --text-muted: #5f5e5a;
+    --accent: #185FA5;
+    --accent-bg: #E6F1FB;
+    --danger: #A32D2D;
+    --danger-bg: #FCEBEB;
+    --success: #0F6E56;
+    --success-bg: #E1F5EE;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  .subtitle { color: var(--text-muted); margin: 0 0 24px; font-size: 14px; }
+
+  .panel {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2 {
+    font-size: 16px; font-weight: 500; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent);
+    font-size: 12px; font-weight: 500;
+  }
+
+  label {
+    display: block; font-size: 13px; color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  input[type="file"] {
+    font-size: 13px;
+    padding: 6px 0;
+  }
+
+  button {
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+    background: var(--surface); color: var(--text);
+    border: 0.5px solid var(--border-strong);
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--bg); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.primary {
+    background: var(--accent); color: white;
+    border-color: var(--accent);
+  }
+  button.primary:hover:not(:disabled) { background: #134B82; }
+  button.danger-text {
+    color: var(--danger);
+  }
+
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+
+  .status {
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    margin-top: 10px;
+  }
+  .status.ok { background: var(--success-bg); color: var(--success); }
+  .status.err { background: var(--danger-bg); color: var(--danger); }
+  .status.warn { background: var(--warn-bg); color: var(--warn-text); }
+
+  .summary {
+    background: var(--accent-bg); color: var(--accent);
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; line-height: 1.6;
+  }
+  .summary p { margin: 2px 0; }
+
+  .table-wrap {
+    max-height: 500px; overflow: auto;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  table th {
+    text-align: left; font-weight: 500; color: var(--text-muted);
+    padding: 8px 12px; font-size: 12px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    position: sticky; top: 0;
+    white-space: nowrap;
+  }
+  table td {
+    padding: 6px 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  table tr:last-child td { border-bottom: none; }
+  table tr:nth-child(even) td { background: rgba(0,0,0,0.015); }
+
+  .preview-info {
+    font-size: 12px; color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .credit-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .credit-footer a { color: var(--text-muted); }
+  .credit-footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Mailing list cleaner</h1>
+<p class="subtitle">Upload a CSV to remove duplicates, invalid addresses, and apply cleaning rules.</p>
+
+<div class="panel">
+  <h2><span class="panel-num">1</span>Upload CSV</h2>
+  <input id="fileInput" type="file" accept=".csv,text/csv" />
+</div>
+
+<div class="panel">
+  <h2><span class="panel-num">2</span>Process</h2>
+  <div class="actions">
+    <button id="processBtn" class="primary" disabled>Process</button>
+    <button id="downloadBtn" disabled>Download cleaned CSV</button>
+    <div class="spacer"></div>
+    <button id="resetBtn" class="danger-text">Reset</button>
+  </div>
+  <div id="statsSection" style="display:none; margin-top: 14px;">
+    <div id="stats" class="summary"></div>
+  </div>
+</div>
+
+<div class="panel" id="previewSection" style="display:none;">
+  <h2><span class="panel-num">3</span>Preview</h2>
+  <div id="preview"></div>
+</div>
+
+</div>
+
+<footer class="credit-footer container">
+  Built by <a href="https://github.com/caitlinsc">caitlinsc</a> on GitHub
+</footer>
+
+<script>
+  const ADDRESS1_REMOVE_KEYWORDS = ['PARKING', 'LOADING DOCK', 'DO NOT DELIVER', 'ATTN: DO NOT DELIVER'];
+  const ADDRESS1_REMOVE_STREETS = ['ALLEY', 'CTY RD', 'COUNTY ROAD'];
+  const NAME_TAG_REMOVE = ['EMPLOYEE', 'DOOR TAG'];
+  const NAME_TAG_STRIP = ['(O-C)'];
+  const PO_BOX_PATTERNS = [/PO BOX/i, /P\.?O\.? BOX/i];
+
+  const fileInput = document.getElementById('fileInput');
+  const processBtn = document.getElementById('processBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const stats = document.getElementById('stats');
+  const preview = document.getElementById('preview');
+  const statsSection = document.getElementById('statsSection');
+  const previewSection = document.getElementById('previewSection');
+
+  let parsedRows = [];
+  let headers = [];
+  let cleanedRows = [];
+
+  fileInput.addEventListener('change', () => {
+    processBtn.disabled = !fileInput.files.length;
+    downloadBtn.disabled = true;
+    statsSection.style.display = 'none';
+    previewSection.style.display = 'none';
+  });
+
+  processBtn.addEventListener('click', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    statsSection.style.display = 'block';
+    stats.innerHTML = '<p>Parsing CSV…</p>';
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: false,
+      dynamicTyping: false,
+      complete: result => {
+        headers = result.meta.fields || [];
+        parsedRows = result.data || [];
+        cleanedRows = cleanRows(parsedRows, headers);
+        const removed = parsedRows.length - cleanedRows.length;
+        stats.innerHTML = `
+          <p><strong>Parsed:</strong> ${parsedRows.length} rows</p>
+          <p><strong>Cleaned:</strong> ${cleanedRows.length} rows</p>
+          <p><strong>Removed:</strong> ${removed} rows</p>
+        `;
+        showPreview(cleanedRows, headers);
+        downloadBtn.disabled = false;
+      },
+      error: err => {
+        stats.outerHTML = `<div id="stats" class="status err">Error parsing CSV: ${escapeHtml(err.message)}</div>`;
+      }
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    parsedRows = [];
+    cleanedRows = [];
+    headers = [];
+    processBtn.disabled = true;
+    downloadBtn.disabled = true;
+    statsSection.style.display = 'none';
+    previewSection.style.display = 'none';
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (!cleanedRows.length) return;
+    const csv = Papa.unparse({fields: headers, data: cleanedRows});
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mailing_list_cleaned.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function cleanRows(rows, hdrs){
+    const field = f => {
+      const map = hdrs.reduce((m,k)=>{m[k.toLowerCase().trim()]=k; return m;}, {});
+      const lookup = name => map[name.toLowerCase()] || map[name.toLowerCase().replace(/\s+/g,' ')] || null;
+      return lookup(f.toLowerCase()) || lookup(f) || f;
+    };
+    const FN = {
+      num: field('Customer Number'),
+      name: field('Customer Name'),
+      a1: field('Address 1'),
+      a2: field('Address 2'),
+      email: field('Email Address')
+    };
+
+    let filtered = rows.filter(r => Object.values(r).some(v => (v !== null && v !== undefined && String(v).trim() !== '')));
+    const seenFull = new Set();
+    filtered = filtered.filter(r => {
+      const key = JSON.stringify(r);
+      if (seenFull.has(key)) return false;
+      seenFull.add(key);
+      return true;
+    });
+
+    filtered = filtered.filter(r => {
+      const a1 = String(r[FN.a1] || '').toUpperCase();
+      if (!a1) return true;
+      for (const kw of ADDRESS1_REMOVE_KEYWORDS) {
+        if (a1.includes(kw.toUpperCase())) return false;
+      }
+      for (const st of ADDRESS1_REMOVE_STREETS) {
+        if (a1.includes(st.toUpperCase())) return false;
+      }
+      return true;
+    });
+
+    filtered = filtered.filter(r => {
+      const nm = String(r[FN.name] || '').toUpperCase();
+      if (!nm) return true;
+      for (const t of NAME_TAG_REMOVE) {
+        if (nm.includes(t.toUpperCase())) return false;
+      }
+      return true;
+    });
+
+    filtered.forEach(r => {
+      let nm = String(r[FN.name] || '');
+      for (const s of NAME_TAG_STRIP) {
+        nm = nm.split(s).join('').trim();
+      }
+      r[FN.name] = nm;
+    });
+
+    filtered.forEach(r => {
+      const a1 = String(r[FN.a1] || '').trim();
+      const a2 = String(r[FN.a2] || '').trim();
+      if ((!a1 || a1 === '') && a2) {
+        r[FN.a1] = a2;
+        r[FN.a2] = '';
+      }
+    });
+
+    filtered.forEach(r => {
+      const a1 = String(r[FN.a1] || '');
+      const a2 = String(r[FN.a2] || '');
+      if (a2) {
+        for (const pat of PO_BOX_PATTERNS) {
+          if (pat.test(a1)) {
+            r[FN.a2] = '';
+            break;
+          }
+        }
+      }
+    });
+
+    const groups = new Map();
+    filtered.forEach(r => {
+      const id = String(r[FN.num] || '').trim();
+      if (!id) {
+        const tempKey = `__noid__${Math.random().toString(36).slice(2,9)}`;
+        groups.set(tempKey, r);
+        return;
+      }
+      if (!groups.has(id)) groups.set(id, r);
+      else {
+        const existing = groups.get(id);
+        const existingHasEmail = String(existing[FN.email] || '').trim() !== '';
+        const rHasEmail = String(r[FN.email] || '').trim() !== '';
+        if (!existingHasEmail && rHasEmail) groups.set(id, r);
+      }
+    });
+
+    const final = [];
+    const used = new Set();
+    filtered.forEach(r => {
+      const id = String(r[FN.num] || '').trim();
+      if (!id) {
+        const key = [...groups.entries()].find(([k,v]) => v === r)?.[0];
+        if (key && !used.has(key)) { final.push(r); used.add(key); }
+        return;
+      }
+      const groupRow = groups.get(id);
+      if (groupRow && !used.has(id)) {
+        final.push(groupRow);
+        used.add(id);
+      }
+    });
+
+    return final;
+  }
+
+  function showPreview(rows, hdrs){
+    preview.innerHTML = '';
+    previewSection.style.display = 'block';
+    if (!rows.length){
+      preview.innerHTML = '<p class="empty-state">No rows after cleaning.</p>';
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    const cols = hdrs.length ? hdrs : Object.keys(rows[0]);
+    cols.forEach(c => {
+      const th = document.createElement('th');
+      th.textContent = c;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    const max = Math.min(rows.length, 100);
+    for (let i = 0; i < max; i++){
+      const r = rows[i];
+      const tr = document.createElement('tr');
+      cols.forEach(c => {
+        const td = document.createElement('td');
+        td.textContent = r[c] !== undefined ? r[c] : '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    preview.appendChild(wrap);
+
+    if (rows.length > 100){
+      const p = document.createElement('p');
+      p.className = 'preview-info';
+      p.textContent = `Showing first 100 of ${rows.length} rows.`;
+      preview.appendChild(p);
+    }
+  }
+</script>
+</body>
+</html>
