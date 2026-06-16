@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendor Order Planner · Cheshire Horse</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  background: #eef1f5;
+  color: #1c2b3a;
+  min-height: 100vh;
+}
+
+header {
+  background: #1a2f4a;
+  color: #fff;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+header .logo { font-size: 26px; }
+header h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
+header p { font-size: 12px; color: #8ca9c4; margin-top: 3px; }
+
+.container { max-width: 980px; margin: 0 auto; padding: 28px 20px; }
+
+/* ── Upload zone ── */
+.upload-zone {
+  background: #fff;
+  border: 2px dashed #b8cad9;
+  border-radius: 12px;
+  padding: 60px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .18s, background .18s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: #2980b9;
+  background: #eef6fd;
+}
+.upload-zone .icon { font-size: 48px; margin-bottom: 14px; display: block; }
+.upload-zone h2 { font-size: 17px; color: #3a5068; margin-bottom: 8px; }
+.upload-zone p { font-size: 13px; color: #8899aa; }
+.upload-zone input { display: none; }
+
+/* ── Results ── */
+.results { margin-top: 0; }
+
+/* ── Options panel ── */
+.panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #dde4ec;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #8899aa;
+  margin-bottom: 12px;
+}
+.options-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.opt-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  color: #2c4059;
+  cursor: pointer;
+  user-select: none;
+}
+.opt-label input[type=checkbox] { width: 15px; height: 15px; accent-color: #2980b9; cursor: pointer; }
+
+/* ── Month tags ── */
+.month-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.month-label-prefix { font-size: 11px; color: #8899aa; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-right: 4px; }
+.mtag {
+  background: #ddeefa; color: #1a6fa3; border: 1px solid #a8d1f0;
+  border-radius: 20px; padding: 3px 11px; font-size: 12px; font-weight: 600;
+}
+.mtag.partial {
+  background: #fef6e4; color: #b07d12; border-color: #f5d87a;
+}
+
+/* ── Stats bar ── */
+.stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.stat {
+  background: #fff; border-radius: 10px; border: 1px solid #dde4ec;
+  padding: 16px 16px 14px; text-align: center;
+}
+.stat .n { font-size: 32px; font-weight: 800; line-height: 1; color: #1a2f4a; }
+.stat .lbl { font-size: 11px; color: #8899aa; margin-top: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+.stat.s-green .n { color: #1a8c4e; }
+.stat.s-blue .n { color: #1a6fa3; }
+.stat.s-gray .n { color: #8899aa; }
+
+/* ── Info note ── */
+.info-note {
+  background: #f5f8fe; border: 1px solid #c9d9ef;
+  border-radius: 8px; padding: 9px 14px;
+  font-size: 12.5px; color: #3a5575;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* ── Table ── */
+.table-wrap {
+  background: #fff; border-radius: 10px; border: 1px solid #dde4ec;
+  overflow-x: auto; margin-bottom: 16px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: #f4f7fb;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #607a8f;
+  border-bottom: 2px solid #dde4ec;
+  white-space: nowrap;
+}
+thead th.right { text-align: right; }
+thead th.center { text-align: center; }
+tbody tr:hover { background: #f8fafc; }
+tbody td { padding: 7px 12px; border-bottom: 1px solid #f0f3f7; white-space: nowrap; vertical-align: middle; }
+td.right { text-align: right; }
+td.center { text-align: center; }
+td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: center;
+}
+.badge-green { background: #d4f5e2; color: #0f6e38; }
+.badge-zero  { background: #f0f3f7; color: #9aacbc; }
+.more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
+
+/* ── Action bar ── */
+.action-bar { display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
+.file-name { font-size: 12px; color: #8899aa; margin-right: auto; }
+.btn {
+  padding: 9px 20px; border-radius: 7px; border: none;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+}
+.btn-primary { background: #1a8c4e; color: #fff; }
+.btn-primary:hover { background: #167943; }
+.btn-ghost { background: transparent; color: #607a8f; border: 1px solid #c8d5e0; }
+.btn-ghost:hover { background: #f0f4f8; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🐴</span>
+  <div>
+    <h1>Vendor Order Planner</h1>
+    <p>Cheshire Horse Internal Tool — Generate suggested reorder quantities from Eagle vendor exports</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Upload -->
+  <div class="upload-zone" id="uploadZone">
+    <span class="icon">📂</span>
+    <h2>Drop your Eagle vendor export here</h2>
+    <p>Click to browse &nbsp;·&nbsp; Accepts .xls or .xlsx</p>
+    <input type="file" id="fileInput" accept=".xls,.xlsx">
+  </div>
+
+  <!-- Results -->
+  <div class="results hidden" id="results">
+
+    <!-- Options -->
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-title">Options</div>
+      <div class="options-grid">
+        <label class="opt-label">
+          <input type="checkbox" id="optExcludeCurrent" checked>
+          Exclude current month from average (may be partial)
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="optFilterDisc">
+          Also remove Discontinued = Y
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="optRespectMult" checked>
+          Round up to Order Multiple
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="optOnlyNeeded">
+          Preview: show only items needing reorder
+        </label>
+      </div>
+    </div>
+
+    <!-- Month tags -->
+    <div class="month-row" id="monthRow">
+      <span class="month-label-prefix">Months used:</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="n" id="sTotal">—</div>
+        <div class="lbl">Loaded</div>
+      </div>
+      <div class="stat s-blue">
+        <div class="n" id="sFiltered">—</div>
+        <div class="lbl">After Filters</div>
+      </div>
+      <div class="stat s-green">
+        <div class="n" id="sNeedOrder">—</div>
+        <div class="lbl">Need Reorder</div>
+      </div>
+      <div class="stat s-gray">
+        <div class="n" id="sNoSales">—</div>
+        <div class="lbl">Zero Sales</div>
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div class="info-note" id="infoNote"></div>
+
+    <!-- Preview table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>SKU</th>
+            <th class="right">QOH</th>
+            <th class="right" id="thAvg">Avg / Mo</th>
+            <th class="right">Ord Mult</th>
+            <th class="center">Post Qty</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+      <div class="more-note hidden" id="moreNote"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-bar">
+      <span class="file-name" id="fileNameLabel"></span>
+      <button class="btn btn-ghost" id="resetBtn">↑ Load Different File</button>
+      <button class="btn btn-primary" id="exportBtn">⬇ Export Order Sheet (.xlsx)</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ─── State ─── */
+let rawRows = [];       // array of arrays (data rows only)
+let headers = [];       // array of strings
+let monthCols = [];     // [{name, idx}] sorted oldest→newest
+let colMap = {};        // {sku, desc, qoh, closeout, disc, ordMult, postQty}
+let processed = [];     // rows after filter/sort/calc
+let loadedFileName = '';
+
+/* ─── Month detection ─── */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_RE = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{2})$/i;
+
+function detectMonths(hdrs) {
+  const found = [];
+  hdrs.forEach((h, i) => {
+    const m = String(h).match(MONTH_RE);
+    if (m) found.push({ name: String(h).trim(), idx: i, mon: MONTHS.indexOf(m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase()), yr: parseInt(m[2]) });
+  });
+  found.sort((a, b) => (a.yr*12 + a.mon) - (b.yr*12 + b.mon));
+  return found;
+}
+
+function currentMonthLabel() {
+  const now = new Date();
+  return `${MONTHS[now.getMonth()]} ${String(now.getFullYear()).slice(2)}`;
+}
+
+/* ─── Core processing ─── */
+function process() {
+  if (!rawRows.length) return;
+
+  const exCurrent = document.getElementById('optExcludeCurrent').checked;
+  const filterDisc = document.getElementById('optFilterDisc').checked;
+  const respMult   = document.getElementById('optRespectMult').checked;
+
+  // Which month cols to average over
+  const curLabel = currentMonthLabel().toLowerCase();
+  let activeCols = monthCols.filter(c => !(exCurrent && c.name.toLowerCase() === curLabel));
+  const excludedCol = exCurrent ? monthCols.find(c => c.name.toLowerCase() === curLabel) : null;
+
+  // Render month tags
+  const row = document.getElementById('monthRow');
+  row.innerHTML = `<span class="month-label-prefix">Months used:</span>`;
+  monthCols.forEach(c => {
+    const isExcl = excludedCol && c.name === excludedCol.name;
+    const tag = document.createElement('span');
+    tag.className = 'mtag' + (isExcl ? ' partial' : '');
+    tag.textContent = isExcl ? `${c.name} (partial—skipped)` : c.name;
+    row.appendChild(tag);
+  });
+
+  // Update avg column header
+  document.getElementById('thAvg').textContent = `Avg/Mo (${activeCols.length}mo)`;
+
+  // Filter
+  let rows = rawRows.filter(r => {
+    if (String(r[colMap.closeout] ?? '').toUpperCase().trim() === 'Y') return false;
+    if (filterDisc && String(r[colMap.disc] ?? '').toUpperCase().trim() === 'Y') return false;
+    return true;
+  });
+
+  // Sort A-Z by description
+  rows.sort((a, b) => {
+    const da = String(a[colMap.desc] ?? '').toLowerCase();
+    const db = String(b[colMap.desc] ?? '').toLowerCase();
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+
+  // Calculate
+  rows = rows.map(r => {
+    const qoh     = parseFloat(r[colMap.qoh]) || 0;
+    const ordMult = Math.max(1, parseInt(r[colMap.ordMult]) || 1);
+    const sales   = activeCols.map(c => parseFloat(r[c.idx]) || 0);
+    const avg     = activeCols.length ? sales.reduce((s, v) => s + v, 0) / activeCols.length : 0;
+
+    let postQty = 0;
+    if (avg > 0) {
+      const needed = avg - qoh;
+      if (needed > 0) {
+        postQty = respMult && ordMult > 1
+          ? Math.ceil(needed / ordMult) * ordMult
+          : Math.ceil(needed);
+      }
+    }
+    return { _row: r, _avg: avg, _postQty: postQty, _qoh: qoh, _ordMult: ordMult };
+  });
+
+  processed = rows;
+
+  // Stats
+  const totalBefore  = rawRows.length;
+  const afterFilter  = rows.length;
+  const needOrder    = rows.filter(r => r._postQty > 0).length;
+  const noSales      = rows.filter(r => r._avg === 0).length;
+
+  document.getElementById('sTotal').textContent    = totalBefore;
+  document.getElementById('sFiltered').textContent = afterFilter;
+  document.getElementById('sNeedOrder').textContent = needOrder;
+  document.getElementById('sNoSales').textContent  = noSales;
+
+  const removed = totalBefore - afterFilter;
+  document.getElementById('infoNote').innerHTML =
+    `<strong>Formula:</strong> Post Qty = amount needed to reach 1-month average stock, rounded up to Order Multiple. ` +
+    `Average based on ${activeCols.length} month(s): <strong>${activeCols.map(c => c.name).join(', ')}</strong>. ` +
+    `Removed ${removed} Closeout row${removed !== 1 ? 's' : ''}. ` +
+    `All quantities are editable after export.`;
+
+  // Preview
+  renderPreview();
+}
+
+function renderPreview() {
+  const onlyNeeded = document.getElementById('optOnlyNeeded').checked;
+  const displayRows = onlyNeeded ? processed.filter(r => r._postQty > 0) : processed;
+  const MAX = 60;
+
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = displayRows.slice(0, MAX).map(({ _row: r, _avg, _postQty, _qoh, _ordMult }) => {
+    const desc = String(r[colMap.desc] ?? '');
+    const sku  = String(r[colMap.sku]  ?? '');
+    const avgStr = _avg > 0 ? _avg.toFixed(1) : '—';
+    const badge = _postQty > 0
+      ? `<span class="badge badge-green">${_postQty}</span>`
+      : `<span class="badge badge-zero">0</span>`;
+    return `<tr>
+      <td class="desc" title="${desc}">${desc}</td>
+      <td>${sku}</td>
+      <td class="right">${_qoh}</td>
+      <td class="right">${avgStr}</td>
+      <td class="right">${_ordMult > 1 ? _ordMult : '—'}</td>
+      <td class="center">${badge}</td>
+    </tr>`;
+  }).join('');
+
+  const moreEl = document.getElementById('moreNote');
+  if (displayRows.length > MAX) {
+    moreEl.textContent = `Showing first ${MAX} of ${displayRows.length} items. All ${displayRows.length} rows included in export.`;
+    moreEl.classList.remove('hidden');
+  } else {
+    moreEl.textContent = `Showing all ${displayRows.length} items.`;
+    moreEl.classList.remove('hidden');
+  }
+}
+
+/* ─── Export ─── */
+function exportSheet() {
+  if (!processed.length) return;
+
+  // Build output — all original columns, Posting Quantity filled in, add Avg/Mo column after Post Qty
+  const avgColHeader = `Avg/Mo`;
+  const postQtyIdx   = colMap.postQty;
+
+  // Insert Avg/Mo right after Posting Quantity
+  const outHeaders = [
+    ...headers.slice(0, postQtyIdx + 1),
+    avgColHeader,
+    ...headers.slice(postQtyIdx + 1)
+  ];
+
+  const outData = [outHeaders];
+
+  for (const { _row: r, _avg, _postQty } of processed) {
+    const baseRow = headers.map((_, i) => {
+      if (i === postQtyIdx) return _postQty;
+      const v = r[i];
+      return v === '' || v == null ? '' : v;
+    });
+    // Insert avg after postQty
+    const fullRow = [
+      ...baseRow.slice(0, postQtyIdx + 1),
+      _avg > 0 ? Math.round(_avg * 10) / 10 : 0,
+      ...baseRow.slice(postQtyIdx + 1)
+    ];
+    outData.push(fullRow);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(outData);
+
+  // ── Styling ──
+  const nCols = outHeaders.length;
+  const nRows = outData.length;
+
+  // Header row: bold + gray fill
+  for (let c = 0; c < nCols; c++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    const cell = ws[addr];
+    if (!cell) continue;
+    cell.s = {
+      font: { bold: true, color: { rgb: '2C3E50' } },
+      fill: { patternType: 'solid', fgColor: { rgb: 'D5DCE4' } },
+      alignment: { horizontal: 'center', wrapText: false }
+    };
+  }
+
+  // Post Qty column: green if > 0, bold header highlight
+  const pqColOut = postQtyIdx; // same index since we inserted avg AFTER it
+  const avgColOut = postQtyIdx + 1;
+
+  // Header cells for Post Qty and Avg/Mo: yellow tint
+  ['Post Qty col header', 'Avg/Mo col header'].forEach((_, ci) => {
+    const c = ci === 0 ? pqColOut : avgColOut;
+    const addr = XLSX.utils.encode_cell({ r: 0, c });
+    const cell = ws[addr];
+    if (cell) {
+      cell.s = {
+        font: { bold: true, color: { rgb: '2C3E50' } },
+        fill: { patternType: 'solid', fgColor: { rgb: 'FDE9A2' } },
+        alignment: { horizontal: 'center' }
+      };
+    }
+  });
+
+  // Data rows
+  for (let r = 1; r < nRows; r++) {
+    const pqAddr  = XLSX.utils.encode_cell({ r, c: pqColOut });
+    const avgAddr = XLSX.utils.encode_cell({ r, c: avgColOut });
+    const pqCell  = ws[pqAddr];
+    const avgCell = ws[avgAddr];
+
+    if (pqCell) {
+      pqCell.t = 'n';
+      const qty = outData[r][pqColOut];
+      if (qty > 0) {
+        pqCell.s = {
+          fill: { patternType: 'solid', fgColor: { rgb: 'C6EFCE' } },
+          font: { bold: true, color: { rgb: '276221' } },
+          alignment: { horizontal: 'center' }
+        };
+      } else {
+        pqCell.s = { alignment: { horizontal: 'center' } };
+      }
+    }
+    if (avgCell) {
+      avgCell.t = 'n';
+      avgCell.s = { alignment: { horizontal: 'center' }, numFmt: '0.0' };
+    }
+  }
+
+  // Column widths
+  ws['!cols'] = outHeaders.map(h => {
+    if (h === 'Description') return { wch: 42 };
+    if (h === 'Posting Quantity') return { wch: 14 };
+    if (h === 'Avg/Mo') return { wch: 10 };
+    if (h === 'SKU') return { wch: 12 };
+    if (h === 'Mfg Part #') return { wch: 14 };
+    if (h === 'UPC') return { wch: 14 };
+    if (h === 'Description') return { wch: 40 };
+    if (['QOH','QOO','Retail','Repl Cost','Avg Cost','List'].includes(h)) return { wch: 10 };
+    return { wch: 11 };
+  });
+
+  // Freeze header row
+  ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2' }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Order Sheet');
+
+  const today = new Date();
+  const stamp = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `order_sheet_${stamp}.xlsx`, { cellStyles: true, bookType: 'xlsx' });
+}
+
+/* ─── File loading ─── */
+function loadFile(file) {
+  loadedFileName = file.name;
+  document.getElementById('fileNameLabel').textContent = `📄 ${file.name}`;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = new Uint8Array(e.target.result);
+    const wb   = XLSX.read(data, { type: 'array', cellDates: true, cellText: false });
+    const ws   = wb.Sheets[wb.SheetNames[0]];
+    const raw  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+
+    if (raw.length < 2) { alert('No data found in this file.'); return; }
+
+    headers = raw[0].map(h => String(h ?? '').trim());
+    rawRows = raw.slice(1).filter(r => r.some(v => v !== '' && v != null));
+
+    colMap = {
+      sku:      headers.indexOf('SKU'),
+      desc:     headers.indexOf('Description'),
+      qoh:      headers.indexOf('QOH'),
+      closeout: headers.indexOf('Store Closeout'),
+      disc:     headers.indexOf('Discontinued'),
+      ordMult:  headers.indexOf('Order Multiple'),
+      postQty:  headers.indexOf('Posting Quantity'),
+    };
+
+    monthCols = detectMonths(headers);
+
+    if (monthCols.length === 0) {
+      alert('No month columns detected. Expected headers like "Jan 25", "Feb 26", etc.');
+      return;
+    }
+    if (colMap.desc === -1 || colMap.qoh === -1) {
+      alert('Could not find expected columns (Description, QOH). Is this an Eagle vendor export?');
+      return;
+    }
+
+    document.getElementById('uploadZone').classList.add('hidden');
+    document.getElementById('results').classList.remove('hidden');
+    process();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ─── Event wiring ─── */
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('click', () => document.getElementById('fileInput').click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  rawRows = []; headers = []; monthCols = []; processed = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('uploadZone').classList.remove('hidden');
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportSheet);
+
+['optExcludeCurrent','optFilterDisc','optRespectMult'].forEach(id =>
+  document.getElementById(id).addEventListener('change', process)
+);
+document.getElementById('optOnlyNeeded').addEventListener('change', renderPreview);
+</script>
+</body>
+</html>
