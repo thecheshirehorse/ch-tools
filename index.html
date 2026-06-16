@@ -6,55 +6,55 @@
 <title>Cheshire Horse — Tools</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#faf9f6;min-height:100vh;color:#1a1a1a}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#141414;min-height:100vh;color:#e0e0e0}
 
-.header{background:linear-gradient(135deg,#1a3a1a,#2d5a27 60%,#3a6e32);color:#fff;padding:16px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.header{background:linear-gradient(135deg,#0d1f0d,#1a3a1a 60%,#245020);color:#fff;padding:16px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .header h1{font-size:18px;font-weight:700;letter-spacing:-0.3px}
 .header .sub{font-size:11px;opacity:0.65;margin-top:2px}
 .search-wrap{position:relative;flex:0 0 220px}
-.search-wrap input{width:100%;padding:7px 12px 7px 32px;border-radius:8px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:12px;outline:none}
-.search-wrap input::placeholder{color:rgba(255,255,255,0.55)}
-.search-wrap input:focus{background:rgba(255,255,255,0.25)}
+.search-wrap input{width:100%;padding:7px 12px 7px 32px;border-radius:8px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:12px;outline:none}
+.search-wrap input::placeholder{color:rgba(255,255,255,0.4)}
+.search-wrap input:focus{background:rgba(255,255,255,0.18)}
 .s-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;opacity:0.6;pointer-events:none}
 
-.toolbar{padding:12px 28px;background:#fff;border-bottom:1px solid #e8e5de;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.filter-label{font-size:11px;color:#999;margin-right:2px}
-.pill{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#faf9f6;color:#666;transition:all .15s}
-.pill:hover{border-color:#2d5a27;color:#2d5a27}
+.toolbar{padding:12px 28px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-label{font-size:11px;color:#777;margin-right:2px}
+.pill{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #333;background:#1e1e1e;color:#999;transition:all .15s}
+.pill:hover{border-color:#3a7a34;color:#6abf62}
 .pill.active{background:#2d5a27;color:#fff;border-color:#2d5a27}
 .cnt{font-size:10px;margin-left:3px;opacity:0.75}
 
 .main{padding:22px 28px}
 .category{margin-bottom:28px}
 .category:last-child{margin-bottom:0}
-.cat-header{font-size:13px;font-weight:700;color:#2d5a27;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e8e5de;display:flex;align-items:center;gap:8px}
+.cat-header{font-size:13px;font-weight:700;color:#6abf62;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #2a2a2a;display:flex;align-items:center;gap:8px}
 .cat-icon{font-size:15px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
-.empty-msg{text-align:center;padding:48px;color:#bbb;font-size:13px;grid-column:1/-1}
+.empty-msg{text-align:center;padding:48px;color:#555;font-size:13px;grid-column:1/-1}
 
-.card{background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:9px;transition:box-shadow .15s,border-color .15s}
-.card:hover{border-color:#b8d4b0;box-shadow:0 2px 14px rgba(45,90,39,0.09)}
+.card{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:9px;transition:box-shadow .15s,border-color .15s}
+.card:hover{border-color:#3a7a34;box-shadow:0 2px 14px rgba(45,90,39,0.15)}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
-.card-name{font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.35;flex:1}
+.card-name{font-size:13px;font-weight:600;color:#e8e8e8;line-height:1.35;flex:1}
 .type-badge{font-size:9px;font-weight:600;padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
-.badge-html{background:#e6f1fb;color:#185fa5}
-.badge-python{background:#eaf3de;color:#3b6d11}
-.badge-terminal{background:#faeeda;color:#854f0b}
-.badge-private{background:#f4f3ef;color:#888;font-size:8px;padding:2px 6px;border-radius:3px;margin-left:3px;vertical-align:middle}
-.card-desc{font-size:11px;color:#777;line-height:1.55;flex:1}
-.card-cmd{background:#f4f3ef;border-radius:6px;padding:7px 10px;display:flex;align-items:center;gap:6px;min-width:0}
-.cmd-text{font-size:10px;font-family:'Courier New',monospace;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.copy-btn{background:#eef4fa;color:#1a4a7a;border:1px solid #b0c8e8;border-radius:4px;font-size:9px;font-weight:600;padding:2px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.copy-btn:hover{background:#d4e6f7}
-.card-note{font-size:10px;color:#aaa;margin-top:-3px}
+.badge-html{background:#162a40;color:#5ba3e0}
+.badge-python{background:#1a2e12;color:#6abf62}
+.badge-terminal{background:#2e2412;color:#d4a54a}
+.badge-private{background:#252525;color:#666;font-size:8px;padding:2px 6px;border-radius:3px;margin-left:3px;vertical-align:middle}
+.card-desc{font-size:11px;color:#999;line-height:1.55;flex:1}
+.card-cmd{background:#252525;border-radius:6px;padding:7px 10px;display:flex;align-items:center;gap:6px;min-width:0}
+.cmd-text{font-size:10px;font-family:'Courier New',monospace;color:#bbb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.copy-btn{background:#162a40;color:#5ba3e0;border:1px solid #2a4a6a;border-radius:4px;font-size:9px;font-weight:600;padding:2px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.copy-btn:hover{background:#1e3a55}
+.card-note{font-size:10px;color:#666;margin-top:-3px}
 .card-action{display:block;width:100%;padding:8px;text-align:center;font-size:12px;font-weight:600;border-radius:7px;cursor:pointer;text-decoration:none;border:none;margin-top:auto}
 .action-open{background:#2d5a27;color:#fff}
-.action-open:hover{background:#245020}
+.action-open:hover{background:#3a7a34}
 .action-cmd{background:#1a4a7a;color:#fff}
-.action-cmd:hover{background:#153d65}
-.action-private{background:#f4f3ef;color:#999;border:1px solid #e0ddd5;cursor:default}
+.action-cmd:hover{background:#2560a0}
+.action-private{background:#252525;color:#555;border:1px solid #333;cursor:default}
 
-.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}
+.toast{position:fixed;bottom:20px;right:20px;background:#e8e8e8;color:#141414;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99}
 .toast.show{opacity:1}
 </style>
 </head>
@@ -96,7 +96,7 @@ const TOOLS = [
     desc: "Matches a Salesforce closeout export against Compass inventory to identify OOS SKUs that need to be disabled.",
     type: "html",
     category: "product",
-    url: "product/closeout-cleaner/",
+    url: "product/closeout-cleaner/closeout-cleaner.html",
   },
   {
     name: "Missing UPC / MFG Code Filler",
@@ -135,10 +135,12 @@ const TOOLS = [
   },
   {
     name: "Google Feed Refresh",
-    desc: "Builds a Google Shopping feed from SFCC catalog and price book XML exports.",
-    type: "html",
+    desc: "Triggers a refresh of the Google Shopping product feed.",
+    type: "python",
     category: "product",
-    url: "product/google-feed-refresh/",
+    private: true,
+    cmd: "start_feed_builder.bat",
+    note: "Double-click in product\\google-feed-refresh",
   },
   {
     name: "Price Check",
@@ -161,7 +163,7 @@ const TOOLS = [
     category: "product",
     private: true,
     cmd: "start_image_tool.bat",
-    note: "Double-click in product\missing-image-in-shipstation",
+    note: "Double-click in product\\missing-image-in-shipstation",
   },
 
   // ── CUSTOMERS ─────────────────────────────────────────────
@@ -179,7 +181,7 @@ const TOOLS = [
     category: "customers",
     private: true,
     cmd: "start_eagle_import.bat",
-    note: "Double-click in customers\rewards-customer-upload",
+    note: "Double-click in customers\\rewards-customer-upload",
   },
   {
     name: "Rewards Customer Upload",
