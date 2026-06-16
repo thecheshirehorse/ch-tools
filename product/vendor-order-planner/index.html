@@ -27,7 +27,7 @@ header .logo { font-size: 26px; }
 header h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
 header p { font-size: 12px; color: #8ca9c4; margin-top: 3px; }
 
-.container { max-width: 980px; margin: 0 auto; padding: 28px 20px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
 
 /* ── Upload zone ── */
 .upload-zone {
@@ -111,15 +111,59 @@ header p { font-size: 12px; color: #8ca9c4; margin-top: 3px; }
   line-height: 1.5;
 }
 
-/* ── Table ── */
+/* ── Section headers ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1c2b3a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-count {
+  display: inline-block;
+  background: #1a8c4e;
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.section-count.gray {
+  background: #b0bec8;
+}
+.toggle-btn {
+  background: none;
+  border: 1px solid #c8d5e0;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #607a8f;
+  cursor: pointer;
+  font-weight: 500;
+}
+.toggle-btn:hover { background: #f0f4f8; }
+
+/* ── Tables ── */
 .table-wrap {
   background: #fff; border-radius: 10px; border: 1px solid #dde4ec;
-  overflow-x: auto; margin-bottom: 16px;
+  overflow-x: auto; margin-bottom: 20px;
 }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-wrap.skipped-wrap {
+  border-color: #e4eaf0;
+  opacity: 0.85;
+}
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
 thead th {
   background: #f4f7fb;
-  padding: 9px 12px;
+  padding: 10px 14px;
   text-align: left;
   font-size: 11px;
   font-weight: 700;
@@ -129,24 +173,27 @@ thead th {
   border-bottom: 2px solid #dde4ec;
   white-space: nowrap;
 }
+.table-wrap.skipped-wrap thead th { background: #f8fafb; }
 thead th.right { text-align: right; }
 thead th.center { text-align: center; }
 tbody tr:hover { background: #f8fafc; }
-tbody td { padding: 7px 12px; border-bottom: 1px solid #f0f3f7; white-space: nowrap; vertical-align: middle; }
+tbody td { padding: 9px 14px; border-bottom: 1px solid #f0f3f7; white-space: nowrap; vertical-align: middle; }
 td.right { text-align: right; }
 td.center { text-align: center; }
-td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+td.desc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+td.muted { color: #8899aa; font-size: 13px; }
 .badge {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 5px 16px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  min-width: 36px;
+  font-size: 17px;
+  font-weight: 800;
+  min-width: 48px;
   text-align: center;
 }
 .badge-green { background: #d4f5e2; color: #0f6e38; }
 .badge-zero  { background: #f0f3f7; color: #9aacbc; }
+.skip-reason { display: inline-block; font-size: 11px; color: #9aacbc; font-style: italic; }
 .more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
 
 /* ── Action bar ── */
@@ -187,8 +234,14 @@ td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
   <!-- Results -->
   <div class="results hidden" id="results">
 
+    <!-- Vendor banner -->
+    <div style="margin-top:20px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8899aa;">Vendor</span>
+      <span id="vendorBadge" style="background:#1a2f4a;color:#fff;border-radius:6px;padding:4px 14px;font-size:15px;font-weight:700;letter-spacing:.02em;">—</span>
+    </div>
+
     <!-- Options -->
-    <div class="panel" style="margin-top:20px;">
+    <div class="panel">
       <div class="panel-title">Options</div>
       <div class="options-grid">
         <label class="opt-label">
@@ -196,16 +249,8 @@ td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
           Exclude current month from average (may be partial)
         </label>
         <label class="opt-label">
-          <input type="checkbox" id="optFilterDisc">
-          Also remove Discontinued = Y
-        </label>
-        <label class="opt-label">
           <input type="checkbox" id="optRespectMult" checked>
           Round up to Order Multiple
-        </label>
-        <label class="opt-label">
-          <input type="checkbox" id="optOnlyNeeded">
-          Preview: show only items needing reorder
         </label>
       </div>
     </div>
@@ -238,22 +283,54 @@ td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
     <!-- Info note -->
     <div class="info-note" id="infoNote"></div>
 
-    <!-- Preview table -->
-    <div class="table-wrap">
+    <!-- ORDER TABLE -->
+    <div class="section-header">
+      <div class="section-title">
+        ✅ To Order
+        <span class="section-count" id="orderCount">0</span>
+      </div>
+    </div>
+    <div class="table-wrap" id="orderTableWrap">
       <table>
         <thead>
           <tr>
             <th>Description</th>
             <th>SKU</th>
+            <th>Mfg Part #</th>
+            <th>UPC</th>
             <th class="right">QOH</th>
             <th class="right" id="thAvg">Avg / Mo</th>
             <th class="right">Ord Mult</th>
             <th class="center">Post Qty</th>
           </tr>
         </thead>
-        <tbody id="previewBody"></tbody>
+        <tbody id="orderBody"></tbody>
       </table>
-      <div class="more-note hidden" id="moreNote"></div>
+      <div class="more-note hidden" id="orderMoreNote"></div>
+    </div>
+
+    <!-- SKIPPED TABLE -->
+    <div class="section-header">
+      <div class="section-title">
+        ⏭ Skipped
+        <span class="section-count gray" id="skipCount">0</span>
+      </div>
+      <button class="toggle-btn" id="toggleSkipped">Show</button>
+    </div>
+    <div class="table-wrap skipped-wrap hidden" id="skippedTableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>SKU</th>
+            <th class="right">QOH</th>
+            <th class="right">Avg / Mo</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="skippedBody"></tbody>
+      </table>
+      <div class="more-note hidden" id="skippedMoreNote"></div>
     </div>
 
     <!-- Actions -->
@@ -299,7 +376,6 @@ function process() {
   if (!rawRows.length) return;
 
   const exCurrent = document.getElementById('optExcludeCurrent').checked;
-  const filterDisc = document.getElementById('optFilterDisc').checked;
   const respMult   = document.getElementById('optRespectMult').checked;
 
   // Which month cols to average over
@@ -321,10 +397,15 @@ function process() {
   // Update avg column header
   document.getElementById('thAvg').textContent = `Avg/Mo (${activeCols.length}mo)`;
 
+  // Vendor number from first row
+  const vendorNum = colMap.vendor >= 0 ? String(rawRows[0]?.[colMap.vendor] ?? '—') : '—';
+  document.getElementById('vendorBadge').textContent = vendorNum;
+
   // Filter
   let rows = rawRows.filter(r => {
     if (String(r[colMap.closeout] ?? '').toUpperCase().trim() === 'Y') return false;
-    if (filterDisc && String(r[colMap.disc] ?? '').toUpperCase().trim() === 'Y') return false;
+    if (String(r[colMap.disc]     ?? '').toUpperCase().trim() === 'Y') return false;
+    if (String(r[colMap.sku]      ?? '').toUpperCase().trimStart().startsWith('ZZ')) return false;
     return true;
   });
 
@@ -368,10 +449,12 @@ function process() {
   document.getElementById('sNoSales').textContent  = noSales;
 
   const removed = totalBefore - afterFilter;
+  const zzCount = rawRows.filter(r => String(r[colMap.sku] ?? '').toUpperCase().trimStart().startsWith('ZZ')).length;
+  const closeoutCount = rawRows.filter(r => String(r[colMap.closeout] ?? '').toUpperCase().trim() === 'Y').length;
   document.getElementById('infoNote').innerHTML =
     `<strong>Formula:</strong> Post Qty = amount needed to reach 1-month average stock, rounded up to Order Multiple. ` +
     `Average based on ${activeCols.length} month(s): <strong>${activeCols.map(c => c.name).join(', ')}</strong>. ` +
-    `Removed ${removed} Closeout row${removed !== 1 ? 's' : ''}. ` +
+    `Removed: ${closeoutCount} Closeout, ${zzCount} ZZ-prefix. ` +
     `All quantities are editable after export.`;
 
   // Preview
@@ -379,36 +462,52 @@ function process() {
 }
 
 function renderPreview() {
-  const onlyNeeded = document.getElementById('optOnlyNeeded').checked;
-  const displayRows = onlyNeeded ? processed.filter(r => r._postQty > 0) : processed;
-  const MAX = 60;
+  const toOrder  = processed.filter(r => r._postQty > 0);
+  const skipped  = processed.filter(r => r._postQty === 0);
 
-  const tbody = document.getElementById('previewBody');
-  tbody.innerHTML = displayRows.slice(0, MAX).map(({ _row: r, _avg, _postQty, _qoh, _ordMult }) => {
-    const desc = String(r[colMap.desc] ?? '');
-    const sku  = String(r[colMap.sku]  ?? '');
-    const avgStr = _avg > 0 ? _avg.toFixed(1) : '—';
-    const badge = _postQty > 0
-      ? `<span class="badge badge-green">${_postQty}</span>`
-      : `<span class="badge badge-zero">0</span>`;
+  // ── Order table ──
+  document.getElementById('orderCount').textContent = toOrder.length;
+
+  const orderBody = document.getElementById('orderBody');
+  orderBody.innerHTML = toOrder.map(({ _row: r, _avg, _postQty, _qoh, _ordMult }) => {
+    const desc    = String(r[colMap.desc]    ?? '');
+    const sku     = String(r[colMap.sku]     ?? '');
+    const mfgPart = colMap.mfgPart >= 0 ? String(r[colMap.mfgPart] ?? '') : '';
+    const upc     = colMap.upc     >= 0 ? String(r[colMap.upc]     ?? '') : '';
+    const avgStr  = _avg > 0 ? _avg.toFixed(1) : '—';
     return `<tr>
-      <td class="desc" title="${desc}">${desc}</td>
+      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
       <td>${sku}</td>
+      <td class="muted">${mfgPart}</td>
+      <td class="muted">${upc}</td>
       <td class="right">${_qoh}</td>
       <td class="right">${avgStr}</td>
       <td class="right">${_ordMult > 1 ? _ordMult : '—'}</td>
-      <td class="center">${badge}</td>
+      <td class="center"><span class="badge badge-green">${_postQty}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:#8899aa;font-style:italic;">No items need reordering with current settings.</td></tr>`;
+
+  // ── Skipped table ──
+  document.getElementById('skipCount').textContent = skipped.length;
+
+  const skippedBody = document.getElementById('skippedBody');
+  skippedBody.innerHTML = skipped.map(({ _row: r, _avg, _qoh }) => {
+    const desc   = String(r[colMap.desc] ?? '');
+    const sku    = String(r[colMap.sku]  ?? '');
+    const avgStr = _avg > 0 ? _avg.toFixed(1) : '—';
+    const reason = _avg === 0
+      ? '<span class="skip-reason">No recent sales</span>'
+      : `<span class="skip-reason">Well stocked (avg ${_avg.toFixed(1)}/mo, have ${_qoh})</span>`;
+    return `<tr>
+      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
+      <td>${sku}</td>
+      <td class="right">${_qoh}</td>
+      <td class="right">${avgStr}</td>
+      <td>${reason}</td>
     </tr>`;
   }).join('');
 
-  const moreEl = document.getElementById('moreNote');
-  if (displayRows.length > MAX) {
-    moreEl.textContent = `Showing first ${MAX} of ${displayRows.length} items. All ${displayRows.length} rows included in export.`;
-    moreEl.classList.remove('hidden');
-  } else {
-    moreEl.textContent = `Showing all ${displayRows.length} items.`;
-    moreEl.classList.remove('hidden');
-  }
+  document.getElementById('skippedMoreNote').classList.add('hidden');
 }
 
 /* ─── Export ─── */
@@ -428,7 +527,7 @@ function exportSheet() {
 
   const outData = [outHeaders];
 
-  for (const { _row: r, _avg, _postQty } of processed) {
+  for (const { _row: r, _avg, _postQty } of processed.filter(r => r._postQty > 0)) {
     const baseRow = headers.map((_, i) => {
       if (i === postQtyIdx) return _postQty;
       const v = r[i];
@@ -554,6 +653,9 @@ function loadFile(file) {
       disc:     headers.indexOf('Discontinued'),
       ordMult:  headers.indexOf('Order Multiple'),
       postQty:  headers.indexOf('Posting Quantity'),
+      mfgPart:  headers.indexOf('Mfg Part #'),
+      upc:      headers.indexOf('UPC'),
+      vendor:   headers.indexOf('Primary Vendor'),
     };
 
     monthCols = detectMonths(headers);
@@ -596,10 +698,15 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 document.getElementById('exportBtn').addEventListener('click', exportSheet);
 
-['optExcludeCurrent','optFilterDisc','optRespectMult'].forEach(id =>
+['optExcludeCurrent','optRespectMult'].forEach(id =>
   document.getElementById(id).addEventListener('change', process)
 );
-document.getElementById('optOnlyNeeded').addEventListener('change', renderPreview);
+
+document.getElementById('toggleSkipped').addEventListener('click', function() {
+  const wrap = document.getElementById('skippedTableWrap');
+  const isHidden = wrap.classList.toggle('hidden');
+  this.textContent = isHidden ? 'Show' : 'Hide';
+});
 </script>
 </body>
 </html>
