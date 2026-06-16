@@ -34,6 +34,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#141414;
 
 .card{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:9px;transition:box-shadow .15s,border-color .15s}
 .card:hover{border-color:#3a7a34;box-shadow:0 2px 14px rgba(45,90,39,0.15)}
+.card-icon{font-size:28px;line-height:1}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
 .card-name{font-size:13px;font-weight:600;color:#e8e8e8;line-height:1.35;flex:1}
 .type-badge{font-size:9px;font-weight:600;padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0}
@@ -93,6 +94,7 @@ const TOOLS = [
   // ── PRODUCT & INVENTORY ───────────────────────────────────
   {
     name: "Closeout Cleaner",
+    icon: "🧹",
     desc: "Matches a Salesforce closeout export against Compass inventory to identify OOS SKUs that need to be disabled.",
     type: "html",
     category: "product",
@@ -100,6 +102,7 @@ const TOOLS = [
   },
   {
     name: "Missing UPC / MFG Code Filler",
+    icon: "🔖",
     desc: "Enriches Salesforce export CSVs with missing UPC and MFG codes pulled from the Compass master file.",
     type: "html",
     category: "product",
@@ -107,6 +110,7 @@ const TOOLS = [
   },
   {
     name: "Missing SKU",
+    icon: "🔍",
     desc: "Finds SKUs that are present in one system but missing from another — surfaces gaps before they cause import errors.",
     type: "html",
     category: "product",
@@ -114,6 +118,7 @@ const TOOLS = [
   },
   {
     name: "Deallocation File Generator",
+    icon: "📤",
     desc: "Generates the deallocation file needed to remove inventory allocations in SFCC.",
     type: "html",
     category: "product",
@@ -121,6 +126,7 @@ const TOOLS = [
   },
   {
     name: "SKU Onboarder",
+    icon: "🚀",
     desc: "Guides the new-SKU onboarding process — preps and validates product data before upload to SFCC.",
     type: "html",
     category: "product",
@@ -128,6 +134,7 @@ const TOOLS = [
   },
   {
     name: "Shopify Inventory Converter",
+    icon: "🔄",
     desc: "Converts Compass inventory reports into upload-ready CSVs for Shopify's inventory import.",
     type: "html",
     category: "product",
@@ -135,6 +142,7 @@ const TOOLS = [
   },
   {
     name: "Google Feed Refresh",
+    icon: "📡",
     desc: "Triggers a refresh of the Google Shopping product feed.",
     type: "python",
     category: "product",
@@ -144,6 +152,7 @@ const TOOLS = [
   },
   {
     name: "Price Check",
+    icon: "💲",
     desc: "Verifies product prices are consistent across systems before a sale or promotion goes live.",
     type: "html",
     category: "product",
@@ -151,6 +160,7 @@ const TOOLS = [
   },
   {
     name: "RPH Review",
+    icon: "📋",
     desc: "Reviews and validates RPH (retail price history) records for accuracy.",
     type: "html",
     category: "product",
@@ -158,6 +168,7 @@ const TOOLS = [
   },
   {
     name: "Missing Image in ShipStation",
+    icon: "🖼️",
     desc: "Identifies orders in ShipStation with missing product images so they can be resolved before packing.",
     type: "python",
     category: "product",
@@ -169,6 +180,7 @@ const TOOLS = [
   // ── CUSTOMERS ─────────────────────────────────────────────
   {
     name: "Store Address Scrubber",
+    icon: "🏠",
     desc: "Finds and removes store/warehouse addresses that ShipStation incorrectly saves to customer records in SFCC.",
     type: "html",
     category: "customers",
@@ -176,6 +188,7 @@ const TOOLS = [
   },
   {
     name: "Rewards Account Creator",
+    icon: "⭐",
     desc: "Google Form → Eagle → PSM pipeline for creating and tracking new loyalty reward accounts.",
     type: "python",
     category: "customers",
@@ -185,6 +198,7 @@ const TOOLS = [
   },
   {
     name: "Rewards Customer Upload",
+    icon: "👤",
     desc: "Prepares and uploads new rewards customer records into the loyalty system.",
     type: "html",
     category: "customers",
@@ -192,6 +206,7 @@ const TOOLS = [
   },
   {
     name: "Astro Loyalty Redemptions",
+    icon: "🎁",
     desc: "Handles loyalty redemption processing through the Astro platform.",
     type: "html",
     category: "customers",
@@ -199,6 +214,7 @@ const TOOLS = [
   },
   {
     name: "Mailing List Cleaner",
+    icon: "✉️",
     desc: "Cleans and deduplicates mailing list exports — removes invalid emails, formats addresses consistently.",
     type: "html",
     category: "customers",
@@ -208,6 +224,7 @@ const TOOLS = [
   // ── MARKETING ─────────────────────────────────────────────
   {
     name: "Sale Category Builder",
+    icon: "🏷️",
     desc: "Accepts SFCC product exports, assigns discount tiers (10/15/20%), filters offline rows, and exports formatted files for Logical Position.",
     type: "html",
     category: "marketing",
@@ -215,6 +232,7 @@ const TOOLS = [
   },
   {
     name: "Coupon Serials",
+    icon: "🎟️",
     desc: "Confirms that coupon serial numbers are present and valid in Salesforce.",
     type: "html",
     category: "marketing",
@@ -224,6 +242,7 @@ const TOOLS = [
   // ── OTHER ─────────────────────────────────────────────────
   {
     name: "Logo Upload",
+    icon: "🖌️",
     desc: "Manages logo image uploads and prepares assets for use in SFCC.",
     type: "html",
     category: "other",
@@ -302,6 +321,7 @@ function render() {
       }
 
       html += `<div class="card">
+        <div class="card-icon">${tool.icon}</div>
         <div class="card-top">
           <div class="card-name">${esc(tool.name)}${privateBadge}</div>
           ${typeBadge}
