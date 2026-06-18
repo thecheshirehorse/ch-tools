@@ -74,18 +74,17 @@ def load_and_classify(rph_path: Path, enrich_path: Path) -> list[dict]:
     rph["Item Number"] = rph["Item Number"].astype(str).str.strip()
     enrich["Item Number"] = enrich["Item Number"].astype(str).str.strip()
 
-    # Aggregate enrichment to one row per item, summing QOH across stores 3+5
-    agg = (
-        enrich.groupby("Item Number")
-        .agg(
-            qoh_cheshire=("Quantity on Hand", lambda s: s.fillna(0).sum()),
-            department_code=("Department Code", "first"),
-            department_name=("Department Name", "first"),
-            class_code=("Class Code", "first"),
-            class_name=("Class Name", "first"),
-        )
-        .reset_index()
-    )
+    # Aggregate enrichment to one row per item, summing QOH/QOO across stores 3+5
+    agg_dict = {
+        "qoh_cheshire": ("Quantity on Hand", lambda s: s.fillna(0).sum()),
+        "department_code": ("Department Code", "first"),
+        "department_name": ("Department Name", "first"),
+        "class_code": ("Class Code", "first"),
+        "class_name": ("Class Name", "first"),
+    }
+    if "Quantity on Order" in enrich.columns:
+        agg_dict["qoo_cheshire"] = ("Quantity on Order", lambda s: s.fillna(0).sum())
+    agg = enrich.groupby("Item Number").agg(**agg_dict).reset_index()
 
     # Dedupe RPH (multi-UPC items show up twice)
     rph_dedup = rph.drop_duplicates("Item Number").copy()
@@ -110,6 +109,7 @@ def load_and_classify(rph_path: Path, enrich_path: Path) -> list[dict]:
                 "class_code": (str(r.get("class_code", "")) if pd.notna(r.get("class_code")) else ""),
                 "class_name": (str(r.get("class_name", "")) if pd.notna(r.get("class_name")) else ""),
                 "qoh_cheshire": float(r.get("qoh_cheshire", 0)) if pd.notna(r.get("qoh_cheshire")) else 0.0,
+                "qoo_cheshire": float(r.get("qoo_cheshire", 0)) if pd.notna(r.get("qoo_cheshire")) else 0.0,
                 "bucket": r["bucket"],
                 "bucket_label": BUCKET_LABELS[r["bucket"]],
             }
