@@ -174,9 +174,9 @@ DECISIONS: dict[str, str] = {}    # item_number -> 'approve' | 'skip'
 @app.route("/")
 def index():
     """Serve the HTML with live state injected, replacing the baked-in demo data."""
-    html_path = Path(__file__).parent / "RPH_Review_Concept.html"
+    html_path = Path(__file__).parent / "index.html"
     if not html_path.exists():
-        return "<h1>Place RPH_Review_Concept.html next to this script.</h1>", 500
+        return "<h1>Place index.html next to this script.</h1>", 500
 
     html = html_path.read_text(encoding="utf-8")
 
