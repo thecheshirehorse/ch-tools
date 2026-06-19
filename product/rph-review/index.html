@@ -7,21 +7,21 @@
   @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
   :root {
-    --bg: #f4f1ea;
-    --paper: #fbf9f3;
-    --ink: #1a1a17;
-    --ink-soft: #4a4641;
-    --ink-faint: #8a857d;
-    --line: #d4cdbf;
-    --line-soft: #e3ddd0;
-    --accent: #8b2a14;        /* burgundy red — Cheshire-ish */
-    --accent-soft: #faeae3;
-    --auto: #2d5a3d;          /* deep green */
-    --auto-soft: #e6f0e8;
-    --drop: #6b6258;          /* warm grey */
-    --drop-soft: #ece8de;
-    --review: #8b6510;        /* mustard */
-    --review-soft: #f7eed8;
+    --bg: #f6f8f6;
+    --paper: #ffffff;
+    --ink: #1b231f;
+    --ink-soft: #57645c;
+    --ink-faint: #8a978f;
+    --line: #dde4e0;
+    --line-soft: #eef2ef;
+    --accent: #056A45;        /* Cheshire Horse brand green */
+    --accent-soft: #e3f3ec;
+    --auto: #15803d;          /* auto-classified */
+    --auto-soft: #dcf3e4;
+    --drop: #57645c;          /* set aside / no match */
+    --drop-soft: #eef2ef;
+    --review: #92651b;        /* needs review */
+    --review-soft: #fbf1de;
     --serif: 'Newsreader', Georgia, serif;
     --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   }
@@ -42,9 +42,11 @@
     border-bottom: 2px solid var(--ink);
     padding: 18px 32px 14px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     background: var(--paper);
+    flex-wrap: wrap;
+    gap: 12px;
   }
   .masthead-title {
     font-family: var(--serif);
@@ -81,7 +83,7 @@
     position: relative;
   }
   .summary-cell:last-child { border-right: none; }
-  .summary-cell:hover { background: #f7f3e9; }
+  .summary-cell:hover { background: #eef2ef; }
   .summary-cell.active::after {
     content: '';
     position: absolute;
@@ -173,7 +175,7 @@
     gap: 4px 8px;
     transition: background 0.1s;
   }
-  .item:hover { background: #f0ebde; }
+  .item:hover { background: #eef2ef; }
   .item.selected {
     background: var(--accent-soft);
     border-left: 3px solid var(--accent);
@@ -332,7 +334,7 @@
   }
   .btn:hover { background: var(--ink); color: var(--paper); }
   .btn-primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
-  .btn-primary:hover { background: #6a1f0e; border-color: #6a1f0e; color: var(--paper); }
+  .btn-primary:hover { background: #034a31; border-color: #034a31; color: var(--paper); }
   .btn-skip { color: var(--ink-soft); border-color: var(--line); }
   .btn-skip:hover { background: var(--ink-soft); color: var(--paper); border-color: var(--ink-soft); }
 
@@ -497,11 +499,15 @@
 <body>
 
 <header class="masthead">
-  <div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <img src="../../assets/logo-green.svg" alt="Cheshire Horse" style="height:26px;width:auto;display:block">
     <div class="masthead-title">The RPH Daily &middot; <em>Review</em></div>
   </div>
-  <div class="masthead-meta">
-    Vol. I &middot; Issue 5/7/26 &middot; 215 SKUs &middot; Cheshire Horse, Salesforce
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="masthead-meta">
+      Vol. I &middot; Issue 5/7/26 &middot; 215 SKUs &middot; Cheshire Horse, Salesforce
+    </div>
+    <a href="../../index.html" style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);text-decoration:none;border:1px solid var(--line);padding:5px 11px;border-radius:20px;white-space:nowrap">&larr; All tools</a>
   </div>
 </header>
 

@@ -10,21 +10,21 @@
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
 
   :root {
-    --bg: #f4f2ee;
+    --bg: #f6f8f6;
     --surface: #ffffff;
-    --surface2: #f9f8f6;
-    --border: #e2ddd7;
-    --border-hover: #c8c0b5;
-    --accent: #2d6a4f;
-    --accent-light: #e8f4ee;
-    --accent-mid: #52b788;
-    --text: #1a1a1a;
-    --muted: #9a9189;
-    --muted2: #6b6359;
+    --surface2: #eef2ef;
+    --border: #dde4e0;
+    --border-hover: #b9c6bf;
+    --accent: #056A45;
+    --accent-light: #e3f3ec;
+    --accent-mid: #0e8f5e;
+    --text: #1b231f;
+    --muted: #8a978f;
+    --muted2: #57645c;
     --danger: #c0392b;
     --danger-bg: #fdf0ee;
-    --ok: #2d6a4f;
-    --ok-bg: #e8f4ee;
+    --ok: #056A45;
+    --ok-bg: #e3f3ec;
     --warn: #7a5c00;
     --warn-bg: #fffbea;
     --warn-border: #f0d060;
@@ -59,7 +59,7 @@
     overflow: hidden;
   }
   #file-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-  #file-pill.connected { border-color: #b7deca; background: var(--accent-light); color: var(--accent); }
+  #file-pill.connected { border-color: #bfe5d4; background: var(--accent-light); color: var(--accent); }
   #file-pill.connected .dot { background: var(--accent-mid); }
   #file-pill.unsaved { border-color: var(--warn-border); background: var(--warn-bg); color: var(--warn); }
   #file-pill.unsaved .dot { background: #e0b000; }
@@ -86,7 +86,7 @@
   }
   button:active { transform: scale(0.97); }
 
-  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(45,106,79,0.18); }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(5,106,69,0.18); }
   .btn-primary:hover { opacity: 0.87; }
   .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border-hover); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
@@ -134,11 +134,11 @@
     padding: 8px 11px; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
     width: 100%; outline: none;
   }
-  input:focus, select:focus { border-color: var(--accent-mid); background: #fff; box-shadow: 0 0 0 3px rgba(82,183,136,0.12); }
+  input:focus, select:focus { border-color: var(--accent-mid); background: #fff; box-shadow: 0 0 0 3px rgba(14,143,94,0.12); }
   input::placeholder { color: var(--muted); }
   select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; }
 
-  #program-info { display: none; margin-top: 7px; padding: 9px 13px; background: var(--accent-light); border: 1px solid #b7deca; border-radius: 7px; font-family: 'DM Mono', monospace; font-size: 0.71rem; color: #2a5c44; line-height: 1.5; }
+  #program-info { display: none; margin-top: 7px; padding: 9px 13px; background: var(--accent-light); border: 1px solid #bfe5d4; border-radius: 7px; font-family: 'DM Mono', monospace; font-size: 0.71rem; color: #034a31; line-height: 1.5; }
   #program-info.visible { display: block; }
   #program-info .prog-title { font-weight: 500; color: var(--accent); margin-bottom: 2px; }
   #program-info .prog-dates { color: var(--muted2); font-size: 0.66rem; margin-top: 2px; }
@@ -162,7 +162,7 @@
   .section-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
   #month-filter { font-family: 'DM Mono', monospace; font-size: 0.73rem; padding: 7px 11px; border: 1px solid var(--border-hover); border-radius: 7px; background: var(--surface); color: var(--text); cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-  #month-filter:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(82,183,136,0.12); }
+  #month-filter:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(14,143,94,0.12); }
 
   .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
   table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.71rem; }
@@ -181,14 +181,30 @@
 
   /* ── Toast ── */
   #toast { position: fixed; bottom: 24px; right: 24px; font-family: 'DM Mono', monospace; font-size: 0.76rem; padding: 11px 18px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 998; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-  #toast.ok { background: var(--ok-bg); border: 1px solid #b7deca; color: var(--ok); }
+  #toast.ok { background: var(--ok-bg); border: 1px solid #bfe5d4; color: var(--ok); }
   #toast.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn); }
   #toast.show { opacity: 1; transform: translateY(0); }
 
   footer { text-align: center; padding: 18px; font-size: 0.63rem; font-family: 'DM Mono', monospace; color: var(--muted); border-top: 1px solid var(--border); background: var(--surface); }
+
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
 </style>
 </head>
 <body>
+
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">Astro Loyalty Redemptions</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 
 <header>
   <div class="header-left">

@@ -7,14 +7,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
-    --bg: #f7f6f2;
+    --bg: #f6f8f6;
     --surface: #ffffff;
     --border: rgba(0,0,0,0.15);
     --border-strong: rgba(0,0,0,0.3);
-    --text: #1f1e1c;
-    --text-muted: #5f5e5a;
-    --accent: #185FA5;
-    --accent-bg: #E6F1FB;
+    --text: #1b231f;
+    --text-muted: #57645c;
+    --accent: #056A45;
+    --accent-bg: #e3f3ec;
     --danger: #A32D2D;
     --danger-bg: #FCEBEB;
     --success: #0F6E56;
@@ -22,6 +22,12 @@
     --warn-bg: #FAEEDA;
     --warn-text: #854F0B;
   }
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-24px -24px 24px}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -110,7 +116,7 @@
     background: var(--accent); color: white;
     border-color: var(--accent);
   }
-  button.primary:hover { background: #134B82; }
+  button.primary:hover { background: #034a31; }
   button.ghost {
     background: transparent; border: 0.5px dashed var(--border-strong);
     color: var(--text-muted); width: 100%;
@@ -293,6 +299,14 @@
 </style>
 </head>
 <body>
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">Deallocation File Generator</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 <div class="container">
 
 <h1>Inventory deallocation file generator</h1>
@@ -331,13 +345,29 @@
 </div>
 
 <div class="panel">
-  <h2><span class="panel-num">3</span>Orders</h2>
+  <h2><span class="panel-num">3</span>Check against open orders
+    <button class="help-link" onclick="showHelpOpen()">Where do I get this file?</button>
+  </h2>
+  <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">
+    Upload a ShipStation export of currently open orders. Any order below that matches one still open will be flagged — including backorders — so you don't release stock that's still owed to a pending order.
+  </p>
+  <div class="drop-zone" id="dropZoneOpen" onclick="document.getElementById('fileInputOpen').click()">
+    <p><strong>Drop your open orders .csv or .xlsx file here</strong></p>
+    <p class="hint">or click to browse</p>
+    <input type="file" id="fileInputOpen" accept=".xls,.xlsx,.csv" style="display: none;">
+  </div>
+  <div id="openOrdersStatus"></div>
+  <div id="openOrdersPreview"></div>
+</div>
+
+<div class="panel">
+  <h2><span class="panel-num">4</span>Orders</h2>
   <div id="orders"></div>
   <button class="ghost" onclick="addOrder()">+ Add another order</button>
 </div>
 
 <div class="panel">
-  <h2><span class="panel-num">4</span>Generate</h2>
+  <h2><span class="panel-num">5</span>Generate</h2>
   <div class="actions">
     <button class="primary" onclick="downloadFile()">Download .txt file</button>
     <button onclick="copyToClipboard()">Copy contents</button>
@@ -365,6 +395,21 @@
       <li>Click <strong>Export Kpad</strong> at the top. Opens in Excel. Save as an <code>.xls</code> to your computer</li>
       <li>Drag that file into the import box</li>
     </ol>
+  </div>
+</div>
+
+<div id="helpPopoverOpen" class="popover-overlay" style="display: none;" onclick="if(event.target===this) hideHelpOpen()">
+  <div class="popover">
+    <button class="close-btn" onclick="hideHelpOpen()" aria-label="Close">×</button>
+    <h3>How to get the open orders file</h3>
+    <ol>
+      <li>In <strong>ShipStation</strong>, go to <strong>Orders</strong></li>
+      <li>Filter to whatever counts as "still open" for your workflow — typically <strong>Awaiting Shipment</strong> plus <strong>On Hold</strong> (backorders usually sit in On Hold)</li>
+      <li>Select all the orders in that view</li>
+      <li>Use the <strong>Export</strong> action to save a <code>.csv</code></li>
+      <li>Drag that file into the box above</li>
+    </ol>
+    <p style="font-size:12px;color:var(--text-muted);margin:8px 0 0;">Only an order number column is required — extra columns are ignored. If your export uses different column headers than expected, let me know and I'll adjust the matching.</p>
   </div>
 </div>
 
@@ -694,6 +739,7 @@ async function copyToClipboard() {
 }
 
 let pendingImport = null;
+let openOrdersCheck = null;
 
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -717,6 +763,179 @@ fileInput.addEventListener('change', e => {
   if (e.target.files.length) handleImportFile(e.target.files[0]);
   e.target.value = '';
 });
+
+const dropZoneOpen = document.getElementById('dropZoneOpen');
+const fileInputOpen = document.getElementById('fileInputOpen');
+
+['dragenter', 'dragover'].forEach(ev => {
+  dropZoneOpen.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    dropZoneOpen.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(ev => {
+  dropZoneOpen.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    dropZoneOpen.classList.remove('dragover');
+  });
+});
+dropZoneOpen.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length) handleOpenOrdersFile(e.dataTransfer.files[0]);
+});
+fileInputOpen.addEventListener('change', e => {
+  if (e.target.files.length) handleOpenOrdersFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+function setOpenOrdersStatus(msg, kind) {
+  const el = document.getElementById('openOrdersStatus');
+  if (!msg) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="status ${kind || 'ok'}" style="margin-top: 10px;">${msg}</div>`;
+}
+
+function handleOpenOrdersFile(file) {
+  setOpenOrdersStatus(`Reading ${file.name}…`, 'ok');
+  document.getElementById('openOrdersPreview').innerHTML = '';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      processOpenOrdersRows(rows, file.name);
+    } catch (err) {
+      console.error(err);
+      setOpenOrdersStatus(`Could not read file: ${err.message}`, 'err');
+    }
+  };
+  reader.onerror = () => setOpenOrdersStatus('Failed to read file', 'err');
+  reader.readAsArrayBuffer(file);
+}
+
+function processOpenOrdersRows(rows, fileName) {
+  if (!rows.length) {
+    setOpenOrdersStatus('Spreadsheet is empty', 'err');
+    return;
+  }
+  const sample = rows[0];
+  const colOrderNum = findColumn(sample, ['Order Number', 'Order #', 'Order No', 'OrderNumber', 'Order ID', 'OrderID']);
+  const colStatus = findColumn(sample, ['Order Status', 'Status']);
+
+  if (!colOrderNum) {
+    setOpenOrdersStatus(`Couldn't find an order number column. Found: ${Object.keys(sample).join(', ')}`, 'err');
+    return;
+  }
+
+  const openMap = new Map(); // normalized order number -> status (for display only)
+  rows.forEach(row => {
+    const num = String(row[colOrderNum] || '').trim();
+    if (!num) return;
+    const status = colStatus ? String(row[colStatus] || '').trim() : '';
+    if (!openMap.has(num)) openMap.set(num, status);
+  });
+
+  if (openMap.size === 0) {
+    setOpenOrdersStatus('No order numbers found in that file', 'err');
+    return;
+  }
+
+  // Exact match only against order numbers currently in the tool — no fuzzy matching.
+  const matches = [];
+  state.orders.forEach((order, idx) => {
+    const num = order.orderNumber.trim();
+    if (!num) return;
+    if (openMap.has(num)) {
+      matches.push({ idx, orderNumber: num, status: openMap.get(num) });
+    }
+  });
+
+  openOrdersCheck = { fileName, openCount: openMap.size, matches };
+  renderOpenOrdersPreview();
+}
+
+function renderOpenOrdersPreview() {
+  const el = document.getElementById('openOrdersPreview');
+  if (!openOrdersCheck) { el.innerHTML = ''; return; }
+
+  const { fileName, openCount, matches } = openOrdersCheck;
+
+  if (matches.length === 0) {
+    setOpenOrdersStatus(`Checked against ${openCount} open order${openCount !== 1 ? 's' : ''} in ${escapeHtml(fileName)} — no matches. Nothing in your list is still open.`, 'ok');
+    el.innerHTML = '';
+    openOrdersCheck = null;
+    return;
+  }
+
+  setOpenOrdersStatus('');
+
+  let html = `
+    <div class="import-summary" style="background: var(--warn-bg); color: var(--warn-text);">
+      ${matches.length} of your ${state.orders.length} order${state.orders.length !== 1 ? 's' : ''} ${matches.length !== 1 ? 'are' : 'is'} still open in ShipStation (checked against ${openCount} open order${openCount !== 1 ? 's' : ''} in ${escapeHtml(fileName)}). These shouldn't be deallocated yet — review and remove below.
+    </div>
+    <div class="import-preview">
+      <div class="import-row header" style="grid-template-columns: 24px 1fr auto;">
+        <span><input type="checkbox" id="selectAllOpen" checked></span>
+        <span>Order</span>
+        <span>Status</span>
+      </div>
+  `;
+  matches.forEach((m, i) => {
+    html += `
+      <div class="import-row" style="grid-template-columns: 24px 1fr auto;">
+        <span><input type="checkbox" data-midx="${i}" checked></span>
+        <span class="order-info"><span><strong>${escapeHtml(m.orderNumber)}</strong></span></span>
+        <span>${m.status ? escapeHtml(m.status) : '—'}</span>
+      </div>
+    `;
+  });
+  html += `
+    </div>
+    <div class="actions" style="margin-top: 12px;">
+      <button class="primary" onclick="applyOpenOrdersRemoval()" style="background: var(--danger); border-color: var(--danger);">Remove selected from list</button>
+      <div class="spacer"></div>
+      <button onclick="cancelOpenOrdersCheck()">Dismiss</button>
+    </div>
+  `;
+  el.innerHTML = html;
+
+  el.querySelector('#selectAllOpen').addEventListener('change', e => {
+    el.querySelectorAll('input[data-midx]').forEach(cb => cb.checked = e.target.checked);
+  });
+}
+
+function applyOpenOrdersRemoval() {
+  if (!openOrdersCheck) return;
+  const el = document.getElementById('openOrdersPreview');
+  const checkedIdx = new Set();
+  el.querySelectorAll('input[data-midx]').forEach(cb => {
+    if (cb.checked) checkedIdx.add(Number(cb.dataset.midx));
+  });
+
+  const toRemove = openOrdersCheck.matches
+    .filter((m, i) => checkedIdx.has(i))
+    .map(m => m.idx)
+    .sort((a, b) => b - a); // descending so splicing doesn't shift earlier indices
+
+  toRemove.forEach(idx => state.orders.splice(idx, 1));
+  if (state.orders.length === 0) state.orders.push(makeEmptyOrder());
+
+  const removedCount = toRemove.length;
+  openOrdersCheck = null;
+  el.innerHTML = '';
+  setOpenOrdersStatus(`Removed ${removedCount} order${removedCount !== 1 ? 's' : ''} still open in ShipStation`, 'ok');
+  setTimeout(() => setOpenOrdersStatus(''), 4000);
+
+  saveState();
+  render();
+}
+
+function cancelOpenOrdersCheck() {
+  openOrdersCheck = null;
+  document.getElementById('openOrdersPreview').innerHTML = '';
+  setOpenOrdersStatus('');
+}
 
 function setImportStatus(msg, kind) {
   const el = document.getElementById('importStatus');
@@ -973,8 +1192,14 @@ function showHelp() {
 function hideHelp() {
   document.getElementById('helpPopover').style.display = 'none';
 }
+function showHelpOpen() {
+  document.getElementById('helpPopoverOpen').style.display = 'flex';
+}
+function hideHelpOpen() {
+  document.getElementById('helpPopoverOpen').style.display = 'none';
+}
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') hideHelp();
+  if (e.key === 'Escape') { hideHelp(); hideHelpOpen(); }
 });
 
 render();

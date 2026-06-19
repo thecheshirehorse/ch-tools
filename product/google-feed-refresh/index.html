@@ -6,25 +6,29 @@
 <title>Google Shopping Feed Builder</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#faf9f6;min-height:100vh;color:#1a1a1a}
-.header{background:linear-gradient(135deg,#1a3a1a,#2d5a27 60%,#3a6e32);color:#fff;padding:16px 28px}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f6f8f6;min-height:100vh;color:#1a1a1a}
+.header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .header h1{font-size:18px;font-weight:700;letter-spacing:-0.3px}
 .header .sub{font-size:11px;opacity:0.65;margin-top:2px}
+.ch-brand{display:flex;align-items:center;gap:8px}
+.ch-divider{opacity:.4;font-size:13px;font-weight:300}
+.ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+.ch-back:hover{background:rgba(255,255,255,.15)}
 .container{max-width:860px;margin:0 auto;padding:24px 28px}
 
 .drop-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .drop-zone{border:2px dashed #ccc;border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
-.drop-zone:hover,.drop-zone.dragover{border-color:#2d5a27;background:#f0f7ef}
-.drop-zone.loaded{border-color:#2d5a27;border-style:solid;background:#f0f7ef}
+.drop-zone:hover,.drop-zone.dragover{border-color:#056A45;background:#e3f3ec}
+.drop-zone.loaded{border-color:#056A45;border-style:solid;background:#e3f3ec}
 .drop-zone .icon{font-size:28px;margin-bottom:8px}
 .drop-zone .label{font-size:13px;font-weight:600;color:#1a1a1a}
 .drop-zone .hint{font-size:11px;color:#999;margin-top:4px}
-.drop-zone .filename{font-size:11px;color:#2d5a27;font-weight:600;margin-top:6px;word-break:break-all}
+.drop-zone .filename{font-size:11px;color:#056A45;font-weight:600;margin-top:6px;word-break:break-all}
 .drop-zone input{display:none}
 
 .btn{padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:#2d5a27;color:#fff}
-.btn-primary:hover:not(:disabled){background:#245020}
+.btn-primary{background:#056A45;color:#fff}
+.btn-primary:hover:not(:disabled){background:#034a31}
 .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
 .btn-download{background:#1a4a7a;color:#fff;margin-left:10px}
 .btn-download:hover{background:#153d65}
@@ -38,26 +42,33 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#faf9f6;
 .log .bold{color:#fff;font-weight:700}
 
 .summary{background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:20px;display:none;margin-bottom:20px}
-.summary h3{font-size:14px;font-weight:700;margin-bottom:12px;color:#2d5a27}
+.summary h3{font-size:14px;font-weight:700;margin-bottom:12px;color:#056A45}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.stat{background:#faf9f6;border-radius:8px;padding:10px 14px}
+.stat{background:#f6f8f6;border-radius:8px;padding:10px 14px}
 .stat .val{font-size:20px;font-weight:700;color:#1a1a1a}
 .stat .lbl{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
 
 .preview{background:#fff;border:1px solid #e8e5de;border-radius:12px;padding:20px;display:none}
-.preview h3{font-size:14px;font-weight:700;margin-bottom:12px;color:#2d5a27}
+.preview h3{font-size:14px;font-weight:700;margin-bottom:12px;color:#056A45}
 .preview-table-wrap{overflow-x:auto}
 .preview table{border-collapse:collapse;font-size:10px;white-space:nowrap;width:100%}
 .preview th{background:#f4f3ef;padding:6px 10px;text-align:left;font-weight:600;border-bottom:2px solid #e8e5de;position:sticky;top:0}
 .preview td{padding:5px 10px;border-bottom:1px solid #f0efeb;max-width:200px;overflow:hidden;text-overflow:ellipsis}
-.preview tr:hover td{background:#faf9f6}
+.preview tr:hover td{background:#f6f8f6}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>📦 Google Shopping Feed Builder</h1>
-  <div class="sub">SFCC Catalog XML + Price Book XML → Google Merchant Center TSV</div>
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <div>
+      <h1>Google Shopping Feed Builder</h1>
+      <div class="sub">SFCC Catalog XML + Price Book XML → Google Merchant Center TSV</div>
+    </div>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
 </div>
 
 <div class="container">

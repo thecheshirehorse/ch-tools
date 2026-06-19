@@ -9,21 +9,21 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #f5f4f0;
+    --bg: #f6f8f6;
     --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: #e2e0d8;
-    --border2: #cccab8;
-    --text: #1a1916;
-    --text2: #6b6a62;
-    --text3: #9b9a91;
-    --accent: #2d5a3d;
-    --accent-light: #e8f0ea;
-    --accent-text: #1e3d2a;
+    --surface2: #eef2ef;
+    --border: #dde4e0;
+    --border2: #b9c6bf;
+    --text: #1b231f;
+    --text2: #57645c;
+    --text3: #8a978f;
+    --accent: #056A45;
+    --accent-light: #e3f3ec;
+    --accent-text: #034a31;
     --danger: #c0392b;
     --danger-light: #fdf0ef;
-    --success: #2d5a3d;
-    --success-light: #e8f0ea;
+    --success: #056A45;
+    --success-light: #e3f3ec;
     --font: 'IBM Plex Mono', monospace;
     --font-sans: 'IBM Plex Sans', sans-serif;
   }
@@ -294,9 +294,13 @@
 </head>
 <body>
 
-<header>
-  <h1>Compass → Shopify Inventory</h1>
-  <span>CSV Converter</span>
+<header style="justify-content:space-between">
+  <div style="display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:22px;width:auto;display:block;align-self:center">
+    <h1>Compass &rarr; Shopify Inventory</h1>
+    <span>CSV Converter</span>
+  </div>
+  <a href="../../index.html" style="font-family:var(--font);font-size:0.75rem;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:5px 12px;border-radius:20px;white-space:nowrap">&larr; All tools</a>
 </header>
 
 <div class="main">

@@ -8,14 +8,14 @@
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
   :root {
-    --bg: #f7f6f2;
+    --bg: #f6f8f6;
     --surface: #ffffff;
     --border: rgba(0,0,0,0.15);
     --border-strong: rgba(0,0,0,0.3);
-    --text: #1f1e1c;
-    --text-muted: #5f5e5a;
-    --accent: #185FA5;
-    --accent-bg: #E6F1FB;
+    --text: #1b231f;
+    --text-muted: #57645c;
+    --accent: #056A45;
+    --accent-bg: #e3f3ec;
     --danger: #A32D2D;
     --danger-bg: #FCEBEB;
     --success: #0F6E56;
@@ -23,6 +23,12 @@
     --warn-bg: #FAEEDA;
     --warn-text: #854F0B;
   }
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-24px -24px 24px}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -77,7 +83,7 @@
     background: var(--accent); color: white;
     border-color: var(--accent);
   }
-  button.primary:hover:not(:disabled) { background: #134B82; }
+  button.primary:hover:not(:disabled) { background: #034a31; }
   button.danger-text {
     color: var(--danger);
   }
@@ -149,6 +155,14 @@
 </style>
 </head>
 <body>
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">Mailing List Cleaner</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 <div class="container">
 
 <h1>Mailing list cleaner</h1>

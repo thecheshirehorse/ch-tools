@@ -7,28 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #111110;
-    --surface: #1A1A19;
-    --surface-raised: #222221;
-    --border: rgba(255,255,255,0.08);
-    --border-strong: rgba(255,255,255,0.16);
-    --text: #E8E7E3;
-    --text-muted: #8A8985;
-    --accent: #60A5FA;
-    --accent-hover: #93C5FD;
-    --accent-bg: rgba(96,165,250,0.10);
-    --danger: #F87171;
-    --danger-bg: rgba(248,113,113,0.10);
-    --success: #34D399;
-    --success-bg: rgba(52,211,153,0.08);
-    --warn-bg: rgba(251,191,36,0.08);
-    --warn-text: #FBBF24;
-    --warn-border: rgba(251,191,36,0.20);
+  :root{
+    --bg: #f6f8f6;
+    --surface: #ffffff;
+    --surface-raised: #eef2ef;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1b231f;
+    --text-muted: #57645c;
+    --accent: #056A45;
+    --accent-hover: #0e8f5e;
+    --accent-bg: rgba(5,106,69,0.10);
+    --danger: #c0392b;
+    --danger-bg: rgba(192,57,43,0.08);
+    --success: #15803d;
+    --success-bg: rgba(21,128,61,0.08);
+    --warn-bg: rgba(146,101,27,0.10);
+    --warn-text: #92651b;
+    --warn-border: rgba(146,101,27,0.25);
     --radius: 10px;
     --radius-sm: 6px;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
     --font: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
@@ -299,7 +299,7 @@
     font-size: 12px;
   }
   table tr:last-child td { border-bottom: none; }
-  table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  table tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
   table tr.row-flag td,
   table tr.row-flag:nth-child(even) td {
     background: var(--warn-bg);
@@ -345,9 +345,25 @@
     line-height: 1.5;
   }
   .warning-banner strong { font-weight: 600; }
+
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
 </style>
 </head>
 <body>
+
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">Missing UPC / MFG Code Filler</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 
 <div class="header">
   <div class="header-inner">

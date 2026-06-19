@@ -10,7 +10,7 @@
 
   body {
     font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #f0f2f5;
+    background: #f6f8f6;
     color: #1a1a2e;
     min-height: 100vh;
     padding: 32px 24px;
@@ -19,6 +19,13 @@
   header {
     margin-bottom: 32px;
   }
+
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-32px -24px 32px}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
 
   header h1 {
     font-size: 22px;
@@ -68,8 +75,8 @@
   }
 
   #dropzone.over {
-    border-color: #4f46e5;
-    background: #eef2ff;
+    border-color: #056A45;
+    background: #e3f3ec;
   }
 
   #dropzone svg {
@@ -84,7 +91,7 @@
   }
 
   #dropzone strong {
-    color: #4f46e5;
+    color: #056A45;
     cursor: pointer;
   }
 
@@ -133,7 +140,7 @@
   }
 
   .file-row select:focus, .file-row input[type="text"]:focus {
-    outline: 2px solid #4f46e5;
+    outline: 2px solid #056A45;
     outline-offset: 1px;
     border-color: transparent;
   }
@@ -252,7 +259,7 @@
   .btn-10 { background: #10b981; color: #fff; }
   .btn-15 { background: #3b82f6; color: #fff; }
   .btn-20 { background: #8b5cf6; color: #fff; }
-  .btn-all { background: #1a1a2e; color: #fff; }
+  .btn-all { background: #034a31; color: #fff; }
 
   .export-all-wrap {
     margin-top: 4px;
@@ -281,6 +288,15 @@
 </style>
 </head>
 <body>
+
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">LP Sale Category Builder</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 
 <header>
   <h1>LP Sale Category Builder</h1>

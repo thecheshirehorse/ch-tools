@@ -10,26 +10,57 @@
 
   <!-- Simple styles -->
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
+    :root{
+      --bg:#f6f8f6; --surface:#ffffff; --border:#dde4e0;
+      --text:#1b231f; --text-soft:#57645c;
+      --green:#056A45; --green-dark:#034a31; --green-light:#0e8f5e;
     }
+    *{box-sizing:border-box}
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .ch-brand{display:flex;align-items:center;gap:8px}
+    .ch-brand svg{height:24px;width:auto;display:block}
+    .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+    .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px}
+    .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px}
+    .ch-back:hover{background:rgba(255,255,255,.15)}
+    h1{font-size:18px;font-weight:600;margin:22px 0 4px;color:var(--text)}
+    p{color:var(--text-soft);font-size:13px;margin:0 0 8px}
     #reader {
       margin: 20px auto;
       width: 90%;
       max-width: 400px;
     }
     button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 7px;
       cursor: pointer;
       margin-top: 10px;
+      background: var(--green);
+      color: #fff;
     }
+    button:hover{background:var(--green-dark)}
   </style>
 </head>
 <body>
+
+  <div class="ch-header">
+    <div class="ch-brand">
+      <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+      <span class="ch-divider">|</span>
+      <span class="ch-tool-name">Price Checker</span>
+    </div>
+    <a href="../../index.html" class="ch-back">&larr; All tools</a>
+  </div>
 
   <h1>Price Checker</h1>
   <p>Scan a product barcode to check prices.</p>

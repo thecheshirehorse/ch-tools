@@ -287,40 +287,47 @@ def upload_page():
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111827; color: #e5e7eb;
+      background: #f6f8f6; color: #1b231f;
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
     }
     .card {
-      background: #1f2937; border: 1px solid #374151; border-radius: 12px;
+      background: #ffffff; border: 1px solid #dde4e0; border-radius: 12px;
       padding: 40px 48px; width: 480px; max-width: 95vw;
     }
-    h1 { font-size: 1.4rem; font-weight: 600; color: #f9fafb; margin-bottom: 6px; }
-    .subtitle { font-size: 0.875rem; color: #9ca3af; margin-bottom: 32px; }
-    label { display: block; font-size: 0.875rem; font-weight: 500; color: #d1d5db; margin-bottom: 6px; }
+    .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+    .brand-row img { height: 26px; width: auto; display: block; }
+    .brand-row .divider { opacity: .35; font-size: 14px; font-weight: 300; }
+    h1 { font-size: 1.4rem; font-weight: 600; color: #1b231f; margin-bottom: 6px; }
+    .subtitle { font-size: 0.875rem; color: #57645c; margin-bottom: 32px; }
+    label { display: block; font-size: 0.875rem; font-weight: 500; color: #1b231f; margin-bottom: 6px; }
     .file-row { margin-bottom: 20px; }
     input[type="file"] {
       display: block; width: 100%;
-      background: #111827; border: 1px solid #374151; border-radius: 8px;
-      color: #e5e7eb; padding: 10px 12px; font-size: 0.875rem; cursor: pointer;
+      background: #ffffff; border: 1px solid #dde4e0; border-radius: 8px;
+      color: #1b231f; padding: 10px 12px; font-size: 0.875rem; cursor: pointer;
     }
     input[type="file"]::file-selector-button {
-      background: #374151; border: none; color: #e5e7eb;
+      background: #eef2ef; border: none; color: #1b231f;
       padding: 5px 12px; border-radius: 4px; margin-right: 10px; cursor: pointer;
     }
-    .hint { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+    .hint { font-size: 0.75rem; color: #8a978f; margin-top: 4px; }
     button[type="submit"] {
       width: 100%; margin-top: 12px; padding: 12px;
-      background: #10b981; border: none; border-radius: 8px;
+      background: #056A45; border: none; border-radius: 8px;
       color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer;
       transition: background 0.15s;
     }
-    button[type="submit"]:hover { background: #059669; }
-    button[type="submit"]:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
-    #status { margin-top: 16px; font-size: 0.875rem; color: #9ca3af; text-align: center; min-height: 20px; }
+    button[type="submit"]:hover { background: #034a31; }
+    button[type="submit"]:disabled { background: #dde4e0; color: #8a978f; cursor: not-allowed; }
+    #status { margin-top: 16px; font-size: 0.875rem; color: #57645c; text-align: center; min-height: 20px; }
   </style>
 </head>
 <body>
   <div class="card">
+    <div class="brand-row">
+      <img src="https://caitlinsc.github.io/ch-tools/assets/logo-green.svg" alt="Cheshire Horse">
+      <span class="divider">|</span>
+    </div>
     <h1>RPH Review Tool</h1>
     <p class="subtitle">Load this week's files to begin</p>
     <form id="loadForm">

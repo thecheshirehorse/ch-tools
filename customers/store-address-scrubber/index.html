@@ -8,20 +8,20 @@
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --border: #2a2e3d;
-    --border-active: #4a6cf7;
-    --text: #e4e6ef;
-    --text-dim: #7a7f95;
-    --accent: #4a6cf7;
-    --accent-glow: rgba(74,108,247,0.15);
-    --danger: #ef4444;
-    --danger-glow: rgba(239,68,68,0.12);
-    --success: #22c55e;
-    --success-glow: rgba(34,197,94,0.12);
-    --warn: #f59e0b;
-    --warn-glow: rgba(245,158,11,0.1);
+    --bg: #f6f8f6;
+    --surface: #ffffff;
+    --border: #dde4e0;
+    --border-active: #056A45;
+    --text: #1b231f;
+    --text-dim: #57645c;
+    --accent: #056A45;
+    --accent-glow: rgba(5,106,69,0.12);
+    --danger: #c0392b;
+    --danger-glow: rgba(192,57,43,0.10);
+    --success: #15803d;
+    --success-glow: rgba(21,128,61,0.10);
+    --warn: #92651b;
+    --warn-glow: rgba(146,101,27,0.10);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,8 +78,8 @@
     display: inline-flex; align-items: center; gap: 6px;
     padding: 4px 10px; border-radius: 6px; font-size: 12px;
   }
-  .tag-danger { background: var(--danger-glow); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
-  .tag-warn { background: var(--warn-glow); border: 1px solid rgba(245,158,11,0.2); color: var(--warn); }
+  .tag-danger { background: var(--danger-glow); border: 1px solid rgba(192,57,43,0.25); color: var(--danger); }
+  .tag-warn { background: var(--warn-glow); border: 1px solid rgba(146,101,27,0.25); color: var(--warn); }
   .tag-remove { cursor: pointer; opacity: 0.7; }
   .tag-remove:hover { opacity: 1; }
   .tag-empty { color: var(--text-dim); font-size: 12px; font-style: italic; }
@@ -97,7 +97,7 @@
     font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s;
   }
   .btn-accent { background: var(--accent); color: #fff; }
-  .btn-warn { background: var(--warn); color: #000; }
+  .btn-warn { background: var(--warn); color: #fff; }
   .btn-danger { background: var(--danger); color: #fff; }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
   .btn-lg {
@@ -110,8 +110,8 @@
     display: flex; justify-content: space-between; align-items: center;
     border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
   }
-  .summary-bar.has-matches { background: var(--danger-glow); border: 1px solid rgba(239,68,68,0.2); }
-  .summary-bar.no-matches { background: var(--success-glow); border: 1px solid rgba(34,197,94,0.2); }
+  .summary-bar.has-matches { background: var(--danger-glow); border: 1px solid rgba(192,57,43,0.25); }
+  .summary-bar.no-matches { background: var(--success-glow); border: 1px solid rgba(21,128,61,0.25); }
   .summary-count { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 28px; }
   .summary-count.danger { color: var(--danger); }
   .summary-count.success { color: var(--success); }
@@ -169,9 +169,25 @@
     border: 1px solid var(--border); background: transparent; color: var(--text-dim);
   }
   .chip.selected { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+
+  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-24px -24px 24px}
+  .ch-brand{display:flex;align-items:center;gap:8px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
 </style>
 </head>
 <body>
+
+<div class="ch-header">
+  <div class="ch-brand">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <span class="ch-tool-name">Store Address Scrubber</span>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</div>
 
 <div class="container">
   <div class="header-row">
@@ -582,7 +598,7 @@ function renderMatches() {
 
   // Show skipped matches (open orders)
   if (skippedMatches.length > 0) {
-    html += '<div class="card" style="padding:0;overflow:hidden;margin-top:20px;border-color:rgba(245,158,11,0.3)">' +
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-top:20px;border-color:rgba(146,101,27,0.3)">' +
       '<div class="match-list-header" style="color:var(--warn)">⚠ Skipped — ' + skippedMatches.length +
       ' match' + (skippedMatches.length !== 1 ? 'es' : '') + ' with open orders (will NOT be removed)</div>' +
       '<div class="match-list-body">';

@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #0a0d12; } #root { min-height: 100vh; }</style>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #f6f8f6; } #root { min-height: 100vh; }</style>
 </head>
 <body>
 <div id="root"></div>
@@ -997,7 +997,7 @@ function CategorySelect({value,onChange,className}) {
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, fontSize: 12 }}>
           {value ? selectedLabel : "— Select Category —"}
         </span>
-        <span style={{ fontSize: 10, color: "#4b5563", flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ fontSize: 10, color: "#8a978f", flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
         <div className="cat-dropdown">
@@ -1011,8 +1011,8 @@ function CategorySelect({value,onChange,className}) {
           />
           {value && (
             <div className="cat-node cat-clear" style={{ paddingLeft: 8 }} onClick={() => select("")}>
-              <span className="cat-dot" style={{ color: "#ef4444" }}>✕</span>
-              <span className="cat-lbl" style={{ color: "#ef4444" }}>Clear category</span>
+              <span className="cat-dot" style={{ color: "#c0392b" }}>✕</span>
+              <span className="cat-lbl" style={{ color: "#c0392b" }}>Clear category</span>
             </div>
           )}
           <div className="cat-tree">
@@ -1044,15 +1044,15 @@ function UploadStep({ onData, rules, rulesLoaded }) {
   return (
     <div style={{ textAlign: "center", padding: "60px 20px" }}>
       <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.4 }}>📦</div>
-      <h2 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 22 }}>Upload KW/IMU Export</h2>
-      <p style={{ color: "#6b7280", marginBottom: 8, fontSize: 14 }}>Drop your .xls or .xlsx RPH report from Eagle</p>
-      {rulesLoaded && <p style={{ color: "#22c55e", fontSize: 12, marginBottom: 20 }}>✓ {Object.keys(rules.classRules).length + Object.keys(rules.vendorRules).length + Object.keys(rules.skuRules).length + Object.keys(rules.prefixRules).length + Object.keys(rules.deptRules).length} rules loaded</p>}
+      <h2 style={{ margin: "0 0 8px", color: "#1b231f", fontSize: 22 }}>Upload KW/IMU Export</h2>
+      <p style={{ color: "#57645c", marginBottom: 8, fontSize: 14 }}>Drop your .xls or .xlsx RPH report from Eagle</p>
+      {rulesLoaded && <p style={{ color: "#15803d", fontSize: 12, marginBottom: 20 }}>✓ {Object.keys(rules.classRules).length + Object.keys(rules.vendorRules).length + Object.keys(rules.skuRules).length + Object.keys(rules.prefixRules).length + Object.keys(rules.deptRules).length} rules loaded</p>}
       <div className={`dz ${dragging?"dz-a":""}`}
         onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)}
         onDrop={e=>{e.preventDefault();setDragging(false);handleFile(e.dataTransfer.files[0]);}}
         onClick={()=>fileRef.current?.click()}>
-        <span style={{ fontSize: 14, color: "#9ca3af" }}>{dragging ? "Drop it here" : "Click or drag file here"}</span>
-        <span style={{ fontSize: 12, color: "#4b5563", marginTop: 6 }}>.xls or .xlsx · RPH export from KW/IMU</span>
+        <span style={{ fontSize: 14, color: "#57645c" }}>{dragging ? "Drop it here" : "Click or drag file here"}</span>
+        <span style={{ fontSize: 12, color: "#8a978f", marginTop: 6 }}>.xls or .xlsx · RPH export from KW/IMU</span>
         <input ref={fileRef} type="file" accept=".xls,.xlsx,.csv" hidden onChange={e=>handleFile(e.target.files[0])} />
       </div>
     </div>
@@ -1110,10 +1110,10 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
       {/* Auto-approved list */}
       <div className="panel" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: 15, color: "#22c55e" }}>✓ Auto-Approved ({autoProducts.length})</h3>
+          <h3 style={{ margin: 0, fontSize: 15, color: "#15803d" }}>✓ Auto-Approved ({autoProducts.length})</h3>
           <button className="btn-xs" onClick={() => setShowAuto(!showAuto)}>{showAuto ? "Hide" : "Show"}</button>
         </div>
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Matched by class, vendor, or SKU rules. Pre-selected for import. Deselect any you don't want.</p>
+        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#57645c" }}>Matched by class, vendor, or SKU rules. Pre-selected for import. Deselect any you don't want.</p>
         {showAuto && (
           <div className="tw" style={{ maxHeight: 300, marginTop: 12 }}>
             <table className="tbl"><thead><tr>
@@ -1124,7 +1124,7 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
                   <td onClick={e => e.stopPropagation()}><input type="checkbox" checked={p.selected} onChange={() => toggleAuto(p.sku)} /></td>
                   <td className="mono">{p.sku}</td>
                   <td style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</td>
-                  <td style={{ fontSize: 12, color: "#6b7280" }}>{p.vendor}</td>
+                  <td style={{ fontSize: 12, color: "#57645c" }}>{p.vendor}</td>
                   <td style={{ textAlign: "right" }} className="mono">${p.retailPrice.toFixed(2)}</td>
                   <td><span className="badge-au">{p._reason}</span></td>
                 </tr>
@@ -1137,10 +1137,10 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
       {/* Drops list with rescue */}
       <div className="panel" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: 15, color: "#ef4444" }}>✕ Dropped ({drops.length})</h3>
+          <h3 style={{ margin: 0, fontSize: 15, color: "#c0392b" }}>✕ Dropped ({drops.length})</h3>
           <button className="btn-xs" onClick={() => setShowDrops(!showDrops)}>{showDrops ? "Hide" : "Show"}</button>
         </div>
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Filtered out by cascade rules. Rescue items that should be included.</p>
+        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#57645c" }}>Filtered out by cascade rules. Rescue items that should be included.</p>
         {showDrops && (
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
@@ -1152,13 +1152,13 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
                   <tr key={d.sku} style={{ opacity: 0.7 }}>
                     <td className="mono">{d.sku}</td>
                     <td style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</td>
-                    <td style={{ fontSize: 12, color: "#6b7280" }}>{d.vendor}</td>
+                    <td style={{ fontSize: 12, color: "#57645c" }}>{d.vendor}</td>
                     <td><span className="drop-chip">{d._reason}</span></td>
-                    <td><button className="btn-xs" style={{ color: "#22c55e", borderColor: "rgba(34,197,94,0.3)" }} onClick={(e) => { e.stopPropagation(); setRescuePrompt(d); }}>Rescue</button></td>
+                    <td><button className="btn-xs" style={{ color: "#15803d", borderColor: "rgba(21,128,61,.3)" }} onClick={(e) => { e.stopPropagation(); setRescuePrompt(d); }}>Rescue</button></td>
                   </tr>
                 ))}</tbody>
               </table>
-              {drops.length > 200 && <div style={{padding:12,textAlign:"center",color:"#4b5563",fontSize:13}}>Showing 200 of {drops.length}</div>}
+              {drops.length > 200 && <div style={{padding:12,textAlign:"center",color:"#8a978f",fontSize:13}}>Showing 200 of {drops.length}</div>}
             </div>
           </div>
         )}
@@ -1168,11 +1168,11 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
       {rescuePrompt && (
         <div className="modal-overlay" onClick={() => setRescuePrompt(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 16 }}>Rescue: {rescuePrompt.name}</h3>
-            <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px" }}>
-              Dropped because: <strong style={{ color: "#f87171" }}>{rescuePrompt._reason}</strong>
+            <h3 style={{ margin: "0 0 8px", color: "#1b231f", fontSize: 16 }}>Rescue: {rescuePrompt.name}</h3>
+            <p style={{ fontSize: 13, color: "#57645c", margin: "0 0 16px" }}>
+              Dropped because: <strong style={{ color: "#a32d2d" }}>{rescuePrompt._reason}</strong>
             </p>
-            <p style={{ fontSize: 13, color: "#9ca3af", margin: "0 0 12px" }}>How should this be remembered?</p>
+            <p style={{ fontSize: 13, color: "#57645c", margin: "0 0 12px" }}>How should this be remembered?</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button className="btn-sm" onClick={() => confirmRescue(rescuePrompt, "none")} style={{ textAlign: "left" }}>
                 🔄 Just this once — don't save a rule
@@ -1199,10 +1199,10 @@ function CascadeStep({ products, drops, stats, onUpdate, onNext, rules, onSaveRu
       {/* Review preview + next */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
         <div>
-          <p style={{ margin: 0, fontSize: 14, color: "#e2e4e9" }}>
+          <p style={{ margin: 0, fontSize: 14, color: "#1b231f" }}>
             <strong>{reviewProducts.length}</strong> items need manual review →
           </p>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>Items not matched by any rule. You'll select which ones to include next.</p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#57645c" }}>Items not matched by any rule. You'll select which ones to include next.</p>
         </div>
         <button className="btn-primary" onClick={onNext}>
           Review {reviewProducts.length} Items →
@@ -1277,7 +1277,7 @@ function ReviewStep({ products, onUpdate, onNext, onBack, stats, onSaveRule }) {
     <div>
       <div className="step-header">
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, color: "#e2e4e9" }}>Manual Review</h2>
+          <h2 style={{ margin: 0, fontSize: 20, color: "#1b231f" }}>Manual Review</h2>
           <p className="step-sub">{selectedCount} of {reviewItems.length} review items selected · {totalSelected} total for import</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -1288,15 +1288,15 @@ function ReviewStep({ products, onUpdate, onNext, onBack, stats, onSaveRule }) {
 
       {/* Vendor quick-action chips */}
       <div className="panel" style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#9ca3af" }}>Quick Actions by Vendor</h3>
-        <p style={{ margin: "0 0 12px", fontSize: 12, color: "#4b5563" }}>Click a vendor to select/skip all their items and optionally save as a permanent rule.</p>
+        <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#57645c" }}>Quick Actions by Vendor</h3>
+        <p style={{ margin: "0 0 12px", fontSize: 12, color: "#8a978f" }}>Click a vendor to select/skip all their items and optionally save as a permanent rule.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {vendorSummary.map(([v, s]) => (
             <button key={v} className="suggestion-chip" onClick={() => setBulkPrompt(v)}>
               <strong>{v}</strong>
-              <span style={{ color: "#6b7280", margin: "0 4px" }}>·</span>
+              <span style={{ color: "#57645c", margin: "0 4px" }}>·</span>
               {s.total}
-              {s.selected > 0 && <span style={{ color: "#22c55e", marginLeft: 4, fontSize: 11 }}>({s.selected} ✓)</span>}
+              {s.selected > 0 && <span style={{ color: "#15803d", marginLeft: 4, fontSize: 11 }}>({s.selected} ✓)</span>}
             </button>
           ))}
         </div>
@@ -1306,8 +1306,8 @@ function ReviewStep({ products, onUpdate, onNext, onBack, stats, onSaveRule }) {
       {bulkPrompt && (
         <div className="modal-overlay" onClick={() => setBulkPrompt(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: "0 0 8px", color: "#e2e4e9", fontSize: 16 }}>{bulkPrompt}</h3>
-            <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 16px" }}>
+            <h3 style={{ margin: "0 0 8px", color: "#1b231f", fontSize: 16 }}>{bulkPrompt}</h3>
+            <p style={{ fontSize: 13, color: "#57645c", margin: "0 0 16px" }}>
               {vendorSummary.find(([v]) => v === bulkPrompt)?.[1]?.total || 0} items in review
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1353,14 +1353,14 @@ function ReviewStep({ products, onUpdate, onNext, onBack, stats, onSaveRule }) {
               <td onClick={e => e.stopPropagation()}><input type="checkbox" checked={p.selected} onChange={() => toggleOne(p.sku)} /></td>
               <td className="mono">{p.sku}</td>
               <td style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</td>
-              <td style={{ fontSize: 12, color: "#6b7280" }}>{p.vendor}</td>
-              {stats.hasEnrichment && <td style={{ fontSize: 11, color: "#6b7280" }}>{p.classCode}{p.className && ` · ${p.className}`}</td>}
+              <td style={{ fontSize: 12, color: "#57645c" }}>{p.vendor}</td>
+              {stats.hasEnrichment && <td style={{ fontSize: 11, color: "#57645c" }}>{p.classCode}{p.className && ` · ${p.className}`}</td>}
               <td style={{ textAlign: "right" }} className="mono">${p.retailPrice.toFixed(2)}</td>
               <td style={{ textAlign: "right" }} className="mono">{p.qoh || "—"}</td>
             </tr>
           ))}</tbody>
         </table>
-        {filtered.length > 400 && <div style={{ padding: 12, textAlign: "center", color: "#4b5563", fontSize: 13 }}>Showing 400 of {filtered.length}</div>}
+        {filtered.length > 400 && <div style={{ padding: 12, textAlign: "center", color: "#8a978f", fontSize: 13 }}>Showing 400 of {filtered.length}</div>}
       </div>
     </div>
   );
@@ -1542,19 +1542,19 @@ function GroupStep({ products, onUpdate, groups, setGroups, onNext, onBack }) {
   return (
     <div>
       <div className="step-header">
-        <div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Group Variations</h2><p className="step-sub">{groups.length} group{groups.length!==1?"s":""} · {ungrouped.length} ungrouped</p></div>
+        <div><h2 style={{margin:0,fontSize:20,color:"#1b231f"}}>Group Variations</h2><p className="step-sub">{groups.length} group{groups.length!==1?"s":""} · {ungrouped.length} ungrouped</p></div>
         <div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-primary" onClick={onNext}>Next: Edit →</button></div>
       </div>
-      {autoSugg.length>0&&(<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>🔍 Detected Groups</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Shared prefix + vendor — click to group. Type auto-detected from variant labels.</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{autoSugg.map((s,i)=><button key={i} className="suggestion-chip" onClick={()=>quickGroup(s)}><strong>{s.prefix}*</strong><span style={{color:"#6b7280",margin:"0 4px"}}>·</span>{s.members.length}<span style={{color:"#6b7280",margin:"0 4px"}}>·</span><span style={{color:"#6b7280",fontSize:11}}>{s.vendor}</span><span className="badge-type" style={{marginLeft:6,fontSize:10}}>{s._detectedType||"color"}</span></button>)}</div></div>)}
+      {autoSugg.length>0&&(<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#1b231f"}}>🔍 Detected Groups</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#57645c"}}>Shared prefix + vendor — click to group. Type auto-detected from variant labels.</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{autoSugg.map((s,i)=><button key={i} className="suggestion-chip" onClick={()=>quickGroup(s)}><strong>{s.prefix}*</strong><span style={{color:"#57645c",margin:"0 4px"}}>·</span>{s.members.length}<span style={{color:"#57645c",margin:"0 4px"}}>·</span><span style={{color:"#57645c",fontSize:11}}>{s.vendor}</span><span className="badge-type" style={{marginLeft:6,fontSize:10}}>{s._detectedType||"color"}</span></button>)}</div></div>)}
 
       {groups.map(g=>{const ms=products.filter(p=>p.selected&&p.groupId===g.id);const isEd=editingGroup===g.id;return(
         <div key={g.id} className="gcard"><div className="ghead"><div>
           {isEd?<input className="fi" style={{fontSize:15,fontWeight:600,padding:"4px 8px",maxWidth:400}} value={g.displayName} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,displayName:e.target.value}:gg))} />
-          :<span style={{fontSize:15,fontWeight:600,color:"#e2e4e9"}}>{g.displayName}</span>}
-          <span className="mono" style={{marginLeft:10,fontSize:11,color:"#4b5563"}}>Base: {g.id}x</span><span style={{marginLeft:8,fontSize:12,color:"#6b7280"}}>{ms.length}v</span><span className="badge-type">{g.variationType}</span>
-          {g.category && (() => { const va = getVariationAttrs(g.category); return <span style={{marginLeft:6,fontSize:10,color:"#4b5563"}}>→ {g.variationType!=="size"&&va.color}{g.variationType==="color-size"&&" + "}{g.variationType!=="color"&&va.size}</span>; })()}
+          :<span style={{fontSize:15,fontWeight:600,color:"#1b231f"}}>{g.displayName}</span>}
+          <span className="mono" style={{marginLeft:10,fontSize:11,color:"#8a978f"}}>Base: {g.id}x</span><span style={{marginLeft:8,fontSize:12,color:"#57645c"}}>{ms.length}v</span><span className="badge-type">{g.variationType}</span>
+          {g.category && (() => { const va = getVariationAttrs(g.category); return <span style={{marginLeft:6,fontSize:10,color:"#8a978f"}}>→ {g.variationType!=="size"&&va.color}{g.variationType==="color-size"&&" + "}{g.variationType!=="color"&&va.size}</span>; })()}
         </div><div style={{display:"flex",gap:6}}><button className="btn-xs" onClick={()=>setEditingGroup(isEd?null:g.id)}>{isEd?"Done":"Edit"}</button><button className="btn-xs btn-danger" onClick={()=>rmGroup(g.id)}>Ungroup</button></div></div>
-        {isEd&&<div style={{padding:"12px 16px",borderTop:"1px solid #1e2330"}}>
+        {isEd&&<div style={{padding:"12px 16px",borderTop:"1px solid #dde4e0"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:12}}>
           <div><label className="fl">Variation Type</label><select className="fi" style={{width:"100%"}} value={g.variationType} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,variationType:e.target.value}:gg))}>{VARIATION_TYPES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
           <div><label className="fl">Category</label><CategorySelect value={g.category} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,category:v}:gg))} /></div>
@@ -1562,16 +1562,16 @@ function GroupStep({ products, onUpdate, groups, setGroups, onNext, onBack }) {
         </div>
         {(g.variationType==="color"||g.variationType==="color-size")&&<VarAttrSelect label="Color Attribute Override" value={g.colorAttrOverride||""} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,colorAttrOverride:v}:gg))} />}
         {(g.variationType==="size"||g.variationType==="color-size")&&<VarAttrSelect label="Size Attribute Override" value={g.sizeAttrOverride||""} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,sizeAttrOverride:v}:gg))} />}
-        <label className="fl">Variant Values</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><div key={m.sku} className="vchip"><span className="mono" style={{fontSize:10,color:"#4b5563"}}>{m.sku}</span><input className="vinput" value={m.variantValue} onChange={e=>onUpdate(products.map(p=>p.sku===m.sku?{...p,variantValue:e.target.value,variantColor:g.variationType!=="size"?e.target.value:p.variantColor,variantSize:g.variationType!=="color"?e.target.value:p.variantSize}:p))} /></div>)}</div></div>}
+        <label className="fl">Variant Values</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><div key={m.sku} className="vchip"><span className="mono" style={{fontSize:10,color:"#8a978f"}}>{m.sku}</span><input className="vinput" value={m.variantValue} onChange={e=>onUpdate(products.map(p=>p.sku===m.sku?{...p,variantValue:e.target.value,variantColor:g.variationType!=="size"?e.target.value:p.variantColor,variantSize:g.variationType!=="color"?e.target.value:p.variantSize}:p))} /></div>)}</div></div>}
         {!isEd&&<div style={{padding:"8px 16px",display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><span key={m.sku} className="vtag">{m.variantValue||m.sku}</span>)}</div>}
       </div>);})}
 
       <div className="panel" style={{marginTop:16}}>
-        <h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>Manual Grouping</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Select 2+ variant SKUs.</p>
+        <h3 style={{margin:"0 0 4px",fontSize:15,color:"#1b231f"}}>Manual Grouping</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#57645c"}}>Select 2+ variant SKUs.</p>
         {selectedSkus.size>=2&&<div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center",flexWrap:"wrap"}}><input className="fi" style={{maxWidth:280}} placeholder="Group name..." value={newGroupName} onChange={e=>setNewGroupName(e.target.value)} /><select className="fi" value={newGroupType} onChange={e=>setNewGroupType(e.target.value)}>{VARIATION_TYPES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select><button className="btn-primary" onClick={createGroup}>Create ({selectedSkus.size})</button><button className="btn-sm btn-outline" onClick={()=>setSelectedSkus(new Set())}>Clear</button></div>}
         <input className="fi" placeholder="Search ungrouped..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{marginBottom:10,width:"100%",maxWidth:400}} />
         <div className="tw" style={{maxHeight:350}}><table className="tbl"><thead><tr><th style={{width:36}}></th><th>SKU</th><th>Description</th><th>Vendor</th><th style={{textAlign:"right"}}>Retail</th></tr></thead>
-          <tbody>{filtUng.slice(0,150).map(p=><tr key={p.sku} className={selectedSkus.has(p.sku)?"row-hl":""} onClick={()=>toggleSku(p.sku)}><td onClick={e=>e.stopPropagation()}><input type="checkbox" checked={selectedSkus.has(p.sku)} onChange={()=>toggleSku(p.sku)} /></td><td className="mono">{p.sku}</td><td style={{maxWidth:280,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</td><td style={{fontSize:12,color:"#6b7280"}}>{p.vendor}</td><td style={{textAlign:"right"}} className="mono">${p.retailPrice.toFixed(2)}</td></tr>)}</tbody></table></div>
+          <tbody>{filtUng.slice(0,150).map(p=><tr key={p.sku} className={selectedSkus.has(p.sku)?"row-hl":""} onClick={()=>toggleSku(p.sku)}><td onClick={e=>e.stopPropagation()}><input type="checkbox" checked={selectedSkus.has(p.sku)} onChange={()=>toggleSku(p.sku)} /></td><td className="mono">{p.sku}</td><td style={{maxWidth:280,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</td><td style={{fontSize:12,color:"#57645c"}}>{p.vendor}</td><td style={{textAlign:"right"}} className="mono">${p.retailPrice.toFixed(2)}</td></tr>)}</tbody></table></div>
       </div>
     </div>
   );
@@ -1593,21 +1593,21 @@ function EditStep({ products, onUpdate, groups, setGroups, onNext, onBack }) {
 
   return (
     <div>
-      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Edit & Categorize</h2><p className="step-sub">{catS}/{simple.length} simple · {catG}/{groups.length} groups</p></div>
+      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#1b231f"}}>Edit & Categorize</h2><p className="step-sub">{catS}/{simple.length} simple · {catG}/{groups.length} groups</p></div>
         <div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-sm" onClick={()=>setBulkMode(!bulkMode)}>{bulkMode?"Close":"Bulk Assign"}</button><button className="btn-primary" onClick={onNext}>Next: Export →</button></div></div>
-      {bulkMode&&<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#e2e4e9"}}>Bulk Category</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#6b7280"}}>Apply to all uncategorized.</p><div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><select value={bulkVendor} onChange={e=>setBulkVendor(e.target.value)} className="fi"><option value="all">All Vendors</option>{vendors.map(v=><option key={v} value={v}>{v}</option>)}</select><CategorySelect value={bulkCat} onChange={setBulkCat} /><button className="btn-primary" onClick={applyBulk} disabled={!bulkCat}>Apply</button></div></div>}
-      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #1e2330"}}><button className={`tab ${view==="simple"?"active":""}`} onClick={()=>setView("simple")}>Simple ({simple.length})</button><button className={`tab ${view==="groups"?"active":""}`} onClick={()=>setView("groups")}>Groups ({groups.length})</button></div>
-      {view==="groups"&&<div>{groups.length===0&&<p style={{color:"#4b5563",textAlign:"center",padding:40}}>No groups created.</p>}
+      {bulkMode&&<div className="panel" style={{marginBottom:16}}><h3 style={{margin:"0 0 4px",fontSize:15,color:"#1b231f"}}>Bulk Category</h3><p style={{margin:"0 0 12px",fontSize:13,color:"#57645c"}}>Apply to all uncategorized.</p><div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}><select value={bulkVendor} onChange={e=>setBulkVendor(e.target.value)} className="fi"><option value="all">All Vendors</option>{vendors.map(v=><option key={v} value={v}>{v}</option>)}</select><CategorySelect value={bulkCat} onChange={setBulkCat} /><button className="btn-primary" onClick={applyBulk} disabled={!bulkCat}>Apply</button></div></div>}
+      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #dde4e0"}}><button className={`tab ${view==="simple"?"active":""}`} onClick={()=>setView("simple")}>Simple ({simple.length})</button><button className={`tab ${view==="groups"?"active":""}`} onClick={()=>setView("groups")}>Groups ({groups.length})</button></div>
+      {view==="groups"&&<div>{groups.length===0&&<p style={{color:"#8a978f",textAlign:"center",padding:40}}>No groups created.</p>}
         {groups.map(g=>{const ms=products.filter(p=>p.selected&&p.groupId===g.id);return(<div key={g.id} className="gcard"><div style={{padding:16}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}><div><label className="fl">Display Name</label><input className="fi" value={g.displayName} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,displayName:e.target.value}:gg))} /></div><div><label className="fl">Category</label><CategorySelect value={g.category} onChange={v=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,category:v}:gg))} className={`fi ${!g.category?"iw":""}`} /></div></div>
           <label className="fl">Description</label><textarea className="fi" style={{resize:"vertical",width:"100%"}} rows={2} value={g.description||""} onChange={e=>setGroups(prev=>prev.map(gg=>gg.id===g.id?{...gg,description:e.target.value}:gg))} placeholder="Description..." />
-          <div style={{marginTop:10}}><label className="fl">Variants</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><span key={m.sku} className="vtag">{m.variantValue||m.sku} <span className="mono" style={{fontSize:10,color:"#4b5563"}}>({m.sku})</span></span>)}</div></div>
+          <div style={{marginTop:10}}><label className="fl">Variants</label><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{ms.map(m=><span key={m.sku} className="vtag">{m.variantValue||m.sku} <span className="mono" style={{fontSize:10,color:"#8a978f"}}>({m.sku})</span></span>)}</div></div>
         </div></div>);})}</div>}
       {view==="simple"&&simple.length>0&&p&&(
-        <div className="elayout"><div className="esidebar">{simple.map((item,i)=><div key={item.sku} className={`si ${i===cur?"si-a":""} ${item.category?"si-c":""}`} onClick={()=>setCur(i)}><span className="mono" style={{fontSize:11,color:"#6b7280",width:90,flexShrink:0}}>{item.sku}</span><span style={{fontSize:12,color:"#9ca3af",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{item.displayName}</span>{item.category&&<span style={{color:"#22c55e",fontSize:14}}>✓</span>}</div>)}</div>
+        <div className="elayout"><div className="esidebar">{simple.map((item,i)=><div key={item.sku} className={`si ${i===cur?"si-a":""} ${item.category?"si-c":""}`} onClick={()=>setCur(i)}><span className="mono" style={{fontSize:11,color:"#57645c",width:90,flexShrink:0}}>{item.sku}</span><span style={{fontSize:12,color:"#57645c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{item.displayName}</span>{item.category&&<span style={{color:"#15803d",fontSize:14}}>✓</span>}</div>)}</div>
         <div className="eform"><div style={{maxWidth:700}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,paddingBottom:16,borderBottom:"1px solid #1e2330"}}><div><span className="mono" style={{fontSize:20,fontWeight:600,color:"#fff"}}>{p.sku}</span><span style={{marginLeft:12,background:"#1e2330",padding:"4px 10px",borderRadius:5,fontSize:12,color:"#6b7280"}}>{p.vendor}</span></div><div style={{display:"flex",alignItems:"center",gap:8}}><button disabled={cur===0} onClick={()=>setCur(cur-1)} className="btn-icon">←</button><span className="mono" style={{fontSize:13,color:"#4b5563"}}>{cur+1}/{simple.length}</span><button disabled={cur===simple.length-1} onClick={()=>setCur(cur+1)} className="btn-icon">→</button></div></div>
-          <label className="fl">Display Name</label><input type="text" value={p.displayName} onChange={e=>upd(p.sku,"displayName",e.target.value)} className="fi" style={{width:"100%"}} /><span style={{fontSize:12,color:"#4b5563",marginTop:4,display:"block"}}>Original: {p.name}</span>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,paddingBottom:16,borderBottom:"1px solid #dde4e0"}}><div><span className="mono" style={{fontSize:20,fontWeight:600,color:"#1b231f"}}>{p.sku}</span><span style={{marginLeft:12,background:"#dde4e0",padding:"4px 10px",borderRadius:5,fontSize:12,color:"#57645c"}}>{p.vendor}</span></div><div style={{display:"flex",alignItems:"center",gap:8}}><button disabled={cur===0} onClick={()=>setCur(cur-1)} className="btn-icon">←</button><span className="mono" style={{fontSize:13,color:"#8a978f"}}>{cur+1}/{simple.length}</span><button disabled={cur===simple.length-1} onClick={()=>setCur(cur+1)} className="btn-icon">→</button></div></div>
+          <label className="fl">Display Name</label><input type="text" value={p.displayName} onChange={e=>upd(p.sku,"displayName",e.target.value)} className="fi" style={{width:"100%"}} /><span style={{fontSize:12,color:"#8a978f",marginTop:4,display:"block"}}>Original: {p.name}</span>
           <label className="fl">Short Description</label><textarea value={p.description} onChange={e=>upd(p.sku,"description",e.target.value)} className="fi" style={{resize:"vertical",width:"100%"}} rows={3} placeholder="Description..." />
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}><div><label className="fl">Category</label><CategorySelect value={p.category} onChange={v=>upd(p.sku,"category",v)} className={`fi ${!p.category?"iw":""}`} /></div><div><label className="fl">Retail Price</label><input type="number" step="0.01" value={p.retailPrice} onChange={e=>upd(p.sku,"retailPrice",parseFloat(e.target.value)||0)} className="fi" style={{width:"100%"}} /></div></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginTop:12}}><div><label className="fl">Tax</label><span className="fv">{TAX_LABEL[p.tax]||"Not Set"}</span></div><div><label className="fl">Weight</label><span className="fv">{p.weight>0?`${p.weight} lbs`:"—"}</span></div><div><label className="fl">UPC</label><span className="fv" style={{fontSize:12,wordBreak:"break-all"}}>{p.upcs[0]||"—"}</span></div><div><label className="fl">MFG #</label><span className="fv" style={{fontSize:12,wordBreak:"break-all"}}>{p.mfg||"—"}</span></div></div>
@@ -1632,14 +1632,14 @@ function ExportStep({ products, groups, onBack }) {
 
   return (
     <div>
-      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#e2e4e9"}}>Review & Export</h2><p className="step-sub">{sel.length} products · {groups.length} groups</p></div><div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-export" onClick={doExport}>{done?"✓ Downloaded":"Download Import Files"}</button></div></div>
+      <div className="step-header"><div><h2 style={{margin:0,fontSize:20,color:"#1b231f"}}>Review & Export</h2><p className="step-sub">{sel.length} products · {groups.length} groups</p></div><div style={{display:"flex",gap:8}}><button className="btn-outline" onClick={onBack}>← Back</button><button className="btn-export" onClick={doExport}>{done?"✓ Downloaded":"Download Import Files"}</button></div></div>
       {uc>0&&<div className="warn">⚠ {uc} item{uc>1?"s":""} without a category.</div>}
       <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:20,marginBottom:28}}>
-        <div className="panel"><h3 style={{margin:"0 0 12px",fontSize:16,color:"#e2e4e9"}}>Summary</h3><div className="srows"><div className="srow"><span>Simple</span><span className="sv">{simple.length}</span></div><div className="srow"><span>Groups</span><span className="sv">{groups.length}</span></div><div className="srow"><span>Variant SKUs</span><span className="sv">{sel.filter(p=>p.groupId).length}</span></div><div className="srow"><span>Categorized</span><span className="sv" style={{color:"#22c55e"}}>{catS.length+catG.length}</span></div><div className="srow"><span>Uncategorized</span><span className="sv" style={{color:uc>0?"#f97316":"#22c55e"}}>{uc}</span></div></div></div>
-        <div className="panel" style={{padding:0,overflow:"hidden"}}><div style={{display:"flex",borderBottom:"1px solid #1e2330"}}><button className={`tab ${tab==="catalog"?"active":""}`} onClick={()=>setTab("catalog")}>Catalog XML</button><button className={`tab ${tab==="pricebook"?"active":""}`} onClick={()=>setTab("pricebook")}>Price Book XML</button></div><pre style={{padding:16,margin:0,fontFamily:"'SF Mono',Menlo,Consolas,monospace",fontSize:11,lineHeight:1.6,color:"#8b95a5",maxHeight:400,overflow:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{(tab==="catalog"?catXml:pbXml).slice(0,4000)}{(tab==="catalog"?catXml:pbXml).length>4000&&"\n\n... (truncated)"}</pre></div>
+        <div className="panel"><h3 style={{margin:"0 0 12px",fontSize:16,color:"#1b231f"}}>Summary</h3><div className="srows"><div className="srow"><span>Simple</span><span className="sv">{simple.length}</span></div><div className="srow"><span>Groups</span><span className="sv">{groups.length}</span></div><div className="srow"><span>Variant SKUs</span><span className="sv">{sel.filter(p=>p.groupId).length}</span></div><div className="srow"><span>Categorized</span><span className="sv" style={{color:"#15803d"}}>{catS.length+catG.length}</span></div><div className="srow"><span>Uncategorized</span><span className="sv" style={{color:uc>0?"#f97316":"#15803d"}}>{uc}</span></div></div></div>
+        <div className="panel" style={{padding:0,overflow:"hidden"}}><div style={{display:"flex",borderBottom:"1px solid #dde4e0"}}><button className={`tab ${tab==="catalog"?"active":""}`} onClick={()=>setTab("catalog")}>Catalog XML</button><button className={`tab ${tab==="pricebook"?"active":""}`} onClick={()=>setTab("pricebook")}>Price Book XML</button></div><pre style={{padding:16,margin:0,fontFamily:"'SF Mono',Menlo,Consolas,monospace",fontSize:11,lineHeight:1.6,color:"#57645c",maxHeight:400,overflow:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}}>{(tab==="catalog"?catXml:pbXml).slice(0,4000)}{(tab==="catalog"?catXml:pbXml).length>4000&&"\n\n... (truncated)"}</pre></div>
       </div>
-      <h3 style={{fontSize:18,color:"#e2e4e9",margin:"0 0 16px"}}>Import into Business Manager</h3>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>{[{n:1,t:"Upload Catalog XML",d:"Administration → Site Development → Import & Export"},{n:2,t:"Import Catalog",d:"Select file, MERGE mode. Creates products + variations."},{n:3,t:"Import Price Book",d:"Upload and import pricebook XML, MERGE mode."},{n:4,t:"Verify",d:"Search imported SKUs in staging. Check variations and pricing."}].map(s=><div key={s.n} style={{display:"flex",gap:14,background:"#111520",border:"1px solid #1e2330",borderRadius:10,padding:16}}><span style={{width:28,height:28,flexShrink:0,background:"#3b82f6",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700}}>{s.n}</span><div><strong style={{color:"#e2e4e9",fontSize:14,display:"block",marginBottom:4}}>{s.t}</strong><p style={{color:"#6b7280",fontSize:13,margin:0,lineHeight:1.5}}>{s.d}</p></div></div>)}</div>
+      <h3 style={{fontSize:18,color:"#1b231f",margin:"0 0 16px"}}>Import into Business Manager</h3>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>{[{n:1,t:"Upload Catalog XML",d:"Administration → Site Development → Import & Export"},{n:2,t:"Import Catalog",d:"Select file, MERGE mode. Creates products + variations."},{n:3,t:"Import Price Book",d:"Upload and import pricebook XML, MERGE mode."},{n:4,t:"Verify",d:"Search imported SKUs in staging. Check variations and pricing."}].map(s=><div key={s.n} style={{display:"flex",gap:14,background:"#ffffff",border:"1px solid #dde4e0",borderRadius:10,padding:16}}><span style={{width:28,height:28,flexShrink:0,background:"#056A45",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700}}>{s.n}</span><div><strong style={{color:"#1b231f",fontSize:14,display:"block",marginBottom:4}}>{s.t}</strong><p style={{color:"#57645c",fontSize:13,margin:0,lineHeight:1.5}}>{s.d}</p></div></div>)}</div>
     </div>
   );
 }
@@ -1668,10 +1668,10 @@ function RulesPanel({ rules, onSaveRule, onDeleteRule }) {
 
   return (
     <div>
-      <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "#e2e4e9" }}>Rules Manager</h2>
+      <h2 style={{ margin: "0 0 8px", fontSize: 20, color: "#1b231f" }}>Rules Manager</h2>
       <p className="step-sub" style={{ marginBottom: 20 }}>Rules persist across sessions. They control how the cascade classifies items on upload.</p>
       <div className="panel" style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#e2e4e9" }}>Add Rule</h3>
+        <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#1b231f" }}>Add Rule</h3>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <select className="fi" value={newType} onChange={e => setNewType(e.target.value)}>
             <option value="class">Class</option><option value="dept">Department</option><option value="vendor">Vendor</option><option value="sku">SKU</option><option value="prefix">Prefix</option>
@@ -1689,12 +1689,12 @@ function RulesPanel({ rules, onSaveRule, onDeleteRule }) {
         if (!entries.length) return null;
         return (
           <div key={sec.key} style={{ marginBottom: 16 }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#9ca3af" }}>{sec.label} ({entries.length})</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 14, color: "#57645c" }}>{sec.label} ({entries.length})</h3>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {entries.sort((a,b) => a[0].localeCompare(b[0])).map(([code, rule]) => (
                 <span key={code} className={rule.action === "upload" ? "rule-chip-up" : "rule-chip-drop"}>
                   <strong>{code}</strong> · {rule.name} · {rule.action}
-                  <button onClick={() => onDeleteRule(sec.key, code)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", marginLeft: 6, fontSize: 14, padding: 0 }}>×</button>
+                  <button onClick={() => onDeleteRule(sec.key, code)} style={{ background: "none", border: "none", color: "#57645c", cursor: "pointer", marginLeft: 6, fontSize: 14, padding: 0 }}>×</button>
                 </span>
               ))}
             </div>
@@ -1764,112 +1764,116 @@ function SKUOnboarder() {
     <div className="app">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
-        .app{font-family:'DM Sans',sans-serif;min-height:100vh;background:#0a0d12;color:#c9cbd0}
-        .app-header{display:flex;align-items:center;gap:10px;padding:8px 20px;background:linear-gradient(135deg,#0f1219,#111827);border-bottom:1px solid #1e2330}
-        .app-logo{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;letter-spacing:1px}
-        .app-title{font-size:15px;font-weight:600;color:#e2e4e9}
-        .app-sub{font-size:12px;color:#4b5563;margin-left:4px}
-        .stepper{display:flex;align-items:center;padding:8px 20px;background:#0c0f14;border-bottom:1px solid #1a1f2e;overflow-x:auto}
-        .sd{display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;padding:4px 10px;border-radius:20px;white-space:nowrap;transition:all .15s}
-        .sd.active{color:#3b82f6;background:rgba(59,130,246,.1);font-weight:500}.sd.done{color:#22c55e}
-        .sn{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:#1e2330;color:#6b7280}
-        .sd.active .sn{background:#3b82f6;color:#fff}.sd.done .sn{background:#22c55e;color:#fff}
-        .sc{color:#2a2f3d;margin:0 2px;font-size:14px}
+        .app{font-family:'DM Sans',sans-serif;min-height:100vh;background:#f6f8f6;color:#1b231f}
+        .app-header{display:flex;align-items:center;gap:10px;padding:8px 20px;background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);border-bottom:1px solid #dde4e0;flex-wrap:wrap}
+        .app-logo{width:28px;height:28px;background:linear-gradient(135deg,#056A45,#0e8f5e);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;letter-spacing:1px}
+        .app-title{font-size:15px;font-weight:600;color:#fff}
+        .app-sub{font-size:12px;color:rgba(255,255,255,.7);margin-left:4px}
+        .stepper{display:flex;align-items:center;padding:8px 20px;background:#eef2ef;border-bottom:1px solid #dde4e0;overflow-x:auto}
+        .sd{display:flex;align-items:center;gap:6px;font-size:12px;color:#8a978f;padding:4px 10px;border-radius:20px;white-space:nowrap;transition:all .15s}
+        .sd.active{color:#056A45;background:rgba(5,106,69,.10);font-weight:500}.sd.done{color:#15803d}
+        .sn{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;background:#dde4e0;color:#57645c}
+        .sd.active .sn{background:#056A45;color:#fff}.sd.done .sn{background:#15803d;color:#fff}
+        .sc{color:#b9c6bf;margin:0 2px;font-size:14px}
         .app-content{padding:16px 20px;max-width:1200px;margin:0 auto}
         .step-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-        .step-sub{margin:2px 0 0;font-size:13px;color:#6b7280}
-        .cascade-banner{background:#111520;border:1px solid #1e2330;border-radius:12px;padding:12px 16px;margin-bottom:14px}
-        .cb-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#e2e4e9;margin-bottom:8px;flex-wrap:wrap}
+        .step-sub{margin:2px 0 0;font-size:13px;color:#57645c}
+        .cascade-banner{background:#ffffff;border:1px solid #dde4e0;border-radius:12px;padding:12px 16px;margin-bottom:14px}
+        .cb-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#1b231f;margin-bottom:8px;flex-wrap:wrap}
         .cb-warn{font-size:12px;font-weight:400;color:#f97316;margin-left:8px;padding:2px 8px;background:rgba(249,115,22,.1);border-radius:4px}
         .cb-grid{display:flex;gap:8px;flex-wrap:wrap}
-        .cb-card{background:#0c0f14;border:1px solid #1a1f2e;border-radius:8px;padding:8px 14px;min-width:90px;text-align:center}
-        .cb-drop{border-color:rgba(239,68,68,.3)}.cb-auto{border-color:rgba(34,197,94,.3)}.cb-rev{border-color:rgba(59,130,246,.3)}
-        .cb-num{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:20px;font-weight:700;color:#e2e4e9}
-        .cb-drop .cb-num{color:#ef4444}.cb-auto .cb-num{color:#22c55e}.cb-rev .cb-num{color:#3b82f6}
-        .cb-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-        .drop-chip{background:rgba(239,68,68,.1);color:#f87171;padding:3px 8px;border-radius:4px;font-size:11px;display:inline-block}
-        .btn-primary{background:#3b82f6;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
-        .btn-primary:hover{background:#2563eb}.btn-primary:disabled{opacity:.4;cursor:default}
-        .btn-outline{background:none;color:#9ca3af;border:1px solid #2a2f3d;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
-        .btn-outline:hover{border-color:#4b5563;color:#e2e4e9}
-        .btn-sm{background:#1e2330;color:#9ca3af;border:1px solid #2a2f3d;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
-        .btn-sm:hover{background:#252b3b;color:#e2e4e9}
-        .btn-xs{background:none;color:#6b7280;border:1px solid #2a2f3d;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
-        .btn-xs:hover{background:#1e2330}
-        .btn-danger{border-color:rgba(239,68,68,.3);color:#ef4444}.btn-danger:hover{background:rgba(239,68,68,.1)}
-        .btn-icon{background:#1e2330;color:#9ca3af;border:1px solid #2a2f3d;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+        .cb-card{background:#eef2ef;border:1px solid #dde4e0;border-radius:8px;padding:8px 14px;min-width:90px;text-align:center}
+        .cb-drop{border-color:rgba(192,57,43,.3)}.cb-auto{border-color:rgba(21,128,61,.3)}.cb-rev{border-color:rgba(26,111,163,.3)}
+        .cb-num{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:20px;font-weight:700;color:#1b231f}
+        .cb-drop .cb-num{color:#c0392b}.cb-auto .cb-num{color:#15803d}.cb-rev .cb-num{color:#1a6fa3}
+        .cb-label{font-size:10px;color:#57645c;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+        .drop-chip{background:rgba(192,57,43,.1);color:#a32d2d;padding:3px 8px;border-radius:4px;font-size:11px;display:inline-block}
+        .btn-primary{background:#056A45;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+        .btn-primary:hover{background:#034a31}.btn-primary:disabled{opacity:.4;cursor:default}
+        .btn-outline{background:none;color:#57645c;border:1px solid #b9c6bf;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+        .btn-outline:hover{border-color:#8a978f;color:#1b231f}
+        .btn-sm{background:#dde4e0;color:#57645c;border:1px solid #b9c6bf;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
+        .btn-sm:hover{background:#eef2ef;color:#1b231f}
+        .btn-xs{background:none;color:#57645c;border:1px solid #b9c6bf;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
+        .btn-xs:hover{background:#dde4e0}
+        .btn-danger{border-color:rgba(192,57,43,.3);color:#c0392b}.btn-danger:hover{background:rgba(192,57,43,.1)}
+        .btn-icon{background:#dde4e0;color:#57645c;border:1px solid #b9c6bf;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit}
         .btn-icon:disabled{opacity:.3;cursor:default}
-        .btn-export{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
-        .btn-rules{background:none;color:#6b7280;border:1px solid #2a2f3d;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
-        .btn-rules:hover{background:#1e2330;color:#9ca3af}
-        .fi{background:#111520;border:1px solid #2a2f3d;color:#e2e4e9;padding:8px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
-        .fi:focus{border-color:#3b82f6}.iw{border-color:#f97316}
-        .fl{display:block;font-size:11px;font-weight:500;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 5px}
-        .fv{font-size:14px;color:#c9cbd0}
-        .fbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#0c0f14;border:1px solid #1a1f2e;border-radius:10px}
-        .tw{overflow:auto;border:1px solid #1e2330;border-radius:10px}
+        .btn-export{background:linear-gradient(135deg,#056A45,#034a31);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+        .btn-rules{background:none;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
+        .btn-rules:hover{background:rgba(255,255,255,.15);color:#fff}
+        .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:6px;white-space:nowrap}
+        .ch-back:hover{background:rgba(255,255,255,.15)}
+        .fi{background:#ffffff;border:1px solid #b9c6bf;color:#1b231f;padding:8px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box}
+        .fi:focus{border-color:#056A45}.iw{border-color:#f97316}
+        .fl{display:block;font-size:11px;font-weight:500;color:#57645c;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 5px}
+        .fv{font-size:14px;color:#1b231f}
+        .fbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#eef2ef;border:1px solid #dde4e0;border-radius:10px}
+        .tw{overflow:auto;border:1px solid #dde4e0;border-radius:10px}
         .tbl{width:100%;border-collapse:collapse;font-size:13px}
         .tbl thead{position:sticky;top:0;z-index:1}
-        .tbl th{background:#111520;color:#6b7280;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid #1e2330}
-        .tbl td{padding:8px 12px;border-bottom:1px solid #141820;color:#c9cbd0}
+        .tbl th{background:#ffffff;color:#57645c;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid #dde4e0}
+        .tbl td{padding:8px 12px;border-bottom:1px solid #eef2ef;color:#1b231f}
         .tbl tbody tr{cursor:pointer;transition:background .1s}
-        .tbl tbody tr:hover{background:#111520}
-        .row-off{opacity:.35}.row-hl{background:rgba(59,130,246,.08)!important}
+        .tbl tbody tr:hover{background:#eef2ef}
+        .row-off{opacity:.35}.row-hl{background:rgba(5,106,69,.08)!important}
         .mono{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px}
-        .badge-au{background:rgba(34,197,94,.12);color:#22c55e;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
-        .badge-rv{background:rgba(59,130,246,.12);color:#60a5fa;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
-        .badge-type{background:rgba(99,102,241,.12);color:#818cf8;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-left:8px}
-        .panel{background:#111520;border:1px solid #1e2330;border-radius:10px;padding:16px}
-        .dz{border:2px dashed #2a2f3d;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
-        .dz:hover,.dz-a{border-color:#3b82f6;background:rgba(59,130,246,.05)}
-        .suggestion-chip{background:#0c0f14;border:1px solid #2a2f3d;color:#c9cbd0;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center}
-        .suggestion-chip:hover{border-color:#3b82f6;background:rgba(59,130,246,.05)}
-        .gcard{background:#111520;border:1px solid #1e2330;border-radius:10px;margin-bottom:10px;overflow:hidden}
-        .ghead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #1a1f2e}
-        .vtag{background:#1a1f2e;color:#9ca3af;padding:4px 10px;border-radius:5px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
-        .vchip{background:#0c0f14;border:1px solid #1e2330;border-radius:6px;padding:6px 10px;display:flex;flex-direction:column;gap:4px}
-        .vinput{background:#111520;border:1px solid #2a2f3d;color:#e2e4e9;padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none;width:120px}
-        .vinput:focus{border-color:#3b82f6}
-        .elayout{display:flex;gap:0;height:calc(100vh - 200px);border:1px solid #1e2330;border-radius:12px;overflow:hidden}
-        .esidebar{width:300px;flex-shrink:0;background:#111520;border-right:1px solid #1e2330;overflow-y:auto}
+        .badge-au{background:rgba(21,128,61,.12);color:#15803d;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+        .badge-rv{background:rgba(26,111,163,.12);color:#1a6fa3;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+        .badge-type{background:rgba(107,79,160,.12);color:#6b4fa0;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500;margin-left:8px}
+        .panel{background:#ffffff;border:1px solid #dde4e0;border-radius:10px;padding:16px}
+        .dz{border:2px dashed #b9c6bf;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;max-width:480px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+        .dz:hover,.dz-a{border-color:#056A45;background:rgba(5,106,69,.06)}
+        .suggestion-chip{background:#eef2ef;border:1px solid #b9c6bf;color:#1b231f;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center}
+        .suggestion-chip:hover{border-color:#056A45;background:rgba(5,106,69,.06)}
+        .gcard{background:#ffffff;border:1px solid #dde4e0;border-radius:10px;margin-bottom:10px;overflow:hidden}
+        .ghead{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #dde4e0}
+        .vtag{background:#dde4e0;color:#57645c;padding:4px 10px;border-radius:5px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .vchip{background:#eef2ef;border:1px solid #dde4e0;border-radius:6px;padding:6px 10px;display:flex;flex-direction:column;gap:4px}
+        .vinput{background:#ffffff;border:1px solid #b9c6bf;color:#1b231f;padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;outline:none;width:120px}
+        .vinput:focus{border-color:#056A45}
+        .elayout{display:flex;gap:0;height:calc(100vh - 200px);border:1px solid #dde4e0;border-radius:12px;overflow:hidden}
+        .esidebar{width:300px;flex-shrink:0;background:#ffffff;border-right:1px solid #dde4e0;overflow-y:auto}
         .si{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:background .1s;border-left:3px solid transparent}
-        .si:hover{background:#161b28}.si-a{background:#1a2035;border-left-color:#3b82f6}.si-c .mono{color:#22c55e!important}
-        .eform{flex:1;padding:20px;background:#0c0f14;overflow-y:auto}
-        .tab{padding:10px 20px;font-size:13px;font-weight:500;color:#6b7280;background:none;border:none;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent}
-        .tab.active{color:#3b82f6;border-bottom-color:#3b82f6}.tab:hover{color:#9ca3af}
+        .si:hover{background:#eef2ef}.si-a{background:#e3f3ec;border-left-color:#056A45}.si-c .mono{color:#15803d!important}
+        .eform{flex:1;padding:20px;background:#eef2ef;overflow-y:auto}
+        .tab{padding:10px 20px;font-size:13px;font-weight:500;color:#57645c;background:none;border:none;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent}
+        .tab.active{color:#056A45;border-bottom-color:#056A45}.tab:hover{color:#57645c}
         .srows{display:flex;flex-direction:column}
-        .srow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1f2e;font-size:13px;color:#9ca3af}
-        .sv{font-family:'SF Mono',Menlo,Consolas,monospace;color:#e2e4e9}
-        .warn{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 18px;font-size:14px;color:#fb923c;margin-bottom:20px}
-        .rule-chip-up{background:rgba(34,197,94,.1);color:#22c55e;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
-        .rule-chip-drop{background:rgba(239,68,68,.1);color:#f87171;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .srow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #dde4e0;font-size:13px;color:#57645c}
+        .sv{font-family:'SF Mono',Menlo,Consolas,monospace;color:#1b231f}
+        .warn{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 18px;font-size:14px;color:#92651b;margin-bottom:20px}
+        .rule-chip-up{background:rgba(21,128,61,.1);color:#15803d;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+        .rule-chip-drop{background:rgba(192,57,43,.1);color:#a32d2d;padding:4px 10px;border-radius:6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100}
-        .modal{background:#111520;border:1px solid #2a2f3d;border-radius:12px;padding:24px;max-width:480px;width:90%}
+        .modal{background:#ffffff;border:1px solid #b9c6bf;border-radius:12px;padding:24px;max-width:480px;width:90%}
         .cat-trigger{min-height:36px}
-        .cat-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;background:#111520;border:1px solid #2a2f3d;border-radius:10px;margin-top:4px;box-shadow:0 12px 40px rgba(0,0,0,.5);min-width:300px;max-width:420px}
-        .cat-search{width:100%;border:none;border-bottom:1px solid #1e2330;border-radius:10px 10px 0 0;padding:10px 12px;font-size:13px}
+        .cat-dropdown{position:absolute;top:100%;left:0;right:0;z-index:50;background:#ffffff;border:1px solid #b9c6bf;border-radius:10px;margin-top:4px;box-shadow:0 12px 40px rgba(0,0,0,.5);min-width:300px;max-width:420px}
+        .cat-search{width:100%;border:none;border-bottom:1px solid #dde4e0;border-radius:10px 10px 0 0;padding:10px 12px;font-size:13px}
         .cat-tree{max-height:320px;overflow-y:auto;padding:4px 0}
-        .cat-node{display:flex;align-items:center;gap:6px;padding:5px 8px;cursor:pointer;transition:background .1s;font-size:13px;color:#c9cbd0;min-height:28px}
-        .cat-node:hover{background:#1a2035}
-        .cat-sel{background:rgba(59,130,246,.12)!important;color:#60a5fa}
-        .cat-clear:hover{background:rgba(239,68,68,.08)!important}
-        .cat-arrow{color:#4b5563;font-size:11px;width:14px;text-align:center;flex-shrink:0;cursor:pointer}
-        .cat-arrow:hover{color:#9ca3af}
-        .cat-dot{color:#2a2f3d;font-size:8px;width:14px;text-align:center;flex-shrink:0}
+        .cat-node{display:flex;align-items:center;gap:6px;padding:5px 8px;cursor:pointer;transition:background .1s;font-size:13px;color:#1b231f;min-height:28px}
+        .cat-node:hover{background:#e3f3ec}
+        .cat-sel{background:rgba(5,106,69,.12)!important;color:#056A45}
+        .cat-clear:hover{background:rgba(192,57,43,.08)!important}
+        .cat-arrow{color:#8a978f;font-size:11px;width:14px;text-align:center;flex-shrink:0;cursor:pointer}
+        .cat-arrow:hover{color:#57645c}
+        .cat-dot{color:#b9c6bf;font-size:8px;width:14px;text-align:center;flex-shrink:0}
         .cat-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .cat-pick{background:none;border:1px solid #2a2f3d;color:#4b5563;width:20px;height:20px;border-radius:4px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .15s}
+        .cat-pick{background:none;border:1px solid #b9c6bf;color:#8a978f;width:20px;height:20px;border-radius:4px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .15s}
         .cat-node:hover .cat-pick{opacity:1}
-        .cat-pick:hover{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.1)}
-        ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2a2f3d;border-radius:3px}
-        select option,select optgroup{background:#111520;color:#e2e4e9}
-        @media(max-width:800px){.elayout{flex-direction:column;height:auto}.esidebar{width:100%;max-height:200px;border-right:none;border-bottom:1px solid #1e2330}}
+        .cat-pick:hover{border-color:#056A45;color:#056A45;background:rgba(5,106,69,.10)}
+        ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#b9c6bf;border-radius:3px}
+        select option,select optgroup{background:#ffffff;color:#1b231f}
+        @media(max-width:800px){.elayout{flex-direction:column;height:auto}.esidebar{width:100%;max-height:200px;border-right:none;border-bottom:1px solid #dde4e0}}
       `}</style>
 
       <header className="app-header">
-        <div className="app-logo">CH</div>
+        <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style={{ height: 24, width: "auto", display: "block" }} />
+        <span style={{ opacity: 0.4, fontSize: 13, fontWeight: 300 }}>|</span>
         <span className="app-title">SKU Onboarder</span>
-        <span className="app-sub">Cheshire Horse · SFCC Import Tool</span>
-        <div style={{ marginLeft: "auto" }}>
+        <span className="app-sub">SFCC Import Tool</span>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+          <a href="../../index.html" className="ch-back">&larr; All tools</a>
           <button className="btn-rules" onClick={() => setShowRules(!showRules)}>
             ⚙ Rules {showRules ? "▾" : "▸"}
           </button>

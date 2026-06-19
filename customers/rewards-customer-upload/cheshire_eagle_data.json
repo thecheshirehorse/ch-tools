@@ -1,6 +1,6 @@
 {
   "nextNumbers": {
-    "store3": 8081,
+    "store3": 8086,
     "store5": 8085
   },
   "queue": [],
@@ -316,7 +316,7 @@
     {
       "id": "20260612_090821",
       "date": "06/12/26",
-      "stage": "psm_waiting",
+      "stage": "complete",
       "customers": [
         {
           "customerNumber": "*98079",
@@ -340,7 +340,8 @@
           "lastName": "SMITH",
           "interests": "Western",
           "invoice": "E51811",
-          "notes": ""
+          "notes": "",
+          "psmDone": true
         },
         {
           "customerNumber": "*98080",
@@ -364,10 +365,139 @@
           "lastName": "ZAMBONI",
           "interests": "Pet",
           "invoice": "E51853",
-          "notes": ""
+          "notes": "",
+          "psmDone": true
         }
       ],
       "customerCount": 2
+    },
+    {
+      "id": "20260616_121143",
+      "date": "06/16/26",
+      "stage": "psm_waiting",
+      "customers": [
+        {
+          "customerNumber": "*98081",
+          "customerName": "HANNAH ANDERSEN",
+          "sortName": "QQANDERSEN",
+          "address1": "87 HUNTLEY MOUNTAIN",
+          "address2": "",
+          "city": "WASHINGTON",
+          "state": "NH",
+          "zip": "03280",
+          "phone": "8026883771",
+          "categoryPlan": "SALE",
+          "storeOpened": "3",
+          "dateAccountOpened": "06/16/26",
+          "birthdate": "",
+          "userCode4": "3",
+          "email": "HANDERSEN24@icloud.com",
+          "emailUpdates": "Yes",
+          "contactName": "HANNAH ANDERSEN",
+          "firstName": "HANNAH",
+          "lastName": "ANDERSEN",
+          "interests": "",
+          "invoice": "E52816",
+          "notes": ""
+        },
+        {
+          "customerNumber": "*98082",
+          "customerName": "KATHERINE WARD",
+          "sortName": "QQWARD",
+          "address1": "29 VERRYBROOK RD",
+          "address2": "",
+          "city": "WINCHESTER",
+          "state": "NH",
+          "zip": "03470",
+          "phone": "5054527127",
+          "categoryPlan": "SALE",
+          "storeOpened": "3",
+          "dateAccountOpened": "06/16/26",
+          "birthdate": "",
+          "userCode4": "3",
+          "email": "",
+          "emailUpdates": "No",
+          "contactName": "KATHERINE WARD",
+          "firstName": "KATHERINE",
+          "lastName": "WARD",
+          "interests": "Pet",
+          "invoice": "E52835",
+          "notes": ""
+        },
+        {
+          "customerNumber": "*98083",
+          "customerName": "RACHEL CASTLE",
+          "sortName": "QQCASTLE",
+          "address1": "645 TOWNE HILL ROAD",
+          "address2": "",
+          "city": "MONT PILLIAR",
+          "state": "VT",
+          "zip": "05602",
+          "phone": "8027936598",
+          "categoryPlan": "SALE",
+          "storeOpened": "3",
+          "dateAccountOpened": "06/16/26",
+          "birthdate": "",
+          "userCode4": "3",
+          "email": "VTFARM645@MAC.COM",
+          "emailUpdates": "Yes",
+          "contactName": "RACHEL CASTLE",
+          "firstName": "RACHEL",
+          "lastName": "CASTLE",
+          "interests": "English, Pet, Poultry & Livestock",
+          "invoice": "E52841",
+          "notes": ""
+        },
+        {
+          "customerNumber": "*98084",
+          "customerName": "EMILY MERCURE",
+          "sortName": "QQMERCURE",
+          "address1": "72 SUGARLOOK ST",
+          "address2": "",
+          "city": "SOUTH DEERFIELD",
+          "state": "MA",
+          "zip": "01373",
+          "phone": "4132309158",
+          "categoryPlan": "SALE",
+          "storeOpened": "3",
+          "dateAccountOpened": "06/16/26",
+          "birthdate": "",
+          "userCode4": "3",
+          "email": "EAHM16@GMAIL.COM",
+          "emailUpdates": "Yes",
+          "contactName": "EMILY MERCURE",
+          "firstName": "EMILY",
+          "lastName": "MERCURE",
+          "interests": "English",
+          "invoice": "E53084",
+          "notes": ""
+        },
+        {
+          "customerNumber": "*98085",
+          "customerName": "MARGOT GOLD",
+          "sortName": "QQGOLD",
+          "address1": "229 COLE AVE",
+          "address2": "",
+          "city": "WILLIAMSTOWN",
+          "state": "MA",
+          "zip": "01267",
+          "phone": "9174491118",
+          "categoryPlan": "SALE",
+          "storeOpened": "3",
+          "dateAccountOpened": "06/16/26",
+          "birthdate": "",
+          "userCode4": "3",
+          "email": "KASHIAPIEPRZAK@GMAIL.COM",
+          "emailUpdates": "Yes",
+          "contactName": "MARGOT GOLD",
+          "firstName": "MARGOT",
+          "lastName": "GOLD",
+          "interests": "English, Pet",
+          "invoice": "E53172",
+          "notes": ""
+        }
+      ],
+      "customerCount": 5
     }
   ]
 }
