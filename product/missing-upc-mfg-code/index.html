@@ -310,6 +310,13 @@
     color: var(--success);
     font-weight: 500;
   }
+  table tr.row-corrected td.col-upc,
+  table tr.row-corrected td.col-mpn {
+    color: var(--warn-text);
+    font-weight: 500;
+    text-decoration: underline wavy;
+    text-decoration-color: var(--warn-text);
+  }
 
   .table-footer {
     padding: 10px 14px;
@@ -398,10 +405,10 @@
         <div class="file-name" id="imuFileName"></div>
       </div>
       <div class="hint" style="margin-bottom: 10px;">
-        Looks up each SKU in the Compass export and fills missing <strong>UPC</strong> and <strong>MFG code</strong> values. Rows still missing data are highlighted.
+        Looks up each SKU in the Compass export. Fills missing <strong>UPC</strong> and <strong>MFG code</strong> values, and <strong>corrects</strong> any existing value that doesn't match Compass. Rows still missing data are highlighted; corrected rows are marked separately.
       </div>
       <div class="btn-group">
-        <button id="fillFromImu" class="primary">Fill UPCs &amp; MFG codes from Compass</button>
+        <button id="fillFromImu" class="primary">Fill &amp; correct UPCs / MFG codes from Compass</button>
       </div>
       <div id="imuStatus"></div>
       <div class="warning-banner">
@@ -565,7 +572,7 @@ async function prepareMain(statusEl) {
 }
 
 /* ── Render table ── */
-function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraActions, stats }) {
+function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, correctedUpcSet, correctedMpnSet, extraActions, stats }) {
   resultsArea.innerHTML = '';
   if (!rows.length) {
     resultsArea.innerHTML = `<div class="results-empty"><div class="icon">🔍</div>${esc(title)}: no rows found.</div>`;
@@ -580,10 +587,10 @@ function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraAc
   let statsHtml = `<div class="stat"><strong>${rows.length}</strong> rows</div>`;
   if (stats) {
     if (stats.upcFilled !== undefined) {
-      statsHtml += `<div class="divider"></div><div class="stat">UPC: <strong>${stats.upcFilled}</strong> filled, <strong>${stats.upcMissing}</strong> missing</div>`;
+      statsHtml += `<div class="divider"></div><div class="stat">UPC: <strong>${stats.upcFilled}</strong> filled, <strong>${stats.upcCorrected}</strong> corrected, <strong>${stats.upcMissing}</strong> missing</div>`;
     }
     if (stats.mpnFilled !== undefined) {
-      statsHtml += `<div class="divider"></div><div class="stat">MFG: <strong>${stats.mpnFilled}</strong> filled, <strong>${stats.mpnMissing}</strong> missing</div>`;
+      statsHtml += `<div class="divider"></div><div class="stat">MFG: <strong>${stats.mpnFilled}</strong> filled, <strong>${stats.mpnCorrected}</strong> corrected, <strong>${stats.mpnMissing}</strong> missing</div>`;
     }
   }
   if (rows.length > showing.length) {
@@ -615,15 +622,18 @@ function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraAc
     const sku = row[findSkuCol(headers)] || '';
     const upcFilled = filledUpcSet && filledUpcSet.has(sku);
     const mpnFilled = filledMpnSet && filledMpnSet.has(sku);
+    const upcCorrected = correctedUpcSet && correctedUpcSet.has(sku);
+    const mpnCorrected = correctedMpnSet && correctedMpnSet.has(sku);
 
     if (isFlagged) tr.className = 'row-flag';
+    else if (upcCorrected || mpnCorrected) tr.className = 'row-corrected';
     else if (upcFilled || mpnFilled) tr.className = 'row-filled';
 
     headers.forEach((_, i) => {
       const td = document.createElement('td');
       td.textContent = row[i] || '';
-      if (i === upcI && upcFilled) td.className = 'col-upc';
-      if (i === mpnI && mpnFilled) td.className = 'col-mpn';
+      if (i === upcI && (upcFilled || upcCorrected)) td.className = 'col-upc';
+      if (i === mpnI && (mpnFilled || mpnCorrected)) td.className = 'col-mpn';
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -655,7 +665,7 @@ function renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraAc
     more.textContent = `Show more (${Math.min(20, rows.length - currentDisplayCount)} rows)`;
     more.addEventListener('click', () => {
       currentDisplayCount += 20;
-      renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, extraActions });
+      renderTable({ rows, title, flagRow, filledUpcSet, filledMpnSet, correctedUpcSet, correctedMpnSet, extraActions, stats });
     });
     footer.appendChild(more);
   }
@@ -719,11 +729,12 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
   }
 
   /* Fill main rows */
-  let upcFilled = 0, mpnFilled = 0, upcStillMissing = 0, mpnStillMissing = 0;
-  const filledUpcPairs = [];   // [sku, upc]
-  const filledMpnPairs = [];   // [sku, mpn]
+  let upcFilled = 0, mpnFilled = 0, upcCorrected = 0, mpnCorrected = 0, upcStillMissing = 0, mpnStillMissing = 0;
   const filledUpcSkus = new Set();
   const filledMpnSkus = new Set();
+  const correctedUpcSkus = new Set();
+  const correctedMpnSkus = new Set();
+  const correctionLog = []; // {sku, field, from, to}
 
   headers = main.headers;
   upcColIdx = mUpcI;
@@ -732,20 +743,32 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
   const enriched = main.rows.map(row => {
     const out = row.slice();
     const sku = String(out[mSkuI] || '').trim();
+    const found = sku ? upcLookup.get(sku) : null;
+    const foundMpn = sku ? mpnLookup.get(sku) : null;
 
     if (hasUpc) {
-      if (isMissing(out[mUpcI] || '')) {
-        const found = sku ? upcLookup.get(sku) : null;
-        if (found) { out[mUpcI] = found; upcFilled++; filledUpcPairs.push([sku, found]); filledUpcSkus.add(sku); }
+      const current = String(out[mUpcI] || '').trim();
+      if (isMissing(current)) {
+        if (found) { out[mUpcI] = found; upcFilled++; filledUpcSkus.add(sku); }
         else upcStillMissing++;
+      } else if (found && found !== current) {
+        correctionLog.push({ sku, field: 'UPC', from: current, to: found });
+        out[mUpcI] = found;
+        upcCorrected++;
+        correctedUpcSkus.add(sku);
       }
     }
 
     if (hasMpn) {
-      if (isMissing(out[mMpnI] || '')) {
-        const found = sku ? mpnLookup.get(sku) : null;
-        if (found) { out[mMpnI] = found; mpnFilled++; filledMpnPairs.push([sku, found]); filledMpnSkus.add(sku); }
+      const current = String(out[mMpnI] || '').trim();
+      if (isMissing(current)) {
+        if (foundMpn) { out[mMpnI] = foundMpn; mpnFilled++; filledMpnSkus.add(sku); }
         else mpnStillMissing++;
+      } else if (foundMpn && foundMpn !== current) {
+        correctionLog.push({ sku, field: 'MFG', from: current, to: foundMpn });
+        out[mMpnI] = foundMpn;
+        mpnCorrected++;
+        correctedMpnSkus.add(sku);
       }
     }
 
@@ -756,8 +779,8 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
 
   /* Status message */
   const msgs = [];
-  if (hasUpc) msgs.push(`UPC: ${upcFilled} filled, ${upcStillMissing} still missing`);
-  if (hasMpn) msgs.push(`MFG code: ${mpnFilled} filled, ${mpnStillMissing} still missing`);
+  if (hasUpc) msgs.push(`UPC: ${upcFilled} filled, ${upcCorrected} corrected, ${upcStillMissing} still missing`);
+  if (hasMpn) msgs.push(`MFG code: ${mpnFilled} filled, ${mpnCorrected} corrected, ${mpnStillMissing} still missing`);
   if (invalidUpc > 0) msgs.push(`${invalidUpc} invalid UPC value(s) ignored in Compass`);
   const anyMissing = upcStillMissing > 0 || mpnStillMissing > 0;
   setStatus(imuStatusEl, msgs.join('. ') + '.', anyMissing ? 'warn' : 'ok');
@@ -771,26 +794,40 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
 
   /* Download actions */
   const extraActions = [];
+  const totalChanged = upcFilled + mpnFilled + upcCorrected + mpnCorrected;
 
-  if (upcFilled > 0 || mpnFilled > 0) {
+  if (totalChanged > 0) {
     const fullCsv = csvToString([headers, ...enriched]);
     extraActions.push({
-      label: `↓ Download enriched CSV (${upcFilled + mpnFilled} values filled)`,
+      label: `↓ Download enriched CSV (${totalChanged} values filled/corrected)`,
       primary: true,
       onClick: () => downloadCsv(fullCsv, 'enriched-full.csv')
     });
   }
 
+  if (correctionLog.length > 0) {
+    const logCsv = csvToString([
+      ['SKU', 'Field', 'Old Value', 'New Value'],
+      ...correctionLog.map(c => [c.sku, c.field, c.from, c.to])
+    ]);
+    extraActions.push({
+      label: `↓ Download correction log (${correctionLog.length} changes)`,
+      onClick: () => downloadCsv(logCsv, 'corrections-log.csv')
+    });
+  }
+
   renderTable({
     rows: enriched,
-    title: 'CSV with UPCs & MFG codes filled from Compass',
+    title: 'CSV with UPCs & MFG codes filled/corrected from Compass',
     flagRow,
     filledUpcSet: filledUpcSkus,
     filledMpnSet: filledMpnSkus,
+    correctedUpcSet: correctedUpcSkus,
+    correctedMpnSet: correctedMpnSkus,
     extraActions,
     stats: {
-      ...(hasUpc ? { upcFilled, upcMissing: upcStillMissing } : {}),
-      ...(hasMpn ? { mpnFilled, mpnMissing: mpnStillMissing } : {})
+      ...(hasUpc ? { upcFilled, upcCorrected, upcMissing: upcStillMissing } : {}),
+      ...(hasMpn ? { mpnFilled, mpnCorrected, mpnMissing: mpnStillMissing } : {})
     }
   });
 });
