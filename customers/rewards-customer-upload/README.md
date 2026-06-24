@@ -118,6 +118,13 @@ All data is stored in `cheshire_eagle_data.json` in the same folder as `app.py`.
 
 Back up this file by copying it. Restore by replacing it.
 
+**⚠️ This file contains real customer PII (names, addresses, phone numbers) once the tool has been used.** The copy currently committed in this repo is not empty — it has live customer records in its batch history. Treat it the same as any other customer data export: don't commit real customer data to a shared/public repo. Consider adding `cheshire_eagle_data.json` to `.gitignore` and keeping backups somewhere access-controlled instead.
+
+## Known stray files
+
+- A duplicate `index.html` exists at the top level of this folder, identical to `templates/index.html` (the one Flask actually serves). Safe to delete the top-level copy.
+- `__pycache__/app.cpython-312.pyc` is a compiled Python cache artifact and shouldn't be committed — safe to delete and add `__pycache__/` to `.gitignore`.
+
 ## Google Form Setup
 
 The Google Form ("The Cheshire Horse Rewards Application v2") collects:
