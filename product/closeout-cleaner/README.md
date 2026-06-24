@@ -12,7 +12,7 @@ No server, no install, no API key. Just open the HTML file in any browser.
 
 1. **Export from Salesforce** — run a product export scoped to the closeout category, filtered to online items only. Save as `.csv`.
 2. **Export from Compass** — run an inventory export that includes `Item Number` and `Quantity on Hand`. Save as `.xlsx` or `.csv`.
-3. **Open `closeout-oos-matcher.html`** in your browser.
+3. **Open the tool** — `index.html` in this folder, or via the [ch-tools dashboard](https://github.com/caitlinsc/ch-tools).
 4. Drop the SF export into the left box and the Compass export into the right box.
 5. Click **Find OOS SKUs**.
 6. Review the results, then click **Export SKU list** to download a dated `.csv`.
