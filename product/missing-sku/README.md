@@ -2,11 +2,11 @@
 
 A simple web tool to compare a SKU list exported from IMU against one exported from Salesforce, and identify SKUs that are present in IMU but missing from Salesforce.
 
-Live tool: https://caitlinsc.github.io/missing-sku/
+Part of the [ch-tools](https://github.com/caitlinsc/ch-tools) monorepo.
 
 ## How to Use
 
-1. Open `index.html` in a web browser (or use the live link above).
+1. Open the tool from the [ch-tools dashboard](https://github.com/caitlinsc/ch-tools), or open `index.html` directly.
 2. Upload the IMU SKU file (Excel — `.xls` or `.xlsx`).
 3. Upload the Salesforce SKU file (CSV).
 4. Adjust matching options if needed (see below).
