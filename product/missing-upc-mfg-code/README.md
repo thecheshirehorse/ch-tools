@@ -1,32 +1,34 @@
 # Missing UPC & MFG Code Tool
 
-A browser-based tool for filling in missing UPCs and Manufacturer Part Numbers (MPNs) in product CSVs and producing Salesforce-ready upload files.
+A browser-based tool for filling in missing UPCs and Manufacturer Part Numbers (MFG codes) in a Salesforce export, and correcting any existing values that don't match the Compass master file.
 
-**Live tool:** [https://caitlinsc.github.io/missing-upc-mfg-code/](https://caitlinsc.github.io/missing-upc-mfg-code/)
+Part of the [ch-tools](https://github.com/caitlinsc/ch-tools) monorepo. Run it from the dashboard, or open `product/missing-upc-mfg-code/index.html` directly.
 
 Everything runs in the browser. No data is uploaded anywhere.
 
 ## How to use it
 
-1. **Upload your main CSV** — the file with missing UPCs and/or MPN values. The tool auto-detects columns by header name:
+1. **Upload your Salesforce export CSV** — the file with UPCs and/or MFG codes to check. The tool auto-detects columns by header name:
    - **SKU:** `SKU`, `Item Number`, `Item #`, `Product ID`, `Style Number`, `Part Number`, `ID`, etc.
    - **UPC:** `UPC`, `UPC Code`, `Barcode`, `GTIN`, `GTIN-12`, `GTIN-13`, etc.
-   - **MPN:** `MFG`, `MFG Code`, `MPN`, `Manufacturer Part Number`, `Vendor Part`, `Part Number`, etc.
+   - **MFG code:** `MFG`, `MFG Code`, `MPN`, `Manufacturer Part Number`, `Vendor Part`, `Part Number`, etc.
 
    Cells that are blank, `0`, `N/A`, or `NONE` count as missing.
 
-2. **(Optional) Filter** — preview rows that already have UPCs, or download just the rows still needing them.
+2. **Upload the Compass master CSV** — this is treated as the source of truth. The tool builds a SKU → UPC and SKU → MFG code lookup from it.
 
-3. **Fill from IMU** — upload the IMU master CSV (Compass export works as-is). The tool builds a SKU → UPC and SKU → MPN lookup, fills in both missing fields in one pass, and shows a preview. Rows still missing either value are highlighted.
+3. **Fill & correct from Compass** — for every SKU match:
+   - A **missing** UPC or MFG code gets filled in from Compass.
+   - An **existing** UPC or MFG code that doesn't match Compass gets **overwritten** with the Compass value.
+   - A value that already matches Compass is left untouched.
 
-4. **Download Salesforce-ready files** — three download options:
-   - **SF UPC file** — two-column CSV (`ID,UPC`) of rows where a UPC was filled.
-   - **SF MFG file** — two-column CSV (`ID,ManufacturerPartNumber`) of rows where an MPN was filled.
-   - **Full enriched CSV** — the complete file with all filled values included.
+   The preview table highlights both kinds of changes, with separate colors for filled vs. corrected cells, and rows still missing data after the pass are flagged.
 
-   If your Salesforce import expects different field names, rename the headers before uploading.
+4. **Download your results** — up to two files:
+   - **Enriched CSV** — the full file with all fills and corrections applied.
+   - **Correction log** — only appears if any existing values were overwritten. A CSV of `SKU, Field, Old Value, New Value` for every correction, so you can spot-check what changed before trusting the output.
 
-UPCs are validated as 8–14 digit numeric strings — junk values like `3650F` are ignored. MPN values are accepted as-is (no format restriction). When the same SKU appears multiple times in IMU, the first valid value wins.
+UPCs are validated as 8–14 digit numeric strings — junk values like `3650F` in Compass are ignored and never used to fill or correct anything. MFG codes are accepted as-is (no format restriction). When the same SKU appears multiple times in Compass, the first valid value wins.
 
 ## ⚠️ Excel will silently destroy your data
 
