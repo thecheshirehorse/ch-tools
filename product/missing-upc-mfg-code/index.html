@@ -387,8 +387,8 @@
     <div class="panel">
       <h2><span class="panel-num">1</span> Salesforce Export CSV</h2>
       <div class="file-drop" id="mainDrop">
-        <input id="csvFile" type="file" accept=".csv" />
-        <div class="drop-label">Drop CSV here or <strong>browse</strong></div>
+        <input id="csvFile" type="file" accept=".csv,.xlsx,.xls" />
+        <div class="drop-label">Drop CSV or Excel here or <strong>browse</strong></div>
         <div class="file-name" id="mainFileName"></div>
       </div>
       <div class="hint">
@@ -400,8 +400,8 @@
     <div class="panel">
       <h2><span class="panel-num">2</span> Fill from Compass</h2>
       <div class="file-drop" id="imuDrop">
-        <input id="imuFile" type="file" accept=".csv" />
-        <div class="drop-label">Drop Compass CSV or <strong>browse</strong></div>
+        <input id="imuFile" type="file" accept=".csv,.xlsx,.xls" />
+        <div class="drop-label">Drop Compass CSV or Excel or <strong>browse</strong></div>
         <div class="file-name" id="imuFileName"></div>
       </div>
       <div class="hint" style="margin-bottom: 10px;">
@@ -432,6 +432,7 @@
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* ── DOM refs ── */
 const csvFileInput    = document.getElementById('csvFile');
@@ -514,6 +515,33 @@ function findMpnCol(h) {
 }
 
 function parseFile(file) {
+  const name = (file.name || '').toLowerCase();
+  const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+
+  if (isExcel) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: 'array', cellDates: false, raw: false });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+          if (rows.length < 2) { resolve({ error: 'File needs a header row + data.' }); return; }
+          const hdr = rows[0].map(c => String(c ?? '').trim());
+          const data2 = rows.slice(1)
+            .map(row => row.map(c => (c == null ? '' : String(c))))
+            .filter(row => row.some(c => c !== ''));
+          resolve({ headers: hdr, rows: data2 });
+        } catch (err) {
+          resolve({ error: 'Could not read Excel file: ' + err.message });
+        }
+      };
+      reader.onerror = () => resolve({ error: 'Failed to read file.' });
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
   return new Promise(resolve => {
     Papa.parse(file, {
       skipEmptyLines: true,
@@ -553,7 +581,7 @@ function downloadCsv(data, filename) {
 /* ── Prepare main CSV ── */
 async function prepareMain(statusEl) {
   const file = csvFileInput.files[0];
-  if (!file) { setStatus(statusEl, 'Upload a CSV in step 1 first.', 'err'); return false; }
+  if (!file) { setStatus(statusEl, 'Upload a file in step 1 first.', 'err'); return false; }
   const result = await parseFile(file);
   if (result.error) { setStatus(statusEl, result.error, 'err'); return false; }
   headers = result.headers;
@@ -680,12 +708,12 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
   const mainFile = csvFileInput.files[0];
   const imuFile  = imuFileInput.files[0];
   if (!mainFile) { setStatus(imuStatusEl, 'Upload your Salesforce CSV in step 1 first.', 'err'); return; }
-  if (!imuFile)  { setStatus(imuStatusEl, 'Upload a Compass export CSV.', 'err'); return; }
+  if (!imuFile)  { setStatus(imuStatusEl, 'Upload a Compass export file.', 'err'); return; }
 
   setStatus(imuStatusEl, 'Parsing…', 'ok');
   const [main, imu] = await Promise.all([parseFile(mainFile), parseFile(imuFile)]);
-  if (main.error) { setStatus(imuStatusEl, 'Main CSV: ' + main.error, 'err'); return; }
-  if (imu.error)  { setStatus(imuStatusEl, 'Compass CSV: ' + imu.error, 'err'); return; }
+  if (main.error) { setStatus(imuStatusEl, 'Salesforce file: ' + main.error, 'err'); return; }
+  if (imu.error)  { setStatus(imuStatusEl, 'Compass file: ' + imu.error, 'err'); return; }
 
   const mSkuI = findSkuCol(main.headers);
   const mUpcI = findUpcCol(main.headers);
@@ -694,8 +722,8 @@ document.getElementById('fillFromImu').addEventListener('click', async () => {
   const iUpcI = findUpcCol(imu.headers);
   const iMpnI = findMpnCol(imu.headers);
 
-  if (mSkuI === -1) { setStatus(imuStatusEl, 'Main CSV: no SKU column found.', 'err'); return; }
-  if (iSkuI === -1) { setStatus(imuStatusEl, 'Compass CSV: no SKU column found.', 'err'); return; }
+  if (mSkuI === -1) { setStatus(imuStatusEl, 'Salesforce file: no SKU column found.', 'err'); return; }
+  if (iSkuI === -1) { setStatus(imuStatusEl, 'Compass file: no SKU column found.', 'err'); return; }
 
   const hasUpc = mUpcI !== -1 && iUpcI !== -1;
   const hasMpn = mMpnI !== -1 && iMpnI !== -1;
