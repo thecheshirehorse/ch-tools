@@ -23,9 +23,8 @@ The clean file is surgical: it only contains the address books of affected custo
 
 No setup required. It's a single HTML file with no dependencies.
 
-1. Save `shipstation-address-cleaner.html` anywhere on your computer
-2. Double-click to open in any modern browser
-3. Drop your file in
+1. Open `index.html` in this folder, or via the [ch-tools dashboard](https://github.com/caitlinsc/ch-tools)
+2. Drop your file in
 
 Everything runs locally in your browser. No data is sent anywhere.
 
@@ -40,7 +39,7 @@ You can add or remove addresses in the config step before scanning.
 
 ## Open Orders Protection
 
-Before scanning, you must upload a ShipStation open orders CSV export. The tool reads the **Recipient** column and matches those names against customer profiles in the XML. Any customer with an open order is skipped entirely — their addresses will not be touched, even if they have a store address on file.
+Before scanning, you must upload a ShipStation open orders CSV export. The tool primarily matches on the **Recipient** column, with `Name` or `Customer Name` used as a fallback if Recipient is missing in some matching paths. Any customer with an open order is skipped entirely — their addresses will not be touched, even if they have a store address on file.
 
 This prevents breaking any shipments that are currently in progress.
 
@@ -75,6 +74,6 @@ This prevents breaking any shipments that are currently in progress.
 ## File Structure
 
 ```
-shipstation-address-cleaner.html   — The tool (standalone, no dependencies)
-README.md                          — This file
+index.html   — The tool (standalone, no dependencies)
+README.md    — This file
 ```
