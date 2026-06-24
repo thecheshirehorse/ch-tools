@@ -8,7 +8,7 @@ Salesforce Commerce Cloud doesn't allow multi-select across child categories whe
 
 ## Usage
 
-Open `lp-sale-builder.html` in any browser. No installation, no server, no internet connection required.
+Open `index.html` (or via the [ch-tools dashboard](https://github.com/caitlinsc/ch-tools)) in any browser. No installation, no server, no internet connection required.
 
 ### Steps
 
@@ -24,7 +24,7 @@ Open `lp-sale-builder.html` in any browser. No installation, no server, no inter
 
 4. **Check the summary panel** — shows how many sheets and rows are queued per tier
 
-5. **Export** — click the button for each tier you need, or **Export All Tiers** to download everything at once. Files are named `10__off.xlsx`, `15__off.xlsx`, `20__off_.xlsx`.
+5. **Export** — click the button for each tier you need, or **Export All Tiers** to download everything at once. Files are named `10__off.xlsx`, `15__off.xlsx`, `20__off.xlsx`.
 
 ## Filtering
 
