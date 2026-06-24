@@ -21,20 +21,25 @@ python rph_review.py data/RPH_05-07-26.xls data/cheshire-enrichment.xlsx
 # Then open http://localhost:5057
 ```
 
+On Windows, double-clicking `start_rph_review.bat` does the venv setup and dependency install automatically, then launches the tool.
+
 The first run creates `rules.db` next to the script. Class rules persist across runs — each "Always upload" or "Always skip" decision narrows the next week's review queue.
 
 ## What's in here
 
 ```
 rph_review.py             # Flask app + classification logic
-RPH_Review_Concept.html   # Self-contained demo (5/7 data baked in, no setup)
+index.html                # Self-contained demo (5/7 data baked in, no setup)
+start_rph_review.bat      # Windows one-click launcher (sets up venv, installs deps, runs)
 requirements.txt
+SETUP.md                  # Full setup, weekly workflow, and troubleshooting guide
 docs/
   PROJECT_BRIEF.md        # Project state, what's built, what's next
   concept_README.md       # Notes from the 5/7 concept run
 data/                     # Weekly inputs (gitignored)
-  README.md               # What goes here
 ```
+
+See `SETUP.md` for first-time setup, the weekly run process, and troubleshooting. The quick start below is the short version.
 
 ## The rule cascade
 
