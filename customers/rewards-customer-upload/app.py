@@ -79,7 +79,10 @@ def fmt_today():
     return datetime.now().strftime('%m/%d/%y')
 
 def pad_zip(z):
-    return re.sub(r'\D', '', str(z)).zfill(5)[:5]
+    digits = re.sub(r'\D', '', str(z))
+    if not digits:
+        return ""
+    return digits.zfill(5)[:5]
 
 def clean_phone(p):
     return re.sub(r'\D', '', str(p))[:12]
