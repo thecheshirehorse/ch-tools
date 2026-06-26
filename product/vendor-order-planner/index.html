@@ -57,55 +57,6 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
 /* ── Results ── */
 .results { margin-top: 0; }
 
-/* ── Options panel ── */
-.panel {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #dde4ec;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-}
-.panel-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #8899aa;
-  margin-bottom: 12px;
-}
-.options-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; }
-.opt-label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13.5px;
-  color: #2c4059;
-  cursor: pointer;
-  user-select: none;
-}
-.opt-label input[type=checkbox] { width: 15px; height: 15px; accent-color: #056A45; cursor: pointer; }
-.store-num-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.store-num-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #607a8f;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  white-space: nowrap;
-}
-.store-num-input {
-  width: 70px;
-  padding: 5px 8px;
-  border: 1px solid #c8d5e0;
-  border-radius: 5px;
-  font-size: 13px;
-  font-family: inherit;
-}
-.store-num-input:focus { outline: none; border-color: #056A45; box-shadow: 0 0 0 2px rgba(5,106,69,0.12); }
 
 /* ── Month tags ── */
 .month-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
@@ -113,9 +64,12 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
 .mtag {
   background: #ddeefa; color: #1a6fa3; border: 1px solid #a8d1f0;
   border-radius: 20px; padding: 3px 11px; font-size: 12px; font-weight: 600;
+  cursor: pointer; user-select: none; transition: opacity .15s;
 }
+.mtag:hover { opacity: .75; }
 .mtag.partial {
-  background: #fef6e4; color: #b07d12; border-color: #f5d87a;
+  background: #f0f3f7; color: #aab8c4; border-color: #d5dde6;
+  text-decoration: line-through;
 }
 
 /* ── Stats bar ── */
@@ -347,28 +301,9 @@ td.muted { color: #8899aa; font-size: 13px; }
       <span id="vendorBadge" style="background:#1a2f4a;color:#fff;border-radius:6px;padding:4px 14px;font-size:15px;font-weight:700;letter-spacing:.02em;">—</span>
     </div>
 
-    <!-- Options -->
-    <div class="panel">
-      <div class="panel-title">Options</div>
-      <div class="options-grid">
-        <label class="opt-label">
-          <input type="checkbox" id="optExcludeCurrent" checked>
-          Exclude current month from average (may be partial)
-        </label>
-        <label class="opt-label">
-          <input type="checkbox" id="optRespectMult" checked>
-          Round up to Order Multiple
-        </label>
-        <div class="store-num-group">
-          <span class="store-num-label">Store # (for CSV):</span>
-          <input type="text" id="storeNumberInput" class="store-num-input" placeholder="3 or 5">
-        </div>
-      </div>
-    </div>
-
     <!-- Month tags -->
     <div class="month-row" id="monthRow">
-      <span class="month-label-prefix">Months used:</span>
+      <span class="month-label-prefix">Months used <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aab8c4">(click to toggle)</span>:</span>
     </div>
 
     <!-- Stats -->
@@ -457,7 +392,9 @@ td.muted { color: #8899aa; font-size: 13px; }
     <div class="action-bar">
       <span class="file-name" id="fileNameLabel"></span>
       <button class="btn btn-ghost" id="resetBtn">↑ Load Different File</button>
-      <button class="btn btn-ghost" id="exportCsvBtn">⬇ Export CSV</button>
+      <label style="font-size:12px;font-weight:700;color:#607a8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Store #</label>
+      <input type="text" id="storeNumberInput" placeholder="3 or 5" style="width:60px;padding:6px 8px;border:1px solid #c8d5e0;border-radius:5px;font-size:13px;font-family:inherit;">
+      <button class="btn btn-primary" id="exportCsvBtn">⬇ Export CSV</button>
       <button class="btn btn-primary" id="exportBtn">⬇ Export Order Sheet (.xlsx)</button>
     </div>
 
@@ -475,6 +412,7 @@ let loadedFileName = '';
 let postQtyOverrides = {};  // {sku: qty} — user-edited post quantities
 let manualRows = [];        // [{id, sku, postQty}]
 let manualIdCounter = 0;
+let excludedMonthNames = new Set();
 
 /* ─── Month detection ─── */
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -499,21 +437,17 @@ function currentMonthLabel() {
 function process() {
   if (!rawRows.length) return;
 
-  const exCurrent = document.getElementById('optExcludeCurrent').checked;
-  const respMult  = document.getElementById('optRespectMult').checked;
-
-  const curLabel = currentMonthLabel().toLowerCase();
-  const activeCols = monthCols.filter(c => !(exCurrent && c.name.toLowerCase() === curLabel));
-  const excludedCol = exCurrent ? monthCols.find(c => c.name.toLowerCase() === curLabel) : null;
+  const activeCols = monthCols.filter(c => !excludedMonthNames.has(c.name));
 
   // Month tags
   const monthRow = document.getElementById('monthRow');
-  monthRow.innerHTML = `<span class="month-label-prefix">Months used:</span>`;
+  monthRow.innerHTML = `<span class="month-label-prefix">Months used <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aab8c4">(click to toggle)</span>:</span>`;
   monthCols.forEach(c => {
-    const isExcl = excludedCol && c.name === excludedCol.name;
+    const isExcl = excludedMonthNames.has(c.name);
     const tag = document.createElement('span');
     tag.className = 'mtag' + (isExcl ? ' partial' : '');
-    tag.textContent = isExcl ? `${c.name} (partial—skipped)` : c.name;
+    tag.dataset.month = c.name;
+    tag.textContent = c.name;
     monthRow.appendChild(tag);
   });
 
@@ -550,7 +484,7 @@ function process() {
     if (avg > 0) {
       const needed = avg - effectiveQoh;
       if (needed > 0) {
-        postQty = respMult && ordMult > 1
+        postQty = ordMult > 1
           ? Math.ceil(needed / ordMult) * ordMult
           : Math.ceil(needed);
       }
@@ -559,7 +493,7 @@ function process() {
     // QOH=1 items: always include in order table for review
     if (qoh === 1 && postQty === 0) {
       qohFlag = true;
-      postQty = respMult && ordMult > 1 ? ordMult : 1;
+      postQty = ordMult > 1 ? ordMult : 1;
     }
 
     return { _row: r, _avg: avg, _postQty: postQty, _qoh: qoh, _committed: committed, _ordMult: ordMult, _qohFlag: qohFlag };
@@ -888,6 +822,12 @@ function loadFile(file) {
 
     monthCols = detectMonths(headers);
 
+    // Pre-exclude the current month (likely partial)
+    excludedMonthNames = new Set();
+    const curLabel = currentMonthLabel();
+    const curCol = monthCols.find(c => c.name.toLowerCase() === curLabel.toLowerCase());
+    if (curCol) excludedMonthNames.add(curCol.name);
+
     if (monthCols.length === 0) {
       alert('No month columns detected. Expected headers like "Jan 25", "Feb 26", etc.');
       return;
@@ -919,7 +859,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   rawRows = []; headers = []; monthCols = []; processed = [];
-  postQtyOverrides = {}; manualRows = [];
+  postQtyOverrides = {}; manualRows = []; excludedMonthNames = new Set();
   document.getElementById('fileInput').value = '';
   document.getElementById('results').classList.add('hidden');
   document.getElementById('uploadZone').classList.remove('hidden');
@@ -944,9 +884,15 @@ document.getElementById('orderBody').addEventListener('click', e => {
   renderPreview();
 });
 
-['optExcludeCurrent','optRespectMult'].forEach(id =>
-  document.getElementById(id).addEventListener('change', process)
-);
+// Month tag toggle
+document.getElementById('monthRow').addEventListener('click', e => {
+  const tag = e.target.closest('.mtag');
+  if (!tag) return;
+  const month = tag.dataset.month;
+  if (excludedMonthNames.has(month)) excludedMonthNames.delete(month);
+  else excludedMonthNames.add(month);
+  process();
+});
 
 document.getElementById('toggleSkipped').addEventListener('click', function() {
   const wrap = document.getElementById('skippedTableWrap');
