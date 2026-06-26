@@ -36,6 +36,10 @@ jobs:
           STATICRYPT_PASSWORD: ${{ secrets.SITE_PASSWORD }}
         run: |
           echo "staticrypt version: $(staticrypt --version)"
+          if [ -z "$STATICRYPT_PASSWORD" ]; then
+            echo "ERROR: STATICRYPT_PASSWORD is empty — check the SITE_PASSWORD secret"
+            exit 1
+          fi
           find . -name "*.html" \
             -not -path "./.git/*" \
             -not -path "./node_modules/*" \
@@ -44,6 +48,7 @@ jobs:
               staticrypt "$f" \
                 --password "$STATICRYPT_PASSWORD" \
                 -o "${f}.enc" \
+                --short \
                 --template-title "Cheshire Horse Tools" \
                 --template-instructions "Enter the tools password to continue." \
                 --remember 1 \
