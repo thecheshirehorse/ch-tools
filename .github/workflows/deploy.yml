@@ -43,9 +43,13 @@ jobs:
           TEMPLATE="$(pwd)/.staticrypt-template.html"
           echo "Template path: $TEMPLATE"
           echo "Template exists: $(test -f "$TEMPLATE" && echo yes || echo NO)"
+          echo "Testing template flag directly:"
+          staticrypt ./index.html --password "$STATICRYPT_PASSWORD" --short -f "$TEMPLATE" --template-title "Test" --remember 1 -d /tmp 2>&1
+          grep -c "056A45" /tmp/index.html && echo "Template WORKING" || echo "Template NOT applied"
           find . -name "*.html" \
             -not -path "./.git/*" \
             -not -path "./node_modules/*" \
+            -not -name ".staticrypt-template.html" \
             | while read f; do
               echo "Encrypting $f"
               staticrypt "$f" \
