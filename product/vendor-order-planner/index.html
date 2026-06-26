@@ -887,7 +887,7 @@ function loadFile(file) {
 
     if (raw.length < 2) { alert('No data found in this file.'); return; }
 
-    headers = raw[0].map(h => String(h ?? '').trim());
+    headers = raw[0].map(h => String(h ?? '').replace(/[\r\n]+/g, ' ').trim());
     rawRows = raw.slice(1).filter(r => r.some(v => v !== '' && v != null));
 
     // Case-insensitive column finder; tries each name in order
