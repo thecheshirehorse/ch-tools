@@ -138,10 +138,6 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
   background: #fff; border-radius: 10px; border: 1px solid #dde4ec;
   overflow-x: auto; margin-bottom: 20px;
 }
-.table-wrap.skipped-wrap {
-  border-color: #e4eaf0;
-  opacity: 0.85;
-}
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
 thead th {
   background: #f4f7fb;
@@ -155,7 +151,6 @@ thead th {
   border-bottom: 2px solid #dde4ec;
   white-space: nowrap;
 }
-.table-wrap.skipped-wrap thead th { background: #f8fafb; }
 thead th.right { text-align: right; }
 thead th.center { text-align: center; }
 tbody tr:hover { background: #f8fafc; }
@@ -171,7 +166,13 @@ td.right { text-align: right; }
 td.center { text-align: center; }
 td.desc { white-space: nowrap; font-weight: 500; }
 td.muted { color: #8899aa; font-size: 13px; }
-.skip-reason { display: inline-block; font-size: 11px; color: #9aacbc; font-style: italic; }
+.skip-reason { display: block; font-size: 11px; color: #9aacbc; font-style: italic; margin-top: 2px; }
+.add-from-skip-btn {
+  background: none; border: 1px solid #b8cad9; border-radius: 5px;
+  color: #056A45; font-size: 12px; font-weight: 700; padding: 3px 10px;
+  cursor: pointer; white-space: nowrap; font-family: inherit;
+}
+.add-from-skip-btn:hover { background: #e3f3ec; border-color: #056A45; }
 .more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
 
 /* ── Editable post qty input ── */
@@ -406,15 +407,21 @@ td.muted { color: #8899aa; font-size: 13px; }
       </div>
       <button class="toggle-btn" id="toggleSkipped">Show</button>
     </div>
-    <div class="table-wrap skipped-wrap hidden" id="skippedTableWrap">
+    <div class="table-wrap hidden" id="skippedTableWrap">
       <table>
         <thead>
           <tr>
             <th>Description</th>
             <th>SKU</th>
+            <th>Mfg Part #</th>
+            <th>UPC</th>
             <th class="right">QOH</th>
-            <th class="right">Avg / Mo</th>
-            <th>Reason</th>
+            <th class="right">QOO</th>
+            <th class="right">Com</th>
+            <th class="right">Retail</th>
+            <th class="right">Avg/Mo</th>
+            <th class="right">Ord Mult</th>
+            <th class="center">Add</th>
           </tr>
         </thead>
         <tbody id="skippedBody"></tbody>
@@ -489,6 +496,7 @@ let postQtyOverrides = {};  // {sku: qty} — user-edited post quantities
 let manualRows = [];        // [{id, sku, postQty}]
 let manualIdCounter = 0;
 let excludedMonthNames = new Set();
+let addedFromSkipped = new Set();
 
 /* ─── Month detection ─── */
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -661,21 +669,31 @@ function renderPreview() {
   orderBody.innerHTML = mainHtml + manualHtml ||
     `<tr><td colspan="11" style="text-align:center;padding:20px;color:#8899aa;font-style:italic;">No items need reordering with current settings.</td></tr>`;
 
-  // Skipped table
-  document.getElementById('skipCount').textContent = skipped.length;
-  document.getElementById('skippedBody').innerHTML = skipped.map(({ _row: r, _avg, _qoh }) => {
-    const desc   = String(r[colMap.desc] ?? '');
-    const sku    = String(r[colMap.sku]  ?? '');
-    const avgStr = _avg > 0 ? _avg.toFixed(1) : '—';
-    const reason = _avg === 0
-      ? '<span class="skip-reason">No recent sales</span>'
-      : `<span class="skip-reason">Well stocked (avg ${_avg.toFixed(1)}/mo, have ${_qoh})</span>`;
+  // Skipped table — filter out items already added to order
+  const visibleSkipped = skipped.filter(r => !addedFromSkipped.has(String(r._row[colMap.sku] ?? '')));
+  document.getElementById('skipCount').textContent = visibleSkipped.length;
+  document.getElementById('skippedBody').innerHTML = visibleSkipped.map(({ _row: r, _avg, _qoh, _committed, _ordMult }) => {
+    const sku     = String(r[colMap.sku]  ?? '');
+    const desc    = String(r[colMap.desc] ?? '');
+    const mfgPart = colMap.mfgPart   >= 0 ? fmt(r[colMap.mfgPart])        : '—';
+    const upc     = colMap.upc       >= 0 ? fmt(r[colMap.upc])             : '—';
+    const qoo     = colMap.qoo       >= 0 ? fmt(r[colMap.qoo])             : '—';
+    const retail  = colMap.retail    >= 0 ? fmtCurrency(r[colMap.retail])  : '—';
+    const comStr  = _committed > 0 ? _committed : '—';
+    const avgStr  = _avg > 0 ? _avg.toFixed(1) : '—';
+    const reason  = _avg === 0 ? 'No recent sales' : `Well stocked (${_avg.toFixed(1)}/mo avg)`;
     return `<tr>
-      <td class="desc">${desc}</td>
+      <td class="desc">${desc}<span class="skip-reason">${reason}</span></td>
       <td>${sku}</td>
+      <td class="muted">${mfgPart}</td>
+      <td class="muted">${upc}</td>
       <td class="right">${_qoh}</td>
+      <td class="right muted">${qoo}</td>
+      <td class="right muted">${comStr}</td>
+      <td class="right">${retail}</td>
       <td class="right">${avgStr}</td>
-      <td>${reason}</td>
+      <td class="right">${_ordMult > 1 ? _ordMult : '—'}</td>
+      <td class="center"><button class="add-from-skip-btn" data-sku="${sku.replace(/"/g,'&quot;')}" data-ord-mult="${_ordMult}">+ Add</button></td>
     </tr>`;
   }).join('');
 
@@ -953,7 +971,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 function resetAll() {
   rawRows = []; headers = []; monthCols = []; processed = [];
-  postQtyOverrides = {}; manualRows = []; excludedMonthNames = new Set();
+  postQtyOverrides = {}; manualRows = []; excludedMonthNames = new Set(); addedFromSkipped = new Set();
   document.getElementById('fileInput').value = '';
   showView('uploadZone');
 }
@@ -990,6 +1008,17 @@ document.getElementById('orderBody').addEventListener('click', e => {
   if (!e.target.classList.contains('remove-manual-btn')) return;
   const id = parseInt(e.target.dataset.manualId);
   manualRows = manualRows.filter(r => r.id !== id);
+  renderPreview();
+});
+
+// Add skipped item to order
+document.getElementById('skippedBody').addEventListener('click', e => {
+  if (!e.target.classList.contains('add-from-skip-btn')) return;
+  const sku     = e.target.dataset.sku;
+  const ordMult = parseInt(e.target.dataset.ordMult) || 1;
+  if (manualRows.some(r => r.sku === sku)) return;
+  addedFromSkipped.add(sku);
+  manualRows.push({ id: ++manualIdCounter, sku, postQty: ordMult });
   renderPreview();
 });
 
