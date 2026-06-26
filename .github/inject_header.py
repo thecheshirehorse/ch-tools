@@ -9,8 +9,6 @@ LOGO_BLOCK = (
 
 EXTRA_CSS = """<style>
 .staticrypt-page{background:#f6f8f6}
-.staticrypt-form-wrapper{border:1px solid #dde4e0;border-radius:12px;
-  box-shadow:0 4px 16px rgba(5,106,69,0.08)}
 #staticrypt-password:focus{border-color:#056A45;
   box-shadow:0 0 0 3px rgba(5,106,69,0.1);outline:none}
 </style>
@@ -26,16 +24,31 @@ for path in files:
         content = f.read()
     if 'staticrypt-html' not in content:
         continue
-    # inject logo above the login card
-    content = content.replace(
-        '<div class="staticrypt-form-wrapper">',
-        LOGO_BLOCK + '<div class="staticrypt-form-wrapper">',
-        1
+
+    # debug: print the body structure of the first encrypted file
+    if path == 'index.html':
+        body_start = content.find('<body')
+        print('=== index.html body (first 800 chars) ===')
+        print(content[body_start:body_start+800])
+        print('==========================================')
+
+    # inject logo before the first staticrypt div that wraps the form
+    injected = re.sub(
+        r'(<div[^>]*staticrypt-form[^>]*>)',
+        LOGO_BLOCK + r'\1',
+        content,
+        count=1
     )
-    # fix button label
-    content = re.sub(r'(?i)>decrypt<', '>LOGIN<', content)
+    if injected == content:
+        print(f'WARNING: injection point not found in {path}')
+    content = injected
+
+    # fix button label (input type=submit value="DECRYPT")
+    content = re.sub(r'value="DECRYPT"', 'value="LOGIN"', content, flags=re.IGNORECASE)
+
     # inject extra CSS
     content = content.replace('</head>', EXTRA_CSS + '</head>', 1)
+
     with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'Branded: {path}')
