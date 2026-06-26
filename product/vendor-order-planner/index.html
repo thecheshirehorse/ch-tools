@@ -890,7 +890,15 @@ function loadFile(file) {
     headers = raw[0].map(h => String(h ?? '').trim());
     rawRows = raw.slice(1).filter(r => r.some(v => v !== '' && v != null));
 
-    const idx = name => headers.indexOf(name);
+    // Case-insensitive column finder; tries each name in order
+    const idx = (...names) => {
+      const lower = headers.map(h => h.toLowerCase());
+      for (const name of names) {
+        const i = lower.indexOf(name.toLowerCase());
+        if (i !== -1) return i;
+      }
+      return -1;
+    };
     colMap = {
       sku:       idx('SKU'),
       desc:      idx('Description'),
@@ -899,12 +907,12 @@ function loadFile(file) {
       disc:      idx('Discontinued'),
       ordMult:   idx('Order Multiple'),
       postQty:   idx('Posting Quantity'),
-      mfgPart:   idx('Mfg Part #'),
+      mfgPart:   idx('Mfg Part #', 'Mfg Part No', 'Mfg Part No.', 'Mfg Part#', 'Mfr Part #', 'Mfr Part No', 'Vendor Part #', 'Vendor Part No', 'MPN'),
       upc:       idx('UPC'),
       vendor:    idx('Primary Vendor'),
-      qoo:       idx('QOO'),
-      retail:    idx('Retail'),
-      committed: idx('QCom') !== -1 ? idx('QCom') : idx('Committed'),
+      qoo:       idx('QOO', 'Qty On Order', 'Qty OO'),
+      retail:    idx('Retail', 'Retail Price'),
+      committed: idx('QCom', 'Qty Committed', 'Committed', 'QCom.'),
     };
 
     monthCols = detectMonths(headers);
