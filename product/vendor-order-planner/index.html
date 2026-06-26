@@ -582,8 +582,8 @@ function process() {
   document.getElementById('infoNote').innerHTML =
     `<strong>Formula:</strong> Post Qty = amount to reach 1-month avg stock, accounting for committed qty, rounded up to Order Multiple. ` +
     `Average based on ${activeCols.length} month(s): <strong>${activeCols.map(c => c.name).join(', ')}</strong>. ` +
-    `Removed: ${closeoutCount} Closeout, ${zzCount} ZZ-prefix. ` +
-    `<span style="color:#b07d12">&#9888; Items with QOH=1 are highlighted for extra review.</span>`;
+    `Removed: ${closeoutCount} Closeout, ${zzCount} ZZ-prefix.<br>` +
+    `<span style="color:#b07d12">Items with QOH=1 are highlighted for extra review.</span>`;
 
   renderPreview();
 }
