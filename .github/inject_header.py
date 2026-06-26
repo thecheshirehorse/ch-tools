@@ -1,14 +1,15 @@
 import glob, re
 
 LOGO_BLOCK = (
-    '<div style="text-align:center;margin-bottom:24px">'
+    '<div style="text-align:center;margin-bottom:20px">'
     '<img src="/ch-tools/assets/logo-green.svg" alt="Cheshire Horse" '
-    'style="height:44px;width:auto;display:inline-block">'
+    'style="height:72px;width:auto;display:inline-block">'
     '</div>'
 )
 
 EXTRA_CSS = """<style>
 .staticrypt-page{background:#f6f8f6}
+.staticrypt-form-wrapper{padding-top:24px !important}
 #staticrypt-password:focus{border-color:#056A45;
   box-shadow:0 0 0 3px rgba(5,106,69,0.1);outline:none}
 </style>
