@@ -47,12 +47,11 @@ jobs:
               echo "Encrypting $f"
               staticrypt "$f" \
                 --password "$STATICRYPT_PASSWORD" \
-                -o "${f}.enc" \
+                -d "$(dirname "$f")" \
                 --short \
                 --template-title "Cheshire Horse Tools" \
                 --template-instructions "Enter the tools password to continue." \
                 --remember 1 \
-                && mv "${f}.enc" "$f" \
                 || { echo "FAILED on $f"; exit 1; }
             done
           echo "Done. First 5 lines of root index.html:"
