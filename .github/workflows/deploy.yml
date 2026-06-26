@@ -39,11 +39,11 @@ jobs:
             | while read f; do
               staticrypt "$f" \
                 --password "${{ secrets.SITE_PASSWORD }}" \
-                --output "$f" \
+                -o "$f" \
                 --short \
                 --template-title "Cheshire Horse Tools" \
                 --template-instructions "Enter the tools password to continue." \
-                --remember 1440
+                --remember 1
             done
 
       - uses: actions/configure-pages@v5
