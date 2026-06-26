@@ -205,7 +205,7 @@ thead th {
 thead th.right { text-align: right; }
 thead th.center { text-align: center; }
 tbody tr:hover { background: #f8fafc; }
-tbody tr.qoh-flag td.qoh-cell {
+td.qoh-cell {
   color: #b07d12;
   font-weight: 700;
   background: #fff8e8;
@@ -217,7 +217,6 @@ td.right { text-align: right; }
 td.center { text-align: center; }
 td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 td.muted { color: #8899aa; font-size: 13px; }
-.qoh-badge { font-size: 11px; color: #b07d12; margin-left: 4px; }
 .skip-reason { display: inline-block; font-size: 11px; color: #9aacbc; font-style: italic; }
 .more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
 
@@ -616,10 +615,8 @@ function renderPreview() {
     const comStr  = _committed > 0 ? _committed : '—';
     const avgStr  = _avg > 0 ? _avg.toFixed(1) : '—';
     const currentQty = postQtyOverrides[sku] !== undefined ? postQtyOverrides[sku] : _postQty;
-    const flag = _qohFlag ? ' <span class="qoh-badge" title="Only 1 in stock">&#9888;</span>' : '';
-
     return `<tr>
-      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}${flag}</td>
+      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
       <td>${sku}</td>
       <td class="muted">${mfgPart}</td>
       <td class="muted">${upc}</td>
