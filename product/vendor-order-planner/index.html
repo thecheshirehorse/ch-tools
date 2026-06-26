@@ -266,6 +266,40 @@ td.muted { color: #8899aa; font-size: 13px; }
 .btn-ghost:hover { background: #f0f4f8; }
 
 .hidden { display: none !important; }
+
+/* ── Export page ── */
+.exp-wrap { max-width: 520px; margin: 36px auto 0; }
+.exp-heading { font-size: 19px; font-weight: 800; color: #1a2f4a; margin-bottom: 4px; }
+.exp-sub { font-size: 13px; color: #8899aa; margin-bottom: 24px; }
+.exp-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #dde4ec;
+  padding: 20px 24px;
+  margin-bottom: 14px;
+}
+.exp-card-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: #8899aa; margin-bottom: 6px;
+}
+.exp-card-desc { font-size: 13px; color: #607a8f; line-height: 1.5; }
+.exp-field-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: #3a5068; margin-bottom: 5px;
+}
+.exp-field-input {
+  display: block; width: 130px; padding: 7px 10px;
+  border: 1px solid #c8d5e0; border-radius: 6px;
+  font-size: 14px; font-family: inherit;
+}
+.exp-field-input:focus { outline: none; border-color: #056A45; box-shadow: 0 0 0 2px rgba(5,106,69,0.12); }
+.exp-field-input.input-error { border-color: #cc4444; box-shadow: 0 0 0 2px rgba(204,68,68,0.12); }
+.exp-field-error { font-size: 11px; color: #cc4444; margin-top: 5px; }
+.exp-card-row { display: flex; align-items: flex-end; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.exp-nav { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.exp-summary-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 13px; }
+.exp-summary-grid .lbl { color: #8899aa; font-weight: 600; }
+.exp-summary-grid .val { color: #1a2f4a; font-weight: 500; }
 </style>
 </head>
 <body>
@@ -392,16 +426,58 @@ td.muted { color: #8899aa; font-size: 13px; }
     <div class="action-bar">
       <span class="file-name" id="fileNameLabel"></span>
       <button class="btn btn-ghost" id="resetBtn">↑ Load Different File</button>
-      <label style="font-size:12px;font-weight:700;color:#607a8f;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">Store #</label>
-      <input type="text" id="storeNumberInput" placeholder="3 or 5" style="width:60px;padding:6px 8px;border:1px solid #c8d5e0;border-radius:5px;font-size:13px;font-family:inherit;">
-      <button class="btn btn-primary" id="exportCsvBtn">⬇ Export CSV</button>
-      <button class="btn btn-primary" id="exportBtn">⬇ Export Order Sheet (.xlsx)</button>
+      <button class="btn btn-primary" id="goToExportBtn">Export &rarr;</button>
     </div>
 
   </div>
+
+  <!-- Export page -->
+  <div class="hidden" id="exportPage">
+    <div class="exp-wrap">
+      <div class="exp-heading">Export Order</div>
+      <div class="exp-sub" id="expSummary"></div>
+
+      <!-- CSV card -->
+      <div class="exp-card">
+        <div class="exp-card-title">CSV &mdash; Eagle Import</div>
+        <div class="exp-card-desc">Outputs Store, SKU, and Post Qty. Use to import directly into Eagle or share with your rep.</div>
+        <div class="exp-card-row">
+          <div>
+            <label class="exp-field-label">Store Number <span style="color:#cc4444">*</span></label>
+            <input type="text" id="storeNumberInput" class="exp-field-input" placeholder="3 or 5">
+            <div class="exp-field-error hidden" id="storeNumError">Store number is required.</div>
+          </div>
+          <button class="btn btn-primary" id="exportCsvBtn">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <!-- XLSX card -->
+      <div class="exp-card">
+        <div class="exp-card-title">Excel &mdash; Full Order Sheet</div>
+        <div class="exp-card-desc">All original columns plus Post Qty and Avg/Mo, formatted and ready to share or review.</div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" id="exportBtn">⬇ Export Order Sheet (.xlsx)</button>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <div class="exp-nav">
+        <button class="btn btn-ghost" id="backToOrderBtn">&larr; Back to Order</button>
+        <button class="btn btn-ghost" id="startOverBtn" style="margin-left:auto;">Start Over</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
+/* ─── View management ─── */
+function showView(id) {
+  ['uploadZone', 'results', 'exportPage'].forEach(v =>
+    document.getElementById(v).classList.toggle('hidden', v !== id)
+  );
+}
+
 /* ─── State ─── */
 let rawRows = [];
 let headers = [];
@@ -610,7 +686,18 @@ function renderPreview() {
 function exportCSV() {
   if (!processed.length && !manualRows.length) return;
 
-  const storeNum = document.getElementById('storeNumberInput').value.trim();
+  const storeInput = document.getElementById('storeNumberInput');
+  const storeNum = storeInput.value.trim();
+  const errEl = document.getElementById('storeNumError');
+
+  if (!storeNum) {
+    storeInput.classList.add('input-error');
+    errEl.classList.remove('hidden');
+    storeInput.focus();
+    return;
+  }
+  storeInput.classList.remove('input-error');
+  errEl.classList.add('hidden');
   const csvRows = [['Store', 'SKU', 'Post Qty']];
 
   // Processed rows — use current input values
@@ -837,8 +924,7 @@ function loadFile(file) {
       return;
     }
 
-    document.getElementById('uploadZone').classList.add('hidden');
-    document.getElementById('results').classList.remove('hidden');
+    showView('results');
     process();
   };
   reader.readAsArrayBuffer(file);
@@ -857,13 +943,28 @@ document.getElementById('fileInput').addEventListener('change', e => {
   if (e.target.files[0]) loadFile(e.target.files[0]);
 });
 
-document.getElementById('resetBtn').addEventListener('click', () => {
+function resetAll() {
   rawRows = []; headers = []; monthCols = []; processed = [];
   postQtyOverrides = {}; manualRows = []; excludedMonthNames = new Set();
   document.getElementById('fileInput').value = '';
-  document.getElementById('results').classList.add('hidden');
-  document.getElementById('uploadZone').classList.remove('hidden');
+  showView('uploadZone');
+}
+
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+document.getElementById('startOverBtn').addEventListener('click', resetAll);
+
+document.getElementById('goToExportBtn').addEventListener('click', () => {
+  const toOrder  = processed.filter(r => r._postQty > 0);
+  const vendor   = document.getElementById('vendorBadge').textContent;
+  const itemCount = toOrder.length + manualRows.length;
+  const activeCols = monthCols.filter(c => !excludedMonthNames.has(c.name));
+  const manualNote = manualRows.length ? ` + ${manualRows.length} manually added` : '';
+  document.getElementById('expSummary').textContent =
+    `Vendor ${vendor} · ${itemCount} item${itemCount !== 1 ? 's' : ''} to order${manualNote} · Avg over ${activeCols.map(c => c.name).join(', ')}`;
+  showView('exportPage');
 });
+
+document.getElementById('backToOrderBtn').addEventListener('click', () => showView('results'));
 
 document.getElementById('exportBtn').addEventListener('click', exportSheet);
 document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
@@ -882,6 +983,11 @@ document.getElementById('orderBody').addEventListener('click', e => {
   const id = parseInt(e.target.dataset.manualId);
   manualRows = manualRows.filter(r => r.id !== id);
   renderPreview();
+});
+
+document.getElementById('storeNumberInput').addEventListener('input', () => {
+  document.getElementById('storeNumberInput').classList.remove('input-error');
+  document.getElementById('storeNumError').classList.add('hidden');
 });
 
 // Month tag toggle
