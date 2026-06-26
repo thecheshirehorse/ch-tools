@@ -49,6 +49,7 @@ jobs:
                 --password "$STATICRYPT_PASSWORD" \
                 -d "$(dirname "$f")" \
                 --short \
+                -f ".staticrypt-template.html" \
                 --template-title "Cheshire Horse Tools" \
                 --template-instructions "Enter the tools password to continue." \
                 --remember 1 \
