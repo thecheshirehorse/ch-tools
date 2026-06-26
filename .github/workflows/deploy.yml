@@ -53,7 +53,7 @@ jobs:
                 --template-instructions "Enter the tools password to continue." \
                 --template-color-primary "#056A45" \
                 --template-color-secondary "#034a31" \
-                --decrypt-button "LOGIN" \
+                --template-button "LOGIN" \
                 --remember 1 \
                 || { echo "FAILED on $f"; exit 1; }
             done
