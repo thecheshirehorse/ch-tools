@@ -33,7 +33,7 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
 .ch-back { font-size: 12px; color: rgba(255,255,255,.85); text-decoration: none; border: 1px solid rgba(255,255,255,.35); padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
 .ch-back:hover { background: rgba(255,255,255,.15); }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
+.container { max-width: 1300px; margin: 0 auto; padding: 28px 20px; }
 
 /* ── Upload zone ── */
 .upload-zone {
@@ -73,7 +73,7 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
   color: #8899aa;
   margin-bottom: 12px;
 }
-.options-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.options-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; }
 .opt-label {
   display: flex;
   align-items: center;
@@ -84,6 +84,28 @@ header p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 3px; }
   user-select: none;
 }
 .opt-label input[type=checkbox] { width: 15px; height: 15px; accent-color: #056A45; cursor: pointer; }
+.store-num-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.store-num-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #607a8f;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.store-num-input {
+  width: 70px;
+  padding: 5px 8px;
+  border: 1px solid #c8d5e0;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.store-num-input:focus { outline: none; border-color: #056A45; box-shadow: 0 0 0 2px rgba(5,106,69,0.12); }
 
 /* ── Month tags ── */
 .month-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
@@ -183,24 +205,99 @@ thead th {
 thead th.right { text-align: right; }
 thead th.center { text-align: center; }
 tbody tr:hover { background: #f8fafc; }
+tbody tr.qoh-flag { background: #fff8e8; }
+tbody tr.qoh-flag:hover { background: #fff3d0; }
+tbody tr.manual-row { background: #f0f8ff; }
+tbody tr.manual-row:hover { background: #e6f3ff; }
 tbody td { padding: 9px 14px; border-bottom: 1px solid #f0f3f7; white-space: nowrap; vertical-align: middle; }
 td.right { text-align: right; }
 td.center { text-align: center; }
-td.desc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 td.muted { color: #8899aa; font-size: 13px; }
-.badge {
-  display: inline-block;
-  padding: 5px 16px;
-  border-radius: 20px;
-  font-size: 17px;
-  font-weight: 800;
-  min-width: 48px;
-  text-align: center;
-}
-.badge-green { background: #e3f3ec; color: #034a31; }
-.badge-zero  { background: #f0f3f7; color: #9aacbc; }
+.qoh-badge { font-size: 11px; color: #b07d12; margin-left: 4px; }
 .skip-reason { display: inline-block; font-size: 11px; color: #9aacbc; font-style: italic; }
 .more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
+
+/* ── Editable post qty input ── */
+.post-qty-input {
+  width: 68px;
+  padding: 5px 6px;
+  border: 1px solid #c8d5e0;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: #1a2f4a;
+  background: #f4f7fb;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.post-qty-input:focus {
+  outline: none;
+  border-color: #056A45;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(5,106,69,0.12);
+}
+tr.qoh-flag .post-qty-input {
+  border-color: #e8c840;
+  background: #fffbee;
+}
+
+/* ── Remove manual row button ── */
+.remove-manual-btn {
+  background: none;
+  border: none;
+  color: #cc4444;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.55;
+  margin-left: 4px;
+  line-height: 1;
+}
+.remove-manual-btn:hover { opacity: 1; background: #ffe0e0; }
+
+/* ── Add SKU form ── */
+.add-sku-form {
+  padding: 10px 14px;
+  border-top: 2px dashed #dde4ec;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafd;
+  flex-wrap: wrap;
+}
+.add-sku-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #8899aa;
+  white-space: nowrap;
+}
+.add-sku-text {
+  width: 130px;
+  padding: 6px 10px;
+  border: 1px solid #c8d5e0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.add-sku-num {
+  width: 70px;
+  padding: 6px 10px;
+  border: 1px solid #c8d5e0;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+  font-family: inherit;
+}
+.add-sku-text:focus, .add-sku-num:focus {
+  outline: none;
+  border-color: #056A45;
+  box-shadow: 0 0 0 2px rgba(5,106,69,0.12);
+}
 
 /* ── Action bar ── */
 .action-bar { display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
@@ -208,7 +305,9 @@ td.muted { color: #8899aa; font-size: 13px; }
 .btn {
   padding: 9px 20px; border-radius: 7px; border: none;
   font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+  font-family: inherit;
 }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
 .btn-primary { background: #056A45; color: #fff; }
 .btn-primary:hover { background: #034a31; }
 .btn-ghost { background: transparent; color: #607a8f; border: 1px solid #c8d5e0; }
@@ -262,6 +361,10 @@ td.muted { color: #8899aa; font-size: 13px; }
           <input type="checkbox" id="optRespectMult" checked>
           Round up to Order Multiple
         </label>
+        <div class="store-num-group">
+          <span class="store-num-label">Store # (for CSV):</span>
+          <input type="text" id="storeNumberInput" class="store-num-input" placeholder="3 or 5">
+        </div>
       </div>
     </div>
 
@@ -309,13 +412,22 @@ td.muted { color: #8899aa; font-size: 13px; }
             <th>Mfg Part #</th>
             <th>UPC</th>
             <th class="right">QOH</th>
-            <th class="right" id="thAvg">Avg / Mo</th>
+            <th class="right">QOO</th>
+            <th class="right">Com</th>
+            <th class="right">Retail</th>
+            <th class="right" id="thAvg">Avg/Mo</th>
             <th class="right">Ord Mult</th>
             <th class="center">Post Qty</th>
           </tr>
         </thead>
         <tbody id="orderBody"></tbody>
       </table>
+      <div class="add-sku-form">
+        <span class="add-sku-label">Add SKU to order:</span>
+        <input type="text" id="newSkuInput" class="add-sku-text" placeholder="SKU">
+        <input type="number" id="newQtyInput" class="add-sku-num" placeholder="Qty" min="1">
+        <button class="btn btn-ghost btn-sm" id="addSkuBtn">+ Add</button>
+      </div>
       <div class="more-note hidden" id="orderMoreNote"></div>
     </div>
 
@@ -347,6 +459,7 @@ td.muted { color: #8899aa; font-size: 13px; }
     <div class="action-bar">
       <span class="file-name" id="fileNameLabel"></span>
       <button class="btn btn-ghost" id="resetBtn">↑ Load Different File</button>
+      <button class="btn btn-ghost" id="exportCsvBtn">⬇ Export CSV</button>
       <button class="btn btn-primary" id="exportBtn">⬇ Export Order Sheet (.xlsx)</button>
     </div>
 
@@ -355,12 +468,15 @@ td.muted { color: #8899aa; font-size: 13px; }
 
 <script>
 /* ─── State ─── */
-let rawRows = [];       // array of arrays (data rows only)
-let headers = [];       // array of strings
-let monthCols = [];     // [{name, idx}] sorted oldest→newest
-let colMap = {};        // {sku, desc, qoh, closeout, disc, ordMult, postQty}
-let processed = [];     // rows after filter/sort/calc
+let rawRows = [];
+let headers = [];
+let monthCols = [];
+let colMap = {};
+let processed = [];
 let loadedFileName = '';
+let postQtyOverrides = {};  // {sku: qty} — user-edited post quantities
+let manualRows = [];        // [{id, sku, postQty}]
+let manualIdCounter = 0;
 
 /* ─── Month detection ─── */
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -386,32 +502,29 @@ function process() {
   if (!rawRows.length) return;
 
   const exCurrent = document.getElementById('optExcludeCurrent').checked;
-  const respMult   = document.getElementById('optRespectMult').checked;
+  const respMult  = document.getElementById('optRespectMult').checked;
 
-  // Which month cols to average over
   const curLabel = currentMonthLabel().toLowerCase();
-  let activeCols = monthCols.filter(c => !(exCurrent && c.name.toLowerCase() === curLabel));
+  const activeCols = monthCols.filter(c => !(exCurrent && c.name.toLowerCase() === curLabel));
   const excludedCol = exCurrent ? monthCols.find(c => c.name.toLowerCase() === curLabel) : null;
 
-  // Render month tags
-  const row = document.getElementById('monthRow');
-  row.innerHTML = `<span class="month-label-prefix">Months used:</span>`;
+  // Month tags
+  const monthRow = document.getElementById('monthRow');
+  monthRow.innerHTML = `<span class="month-label-prefix">Months used:</span>`;
   monthCols.forEach(c => {
     const isExcl = excludedCol && c.name === excludedCol.name;
     const tag = document.createElement('span');
     tag.className = 'mtag' + (isExcl ? ' partial' : '');
     tag.textContent = isExcl ? `${c.name} (partial—skipped)` : c.name;
-    row.appendChild(tag);
+    monthRow.appendChild(tag);
   });
 
-  // Update avg column header
   document.getElementById('thAvg').textContent = `Avg/Mo (${activeCols.length}mo)`;
 
-  // Vendor number from first row
   const vendorNum = colMap.vendor >= 0 ? String(rawRows[0]?.[colMap.vendor] ?? '—') : '—';
   document.getElementById('vendorBadge').textContent = vendorNum;
 
-  // Filter
+  // Filter out closeout, discontinued, ZZ-prefix
   let rows = rawRows.filter(r => {
     if (String(r[colMap.closeout] ?? '').toUpperCase().trim() === 'Y') return false;
     if (String(r[colMap.disc]     ?? '').toUpperCase().trim() === 'Y') return false;
@@ -419,89 +532,133 @@ function process() {
     return true;
   });
 
-  // Sort A-Z by description
   rows.sort((a, b) => {
     const da = String(a[colMap.desc] ?? '').toLowerCase();
     const db = String(b[colMap.desc] ?? '').toLowerCase();
     return da < db ? -1 : da > db ? 1 : 0;
   });
 
-  // Calculate
   rows = rows.map(r => {
-    const qoh     = parseFloat(r[colMap.qoh]) || 0;
-    const ordMult = Math.max(1, parseInt(r[colMap.ordMult]) || 1);
-    const sales   = activeCols.map(c => parseFloat(r[c.idx]) || 0);
-    const avg     = activeCols.length ? sales.reduce((s, v) => s + v, 0) / activeCols.length : 0;
+    const qoh       = parseFloat(r[colMap.qoh]) || 0;
+    const ordMult   = Math.max(1, parseInt(r[colMap.ordMult]) || 1);
+    const committed = colMap.committed >= 0 ? Math.max(0, parseFloat(r[colMap.committed]) || 0) : 0;
+    const effectiveQoh = qoh - committed;  // negative = over-committed
+    const sales = activeCols.map(c => parseFloat(r[c.idx]) || 0);
+    const avg   = activeCols.length ? sales.reduce((s, v) => s + v, 0) / activeCols.length : 0;
 
     let postQty = 0;
+    let qohFlag = false;
+
     if (avg > 0) {
-      const needed = avg - qoh;
+      const needed = avg - effectiveQoh;
       if (needed > 0) {
         postQty = respMult && ordMult > 1
           ? Math.ceil(needed / ordMult) * ordMult
           : Math.ceil(needed);
       }
     }
-    return { _row: r, _avg: avg, _postQty: postQty, _qoh: qoh, _ordMult: ordMult };
+
+    // QOH=1 items: always include in order table for review
+    if (qoh === 1 && postQty === 0) {
+      qohFlag = true;
+      postQty = respMult && ordMult > 1 ? ordMult : 1;
+    }
+
+    return { _row: r, _avg: avg, _postQty: postQty, _qoh: qoh, _committed: committed, _ordMult: ordMult, _qohFlag: qohFlag };
   });
 
   processed = rows;
 
-  // Stats
-  const totalBefore  = rawRows.length;
-  const afterFilter  = rows.length;
-  const needOrder    = rows.filter(r => r._postQty > 0).length;
-  const noSales      = rows.filter(r => r._avg === 0).length;
+  const totalBefore = rawRows.length;
+  const afterFilter = rows.length;
+  const needOrder   = rows.filter(r => r._postQty > 0).length;
+  const noSales     = rows.filter(r => r._avg === 0).length;
 
-  document.getElementById('sTotal').textContent    = totalBefore;
-  document.getElementById('sFiltered').textContent = afterFilter;
+  document.getElementById('sTotal').textContent     = totalBefore;
+  document.getElementById('sFiltered').textContent  = afterFilter;
   document.getElementById('sNeedOrder').textContent = needOrder;
-  document.getElementById('sNoSales').textContent  = noSales;
+  document.getElementById('sNoSales').textContent   = noSales;
 
-  const removed = totalBefore - afterFilter;
-  const zzCount = rawRows.filter(r => String(r[colMap.sku] ?? '').toUpperCase().trimStart().startsWith('ZZ')).length;
+  const zzCount       = rawRows.filter(r => String(r[colMap.sku] ?? '').toUpperCase().trimStart().startsWith('ZZ')).length;
   const closeoutCount = rawRows.filter(r => String(r[colMap.closeout] ?? '').toUpperCase().trim() === 'Y').length;
   document.getElementById('infoNote').innerHTML =
-    `<strong>Formula:</strong> Post Qty = amount needed to reach 1-month average stock, rounded up to Order Multiple. ` +
+    `<strong>Formula:</strong> Post Qty = amount to reach 1-month avg stock, accounting for committed qty, rounded up to Order Multiple. ` +
     `Average based on ${activeCols.length} month(s): <strong>${activeCols.map(c => c.name).join(', ')}</strong>. ` +
     `Removed: ${closeoutCount} Closeout, ${zzCount} ZZ-prefix. ` +
-    `All quantities are editable after export.`;
+    `<span style="color:#b07d12">&#9888; Items with QOH=1 are highlighted for extra review.</span>`;
 
-  // Preview
   renderPreview();
 }
 
-function renderPreview() {
-  const toOrder  = processed.filter(r => r._postQty > 0);
-  const skipped  = processed.filter(r => r._postQty === 0);
+function fmt(val) {
+  return (val === '' || val == null) ? '—' : val;
+}
 
-  // ── Order table ──
-  document.getElementById('orderCount').textContent = toOrder.length;
+function fmtCurrency(val) {
+  const n = parseFloat(val);
+  return isNaN(n) ? '—' : '$' + n.toFixed(2);
+}
+
+function renderPreview() {
+  const toOrder = processed.filter(r => r._postQty > 0);
+  const skipped = processed.filter(r => r._postQty === 0);
+
+  document.getElementById('orderCount').textContent = toOrder.length + manualRows.length;
 
   const orderBody = document.getElementById('orderBody');
-  orderBody.innerHTML = toOrder.map(({ _row: r, _avg, _postQty, _qoh, _ordMult }) => {
-    const desc    = String(r[colMap.desc]    ?? '');
-    const sku     = String(r[colMap.sku]     ?? '');
-    const mfgPart = colMap.mfgPart >= 0 ? String(r[colMap.mfgPart] ?? '') : '';
-    const upc     = colMap.upc     >= 0 ? String(r[colMap.upc]     ?? '') : '';
+
+  const mainHtml = toOrder.map(({ _row: r, _avg, _postQty, _qoh, _committed, _ordMult, _qohFlag }) => {
+    const sku     = String(r[colMap.sku]  ?? '');
+    const desc    = String(r[colMap.desc] ?? '');
+    const mfgPart = colMap.mfgPart   >= 0 ? fmt(r[colMap.mfgPart])  : '—';
+    const upc     = colMap.upc       >= 0 ? fmt(r[colMap.upc])       : '—';
+    const qoo     = colMap.qoo       >= 0 ? fmt(r[colMap.qoo])       : '—';
+    const retail  = colMap.retail    >= 0 ? fmtCurrency(r[colMap.retail]) : '—';
+    const comStr  = _committed > 0 ? _committed : '—';
     const avgStr  = _avg > 0 ? _avg.toFixed(1) : '—';
-    return `<tr>
-      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
+    const currentQty = postQtyOverrides[sku] !== undefined ? postQtyOverrides[sku] : _postQty;
+    const rowCls  = _qohFlag ? 'qoh-flag' : '';
+    const flag    = _qohFlag ? ' <span class="qoh-badge" title="Only 1 in stock">&#9888;</span>' : '';
+
+    return `<tr class="${rowCls}">
+      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}${flag}</td>
       <td>${sku}</td>
       <td class="muted">${mfgPart}</td>
       <td class="muted">${upc}</td>
       <td class="right">${_qoh}</td>
+      <td class="right muted">${qoo}</td>
+      <td class="right muted">${comStr}</td>
+      <td class="right">${retail}</td>
       <td class="right">${avgStr}</td>
       <td class="right">${_ordMult > 1 ? _ordMult : '—'}</td>
-      <td class="center"><span class="badge badge-green">${_postQty}</span></td>
+      <td class="center"><input type="number" class="post-qty-input" data-sku="${sku.replace(/"/g,'&quot;')}" value="${currentQty}" min="0"></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8" style="text-align:center;padding:20px;color:#8899aa;font-style:italic;">No items need reordering with current settings.</td></tr>`;
+  }).join('');
 
-  // ── Skipped table ──
+  const manualHtml = manualRows.map(({ id, sku, postQty }) => `
+    <tr class="manual-row">
+      <td class="muted" style="font-style:italic">manually added</td>
+      <td>${sku}</td>
+      <td class="muted">—</td>
+      <td class="muted">—</td>
+      <td class="right muted">—</td>
+      <td class="right muted">—</td>
+      <td class="right muted">—</td>
+      <td class="right muted">—</td>
+      <td class="right muted">—</td>
+      <td class="right muted">—</td>
+      <td class="center">
+        <input type="number" class="post-qty-input" data-manual-id="${id}" value="${postQty}" min="1">
+        <button class="remove-manual-btn" data-manual-id="${id}" title="Remove">✕</button>
+      </td>
+    </tr>`).join('');
+
+  orderBody.innerHTML = mainHtml + manualHtml ||
+    `<tr><td colspan="11" style="text-align:center;padding:20px;color:#8899aa;font-style:italic;">No items need reordering with current settings.</td></tr>`;
+
+  // Skipped table
   document.getElementById('skipCount').textContent = skipped.length;
-
-  const skippedBody = document.getElementById('skippedBody');
-  skippedBody.innerHTML = skipped.map(({ _row: r, _avg, _qoh }) => {
+  document.getElementById('skippedBody').innerHTML = skipped.map(({ _row: r, _avg, _qoh }) => {
     const desc   = String(r[colMap.desc] ?? '');
     const sku    = String(r[colMap.sku]  ?? '');
     const avgStr = _avg > 0 ? _avg.toFixed(1) : '—';
@@ -520,15 +677,58 @@ function renderPreview() {
   document.getElementById('skippedMoreNote').classList.add('hidden');
 }
 
-/* ─── Export ─── */
+/* ─── Export CSV ─── */
+function exportCSV() {
+  if (!processed.length && !manualRows.length) return;
+
+  const storeNum = document.getElementById('storeNumberInput').value.trim();
+  const csvRows = [['Store', 'SKU', 'Post Qty']];
+
+  // Processed rows — use current input values
+  const inputs = document.querySelectorAll('#orderBody .post-qty-input[data-sku]');
+  const liveQtys = {};
+  inputs.forEach(inp => { liveQtys[inp.dataset.sku] = parseInt(inp.value) || 0; });
+
+  for (const { _row: r, _postQty, _qohFlag } of processed.filter(row => row._postQty > 0)) {
+    const sku = String(r[colMap.sku] ?? '');
+    const qty = liveQtys[sku] !== undefined ? liveQtys[sku] : (_postQty);
+    if (qty > 0) csvRows.push([storeNum, sku, qty]);
+  }
+
+  // Manual rows — use current input values
+  document.querySelectorAll('#orderBody .post-qty-input[data-manual-id]').forEach(inp => {
+    const id  = parseInt(inp.dataset.manualId);
+    const row = manualRows.find(r => r.id === id);
+    if (row) {
+      const qty = parseInt(inp.value) || 0;
+      if (qty > 0) csvRows.push([storeNum, row.sku, qty]);
+    }
+  });
+
+  const csv = csvRows.map(row =>
+    row.map(v => { const s = String(v); return /[,"\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; }).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  const today = new Date();
+  const stamp = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  a.download = `order_${storeNum ? 'store' + storeNum + '_' : ''}${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ─── Export XLSX ─── */
 function exportSheet() {
-  if (!processed.length) return;
+  if (!processed.length && !manualRows.length) return;
 
-  // Build output — all original columns, Posting Quantity filled in, add Avg/Mo column after Post Qty
-  const avgColHeader = `Avg/Mo`;
   const postQtyIdx   = colMap.postQty;
+  const avgColHeader = 'Avg/Mo';
 
-  // Insert Avg/Mo right after Posting Quantity
   const outHeaders = [
     ...headers.slice(0, postQtyIdx + 1),
     avgColHeader,
@@ -537,28 +737,50 @@ function exportSheet() {
 
   const outData = [outHeaders];
 
-  for (const { _row: r, _avg, _postQty } of processed.filter(r => r._postQty > 0)) {
+  // Read live input values
+  const inputs = document.querySelectorAll('#orderBody .post-qty-input[data-sku]');
+  const liveQtys = {};
+  inputs.forEach(inp => { liveQtys[inp.dataset.sku] = parseInt(inp.value) || 0; });
+
+  for (const { _row: r, _avg, _postQty } of processed.filter(row => row._postQty > 0)) {
+    const sku      = String(r[colMap.sku] ?? '');
+    const finalQty = liveQtys[sku] !== undefined ? liveQtys[sku] : _postQty;
+
     const baseRow = headers.map((_, i) => {
-      if (i === postQtyIdx) return _postQty;
+      if (i === postQtyIdx) return finalQty;
       const v = r[i];
-      return v === '' || v == null ? '' : v;
+      return (v === '' || v == null) ? '' : v;
     });
-    // Insert avg after postQty
-    const fullRow = [
+    outData.push([
       ...baseRow.slice(0, postQtyIdx + 1),
       _avg > 0 ? Math.round(_avg * 10) / 10 : 0,
       ...baseRow.slice(postQtyIdx + 1)
-    ];
-    outData.push(fullRow);
+    ]);
   }
 
-  const ws = XLSX.utils.aoa_to_sheet(outData);
+  // Manual rows
+  document.querySelectorAll('#orderBody .post-qty-input[data-manual-id]').forEach(inp => {
+    const id  = parseInt(inp.dataset.manualId);
+    const row = manualRows.find(r => r.id === id);
+    if (!row) return;
+    const qty = parseInt(inp.value) || 0;
+    if (qty <= 0) return;
+    const baseRow = headers.map((_, i) => {
+      if (i === postQtyIdx) return qty;
+      if (i === colMap.sku) return row.sku;
+      return '';
+    });
+    outData.push([
+      ...baseRow.slice(0, postQtyIdx + 1),
+      '',
+      ...baseRow.slice(postQtyIdx + 1)
+    ]);
+  });
 
-  // ── Styling ──
+  const ws    = XLSX.utils.aoa_to_sheet(outData);
   const nCols = outHeaders.length;
   const nRows = outData.length;
 
-  // Header row: bold + gray fill
   for (let c = 0; c < nCols; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
     const cell = ws[addr];
@@ -570,51 +792,30 @@ function exportSheet() {
     };
   }
 
-  // Post Qty column: green if > 0, bold header highlight
-  const pqColOut = postQtyIdx; // same index since we inserted avg AFTER it
+  const pqColOut  = postQtyIdx;
   const avgColOut = postQtyIdx + 1;
-
-  // Header cells for Post Qty and Avg/Mo: yellow tint
-  ['Post Qty col header', 'Avg/Mo col header'].forEach((_, ci) => {
-    const c = ci === 0 ? pqColOut : avgColOut;
+  [pqColOut, avgColOut].forEach(c => {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
     const cell = ws[addr];
-    if (cell) {
-      cell.s = {
-        font: { bold: true, color: { rgb: '2C3E50' } },
-        fill: { patternType: 'solid', fgColor: { rgb: 'FDE9A2' } },
-        alignment: { horizontal: 'center' }
-      };
-    }
+    if (cell) cell.s = {
+      font: { bold: true, color: { rgb: '2C3E50' } },
+      fill: { patternType: 'solid', fgColor: { rgb: 'FDE9A2' } },
+      alignment: { horizontal: 'center' }
+    };
   });
 
-  // Data rows
   for (let r = 1; r < nRows; r++) {
-    const pqAddr  = XLSX.utils.encode_cell({ r, c: pqColOut });
-    const avgAddr = XLSX.utils.encode_cell({ r, c: avgColOut });
-    const pqCell  = ws[pqAddr];
-    const avgCell = ws[avgAddr];
-
+    const pqCell  = ws[XLSX.utils.encode_cell({ r, c: pqColOut })];
+    const avgCell = ws[XLSX.utils.encode_cell({ r, c: avgColOut })];
     if (pqCell) {
       pqCell.t = 'n';
-      const qty = outData[r][pqColOut];
-      if (qty > 0) {
-        pqCell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: 'C6EFCE' } },
-          font: { bold: true, color: { rgb: '276221' } },
-          alignment: { horizontal: 'center' }
-        };
-      } else {
-        pqCell.s = { alignment: { horizontal: 'center' } };
-      }
+      pqCell.s = outData[r][pqColOut] > 0
+        ? { fill: { patternType: 'solid', fgColor: { rgb: 'C6EFCE' } }, font: { bold: true, color: { rgb: '276221' } }, alignment: { horizontal: 'center' } }
+        : { alignment: { horizontal: 'center' } };
     }
-    if (avgCell) {
-      avgCell.t = 'n';
-      avgCell.s = { alignment: { horizontal: 'center' }, numFmt: '0.0' };
-    }
+    if (avgCell) { avgCell.t = 'n'; avgCell.s = { alignment: { horizontal: 'center' }, numFmt: '0.0' }; }
   }
 
-  // Column widths
   ws['!cols'] = outHeaders.map(h => {
     if (h === 'Description') return { wch: 42 };
     if (h === 'Posting Quantity') return { wch: 14 };
@@ -622,12 +823,9 @@ function exportSheet() {
     if (h === 'SKU') return { wch: 12 };
     if (h === 'Mfg Part #') return { wch: 14 };
     if (h === 'UPC') return { wch: 14 };
-    if (h === 'Description') return { wch: 40 };
-    if (['QOH','QOO','Retail','Repl Cost','Avg Cost','List'].includes(h)) return { wch: 10 };
+    if (['QOH','QOO','Retail','Repl Cost','Avg Cost','List','QCom'].includes(h)) return { wch: 10 };
     return { wch: 11 };
   });
-
-  // Freeze header row
   ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2' }];
 
   const wb = XLSX.utils.book_new();
@@ -636,6 +834,27 @@ function exportSheet() {
   const today = new Date();
   const stamp = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
   XLSX.writeFile(wb, `order_sheet_${stamp}.xlsx`, { cellStyles: true, bookType: 'xlsx' });
+}
+
+/* ─── Add manual SKU ─── */
+function addManualSku() {
+  const skuInput = document.getElementById('newSkuInput');
+  const qtyInput = document.getElementById('newQtyInput');
+  const sku = skuInput.value.trim();
+  const qty = parseInt(qtyInput.value) || 0;
+
+  if (!sku) { skuInput.focus(); return; }
+  if (qty < 1) { qtyInput.focus(); return; }
+  if (manualRows.some(r => r.sku === sku)) {
+    alert(`SKU "${sku}" is already in the order list.`);
+    return;
+  }
+
+  manualRows.push({ id: ++manualIdCounter, sku, postQty: qty });
+  skuInput.value = '';
+  qtyInput.value = '';
+  skuInput.focus();
+  renderPreview();
 }
 
 /* ─── File loading ─── */
@@ -655,17 +874,21 @@ function loadFile(file) {
     headers = raw[0].map(h => String(h ?? '').trim());
     rawRows = raw.slice(1).filter(r => r.some(v => v !== '' && v != null));
 
+    const idx = name => headers.indexOf(name);
     colMap = {
-      sku:      headers.indexOf('SKU'),
-      desc:     headers.indexOf('Description'),
-      qoh:      headers.indexOf('QOH'),
-      closeout: headers.indexOf('Store Closeout'),
-      disc:     headers.indexOf('Discontinued'),
-      ordMult:  headers.indexOf('Order Multiple'),
-      postQty:  headers.indexOf('Posting Quantity'),
-      mfgPart:  headers.indexOf('Mfg Part #'),
-      upc:      headers.indexOf('UPC'),
-      vendor:   headers.indexOf('Primary Vendor'),
+      sku:       idx('SKU'),
+      desc:      idx('Description'),
+      qoh:       idx('QOH'),
+      closeout:  idx('Store Closeout'),
+      disc:      idx('Discontinued'),
+      ordMult:   idx('Order Multiple'),
+      postQty:   idx('Posting Quantity'),
+      mfgPart:   idx('Mfg Part #'),
+      upc:       idx('UPC'),
+      vendor:    idx('Primary Vendor'),
+      qoo:       idx('QOO'),
+      retail:    idx('Retail'),
+      committed: idx('QCom') !== -1 ? idx('QCom') : idx('Committed'),
     };
 
     monthCols = detectMonths(headers);
@@ -701,12 +924,30 @@ document.getElementById('fileInput').addEventListener('change', e => {
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   rawRows = []; headers = []; monthCols = []; processed = [];
+  postQtyOverrides = {}; manualRows = [];
   document.getElementById('fileInput').value = '';
   document.getElementById('results').classList.add('hidden');
   document.getElementById('uploadZone').classList.remove('hidden');
 });
 
 document.getElementById('exportBtn').addEventListener('click', exportSheet);
+document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+document.getElementById('addSkuBtn').addEventListener('click', addManualSku);
+
+document.getElementById('newSkuInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('newQtyInput').focus();
+});
+document.getElementById('newQtyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addManualSku();
+});
+
+// Event delegation for remove buttons
+document.getElementById('orderBody').addEventListener('click', e => {
+  if (!e.target.classList.contains('remove-manual-btn')) return;
+  const id = parseInt(e.target.dataset.manualId);
+  manualRows = manualRows.filter(r => r.id !== id);
+  renderPreview();
+});
 
 ['optExcludeCurrent','optRespectMult'].forEach(id =>
   document.getElementById(id).addEventListener('change', process)
