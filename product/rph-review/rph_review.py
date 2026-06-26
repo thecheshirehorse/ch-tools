@@ -32,7 +32,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 
 # ---------------------------------------------------------------------------
 # CLASSIFICATION
@@ -407,7 +407,7 @@ _original_index = index.__wrapped__ if hasattr(index, '__wrapped__') else index
 @app.before_request
 def check_loaded():
     """Redirect to the file picker if data hasn't been loaded yet."""
-    if request.path in ("/upload", "/api/load") or request.path.startswith("/static"):
+    if request.path in ("/upload", "/api/load") or request.path.startswith("/static") or request.path.startswith("/assets"):
         return None
     if not READY and not RECORDS:
         from flask import redirect

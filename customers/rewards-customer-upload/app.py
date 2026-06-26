@@ -19,6 +19,7 @@ app = Flask(__name__)
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(DATA_DIR, "cheshire_eagle_data.json")
+COUNTERS_FILE = os.path.join(DATA_DIR, "counters.json")
 
 INITIAL_DATA = {
     "nextNumbers": {"store3": 8051, "store5": 8085},
@@ -35,6 +36,19 @@ STAGES = [
 
 # --- Data Persistence ---
 
+def load_counters():
+    if os.path.exists(COUNTERS_FILE):
+        try:
+            with open(COUNTERS_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
+    return dict(INITIAL_DATA["nextNumbers"])
+
+def save_counters(nums):
+    with open(COUNTERS_FILE, 'w') as f:
+        json.dump(nums, f, indent=2)
+
 def load_data():
     if os.path.exists(DATA_FILE):
         try:
@@ -43,14 +57,18 @@ def load_data():
             for key in INITIAL_DATA:
                 if key not in data:
                     data[key] = INITIAL_DATA[key]
-            return data
         except (json.JSONDecodeError, IOError):
-            pass
-    return json.loads(json.dumps(INITIAL_DATA))
+            data = json.loads(json.dumps(INITIAL_DATA))
+    else:
+        data = json.loads(json.dumps(INITIAL_DATA))
+    # counters.json is the source of truth for nextNumbers
+    data["nextNumbers"] = load_counters()
+    return data
 
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
+    save_counters(data["nextNumbers"])
 
 # --- Formatting ---
 
