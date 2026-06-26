@@ -215,7 +215,7 @@ tbody tr.manual-row:hover { background: #e6f3ff; }
 tbody td { padding: 9px 14px; border-bottom: 1px solid #f0f3f7; white-space: nowrap; vertical-align: middle; }
 td.right { text-align: right; }
 td.center { text-align: center; }
-td.desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+td.desc { white-space: nowrap; font-weight: 500; }
 td.muted { color: #8899aa; font-size: 13px; }
 .skip-reason { display: inline-block; font-size: 11px; color: #9aacbc; font-style: italic; }
 .more-note { padding: 10px 14px; font-size: 12px; color: #8899aa; font-style: italic; border-top: 1px solid #f0f3f7; }
@@ -616,7 +616,7 @@ function renderPreview() {
     const avgStr  = _avg > 0 ? _avg.toFixed(1) : '—';
     const currentQty = postQtyOverrides[sku] !== undefined ? postQtyOverrides[sku] : _postQty;
     return `<tr>
-      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
+      <td class="desc">${desc}</td>
       <td>${sku}</td>
       <td class="muted">${mfgPart}</td>
       <td class="muted">${upc}</td>
@@ -661,7 +661,7 @@ function renderPreview() {
       ? '<span class="skip-reason">No recent sales</span>'
       : `<span class="skip-reason">Well stocked (avg ${_avg.toFixed(1)}/mo, have ${_qoh})</span>`;
     return `<tr>
-      <td class="desc" title="${desc.replace(/"/g,'&quot;')}">${desc}</td>
+      <td class="desc">${desc}</td>
       <td>${sku}</td>
       <td class="right">${_qoh}</td>
       <td class="right">${avgStr}</td>
