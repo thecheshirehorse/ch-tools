@@ -33,7 +33,7 @@ jobs:
 
       - name: Encrypt all HTML files
         env:
-          STATICRYPT_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+          STATICRYPT_PASSWORD: ${{ secrets.CH_TOOLS_PW }}
         run: |
           echo "staticrypt version: $(staticrypt --version)"
           if [ -z "$STATICRYPT_PASSWORD" ]; then
