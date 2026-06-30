@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LP Sale Category Builder</title>
+<title>Sale Category Builder · Cheshire Horse</title>
+<link rel="icon" href="../../assets/logo-green.svg" type="image/svg+xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,38 +14,24 @@
     background: #f6f8f6;
     color: #1a1a2e;
     min-height: 100vh;
-    padding: 32px 24px;
+    padding: 0;
   }
 
-  header {
-    margin-bottom: 32px;
-  }
-
-  .ch-header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-32px -24px 32px}
-  .ch-brand{display:flex;align-items:center;gap:8px}
+  header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  header h1{font-size:19px;font-weight:700;letter-spacing:-0.2px}
+  header p{font-size:12px;color:rgba(255,255,255,0.7);margin-top:3px}
+  .ch-brand-row{display:flex;align-items:center;gap:14px}
   .ch-divider{opacity:.4;font-size:13px;font-weight:300}
-  .ch-tool-name{font-size:14px;font-weight:600;letter-spacing:.2px;color:#fff}
   .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
   .ch-back:hover{background:rgba(255,255,255,.15)}
-
-  header h1 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: #1a1a2e;
-  }
-
-  header p {
-    font-size: 13px;
-    color: #6b7280;
-    margin-top: 4px;
-  }
 
   .layout {
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 24px;
     max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
   }
 
   .card {
@@ -289,18 +276,16 @@
 </head>
 <body>
 
-<div class="ch-header">
-  <div class="ch-brand">
-    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:24px;width:auto;display:block">
+<header>
+  <div class="ch-brand-row">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:26px;width:auto;display:block">
     <span class="ch-divider">|</span>
-    <span class="ch-tool-name">LP Sale Category Builder</span>
+    <div>
+      <h1>Sale Category Builder</h1>
+      <p>Assign discount tiers to SFCC category exports and prepare files for Logical Position</p>
+    </div>
   </div>
   <a href="../../index.html" class="ch-back">&larr; All tools</a>
-</div>
-
-<header>
-  <h1>LP Sale Category Builder</h1>
-  <p>Drop SFCC category exports → assign discount tier & sheet name → export xlsx files for Logical Position</p>
 </header>
 
 <div class="layout">
