@@ -24,11 +24,21 @@ import json
 import os
 import re
 import time
+import webbrowser
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from threading import Lock
+from threading import Lock, Timer
 
 from flask import Flask, render_template_string, request, jsonify, send_file
 import requests
+from requests.adapters import HTTPAdapter
+
+# Reused session (connection pooling/keep-alive) for scraping cheshirehorse.com.
+# Sized to comfortably cover several products' worth of concurrent PDP fetches.
+scrape_session = requests.Session()
+_scrape_adapter = HTTPAdapter(pool_connections=30, pool_maxsize=30)
+scrape_session.mount("https://", _scrape_adapter)
+scrape_session.mount("http://", _scrape_adapter)
 
 # ─── Persistence ──────────────────────────────────────────────────────────────
 
@@ -46,6 +56,9 @@ def load_progress():
     return {"log": []}
 
 
+log_lock = Lock()
+
+
 def save_progress():
     """Write current log to disk."""
     data = {"log": state["log"], "saved_at": datetime.now().isoformat()}
@@ -54,6 +67,23 @@ def save_progress():
             json.dump(data, f, indent=2)
     except IOError as e:
         print(f"Warning: could not save progress: {e}")
+
+
+def log_action(product, action, image_url="", source=None):
+    """Append an action to the log and persist it. Locked because auto-match
+    (background) and manual review can both be logging actions concurrently."""
+    entry = {
+        "sku": product.get("sku", ""),
+        "name": product.get("name", ""),
+        "url": image_url,
+        "action": action,
+        "timestamp": datetime.now().isoformat(),
+    }
+    if source:
+        entry["source"] = source
+    with log_lock:
+        state["log"].append(entry)
+        save_progress()
 
 
 # ─── ShipStation API ──────────────────────────────────────────────────────────
@@ -109,6 +139,48 @@ def update_product_image(api_key, api_secret, product, image_url):
     return ss_request("PUT", f"/products/{pid}", api_key, api_secret, json_data=product_copy)
 
 
+# ─── Compass Closeout Enrichment ──────────────────────────────────────────────
+
+def normalize_header(h):
+    return re.sub(r"\s+", " ", str(h or "").strip().lower())
+
+
+def parse_closeout_skus(file_bytes):
+    """Read a Compass enrichment .xlsx and return the set of SKUs (Item Number)
+    flagged Store Closeout? = Y. Same file format the RPH Review tool consumes."""
+    from openpyxl import load_workbook
+
+    wb = load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+    ws = wb.active
+    rows = ws.iter_rows(values_only=True)
+    header = next(rows, None)
+    if not header:
+        raise ValueError("File has no header row")
+
+    norm_header = [normalize_header(h) for h in header]
+    try:
+        sku_idx = next(i for i, h in enumerate(norm_header) if h in ("item number", "item #", "item"))
+    except StopIteration:
+        raise ValueError("Could not find an 'Item Number' column")
+    try:
+        closeout_idx = next(i for i, h in enumerate(norm_header) if h.startswith("store closeout"))
+    except StopIteration:
+        raise ValueError("Could not find a 'Store Closeout?' column")
+
+    closeout_skus = set()
+    for row in rows:
+        if not row:
+            continue
+        sku = row[sku_idx] if sku_idx < len(row) else None
+        flag = row[closeout_idx] if closeout_idx < len(row) else None
+        if sku is None:
+            continue
+        sku = str(sku).strip()
+        if sku and str(flag or "").strip().upper() == "Y":
+            closeout_skus.add(sku)
+    return closeout_skus
+
+
 # ─── Flask App ────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
@@ -118,8 +190,8 @@ state = {
     "api_secret": "",
     "all_products": [],
     "missing": [],
-    "current_index": 0,
     "log": [],
+    "closeout_skus": set(),
 }
 
 
@@ -180,6 +252,9 @@ HTML = r"""
     outline: none; transition: border-color 0.2s;
   }
   .field input:focus { border-color: var(--blue); }
+  .field input[type="file"] {
+    padding: 9px 12px; font-family: var(--font); font-size: 13px; color: var(--text-dim);
+  }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px 24px; font-family: var(--font); font-size: 14px; font-weight: 600;
@@ -360,6 +435,14 @@ HTML = r"""
         <label>API Secret</label>
         <input type="password" id="inp-secret" placeholder="Enter your ShipStation API secret" autocomplete="off">
       </div>
+      <div class="field">
+        <label>Compass Closeout Export (optional)</label>
+        <input type="file" id="inp-enrichment" accept=".xlsx">
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.5;">
+          Same weekly Compass export RPH Review uses. Any SKU flagged <strong>Store Closeout? = Y</strong>
+          is auto-filtered out before it reaches your queue.
+        </div>
+      </div>
       <button class="btn btn-blue btn-block" id="btn-connect" onclick="doConnect()">Connect</button>
       <div class="error-msg" id="login-err"></div>
     </div>
@@ -404,6 +487,7 @@ HTML = r"""
         <div class="stat-pill"><div class="val" id="auto-manual" style="color:var(--blue)">0</div><div class="lbl">Need Manual</div></div>
       </div>
       <p id="auto-current" style="color:var(--text-dim);font-size:12px;font-family:var(--mono);margin-top:8px;"></p>
+      <button class="btn btn-blue" id="btn-review-now" onclick="startManualPhase()" style="display:none;margin-top:20px;">Review items now</button>
     </div>
   </div>
 
@@ -412,11 +496,18 @@ HTML = r"""
     <div class="workflow-header">
       <h2>Assign Image</h2>
       <div style="display:flex;gap:8px;align-items:center;">
+        <span class="picker-hint" id="work-live-note" style="display:none;">scanning for more&hellip;</span>
         <button class="btn btn-ghost" onclick="downloadXlsx()" style="padding:8px 14px;font-size:12px;">XLSX</button>
         <div class="counter"><em id="work-cur">1</em> / <span id="work-total">0</span></div>
       </div>
     </div>
-    <div class="product-card">
+    <div class="product-card" id="waiting-card" style="display:none;">
+      <div class="fetch-card" style="margin-top:0;border:none;padding:48px 40px;">
+        <span class="spinner" style="width:28px;height:28px;border-color:rgba(91,141,239,0.25);border-top-color:var(--blue);"></span>
+        <p style="margin-top:16px;">You're caught up. Auto-match is still scanning in the background &mdash; more items will appear here as they're found.</p>
+      </div>
+    </div>
+    <div class="product-card" id="work-card">
       <div class="product-info">
         <div class="product-sku" id="work-sku"></div>
         <div class="product-name" id="work-name"></div>
@@ -497,6 +588,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s||''
 async function doConnect() {
   const key = document.getElementById('inp-key').value.trim();
   const secret = document.getElementById('inp-secret').value.trim();
+  const enrichFile = document.getElementById('inp-enrichment').files[0];
   const err = document.getElementById('login-err');
   const btn = document.getElementById('btn-connect');
   if (!key || !secret) { err.textContent = 'Enter both API key and secret.'; return; }
@@ -505,6 +597,15 @@ async function doConnect() {
     const r = await fetch('/api/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:key, api_secret:secret})});
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Failed');
+
+    if (enrichFile) {
+      const fd = new FormData();
+      fd.append('file', enrichFile);
+      const ur = await fetch('/api/upload_enrichment', {method:'POST', body: fd});
+      const ud = await ur.json();
+      if (!ur.ok) throw new Error('Closeout export: ' + (ud.error || 'upload failed'));
+    }
+
     show('screen-fetch'); doFetch();
   } catch(e) { err.textContent = e.message; btn.disabled = false; btn.textContent = 'Connect'; }
 }
@@ -518,11 +619,16 @@ async function doFetch() {
     document.getElementById('stat-have').textContent = d.have_images;
     document.getElementById('stat-remaining').textContent = d.remaining;
     const note = document.getElementById('resume-note');
+    const parts = [];
     if (d.already_handled > 0) {
-      note.textContent = 'Resumed from saved progress — ' + d.already_handled + ' products already handled (' + d.missing_total + ' were missing total).';
+      parts.push('Resumed from saved progress — ' + d.already_handled + ' products already handled (' + d.missing_total + ' were missing total).');
     } else {
-      note.textContent = d.missing_total + ' products missing images.';
+      parts.push(d.missing_total + ' products missing images.');
     }
+    if (d.auto_closeout_enrichment > 0) {
+      parts.push(d.auto_closeout_enrichment + ' auto-filtered as closeouts from your Compass export.');
+    }
+    note.textContent = parts.join(' ');
     show('screen-results');
   } catch(e) {
     document.getElementById('fetch-status').textContent = 'Error: ' + e.message;
@@ -530,35 +636,50 @@ async function doFetch() {
   }
 }
 
-// ── Phase 1: Auto-pass (processes all products automatically) ──
+// ── Phase 1: Auto-pass (processes products concurrently in the background) ──
+const AUTO_MATCH_CONCURRENCY = 6;
 let manualIndices = [];
 let manualPos = 0;
+let autoPassRunning = false;
+let manualReviewActive = false;
+let waitingPollTimer = null;
+
+function updateManualCounterUI() {
+  document.getElementById('auto-manual').textContent = manualIndices.length;
+  if (manualReviewActive) return;
+  const btn = document.getElementById('btn-review-now');
+  if (manualIndices.length > 0) {
+    btn.style.display = 'inline-flex';
+    btn.textContent = 'Review ' + manualIndices.length + ' item' + (manualIndices.length === 1 ? '' : 's') + ' now';
+  }
+}
 
 async function startAutoPass() {
   pushed = 0; skipped = 0; closeouts = 0;
   manualIndices = [];
+  autoPassRunning = true;
+  manualReviewActive = false;
+  document.getElementById('btn-review-now').style.display = 'none';
   show('screen-auto');
 
   const resp = await fetch('/api/product_count');
   const countData = await resp.json();
   const total = countData.count;
 
-  if (total === 0) { finishUp(); return; }
+  if (total === 0) { autoPassRunning = false; finishUp(); return; }
 
-  for (let i = 0; i < total; i++) {
-    const pct = Math.round(((i + 1) / total) * 100);
-    document.getElementById('auto-progress').style.width = pct + '%';
+  let nextIndex = 0;
+  let completed = 0;
 
+  async function processOne(i) {
     const pResp = await fetch('/api/product/' + i);
     const p = await pResp.json();
-    if (p.done) break;
-
-    document.getElementById('auto-current').textContent = p.sku + ' (' + (i+1) + '/' + total + ')';
+    if (p.done) return;
 
     if (!p.sku) {
       manualIndices.push(i);
-      document.getElementById('auto-manual').textContent = manualIndices.length;
-      continue;
+      updateManualCounterUI();
+      return;
     }
 
     try {
@@ -567,13 +688,13 @@ async function startAutoPass() {
 
       if (s.images && s.images.length > 0 && s.images[0].exact_match) {
         // Auto-push
-        const pushResp = await fetch('/api/push', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image_url: s.images[0].url})});
+        const pushResp = await fetch('/api/push', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({index: i, image_url: s.images[0].url})});
         if (pushResp.ok) {
           pushed++;
           document.getElementById('auto-pushed').textContent = pushed;
         } else {
           manualIndices.push(i);
-          document.getElementById('auto-manual').textContent = manualIndices.length;
+          updateManualCounterUI();
         }
       } else if (!s.images || s.images.length === 0) {
         // No images — auto-closeout
@@ -583,42 +704,79 @@ async function startAutoPass() {
       } else {
         // Images but no exact match — needs manual
         manualIndices.push(i);
-        document.getElementById('auto-manual').textContent = manualIndices.length;
+        updateManualCounterUI();
       }
     } catch(e) {
       manualIndices.push(i);
-      document.getElementById('auto-manual').textContent = manualIndices.length;
+      updateManualCounterUI();
     }
   }
 
+  async function worker() {
+    while (nextIndex < total) {
+      const i = nextIndex++;
+      await processOne(i);
+      completed++;
+      const pct = Math.round((completed / total) * 100);
+      document.getElementById('auto-progress').style.width = pct + '%';
+      document.getElementById('auto-current').textContent = completed + ' / ' + total + ' scanned';
+    }
+  }
+
+  const workers = [];
+  for (let w = 0; w < Math.min(AUTO_MATCH_CONCURRENCY, total); w++) workers.push(worker());
+  await Promise.all(workers);
+
   // Auto-pass done
+  autoPassRunning = false;
   document.getElementById('auto-current').textContent = '';
+
+  if (manualReviewActive) {
+    // User is already reviewing — the manual screen's own polling will notice
+    // autoPassRunning is now false and finish up once they're caught up.
+    toast('Background auto-match finished.', 'info');
+    return;
+  }
+
   if (manualIndices.length === 0) {
     document.getElementById('auto-status').textContent = 'All done — no manual work needed!';
     setTimeout(() => finishUp(), 1500);
   } else {
     document.getElementById('auto-status').textContent = 'Auto-match complete! ' + manualIndices.length + ' products need your help.';
-    setTimeout(() => startManualPhase(), 2000);
+    setTimeout(() => startManualPhase(), 1500);
   }
 }
 
-// ── Phase 2: Manual workflow (only products that couldn't auto-match) ──
+// ── Phase 2: Manual workflow. Can start while auto-match is still running in
+// the background (via "Review Now"), so manualIndices may keep growing while
+// the user works through it — loadManualProduct() handles the catch-up case.
 function startManualPhase() {
+  manualReviewActive = true;
   manualPos = 0;
   show('screen-work');
   loadManualProduct();
 }
 
 function loadManualProduct() {
+  document.getElementById('work-live-note').style.display = autoPassRunning ? 'inline' : 'none';
+
+  if (manualPos >= manualIndices.length) {
+    if (autoPassRunning) { showWaitingForMore(); return; }
+    finishUp();
+    return;
+  }
+
+  clearTimeout(waitingPollTimer);
+  document.getElementById('waiting-card').style.display = 'none';
+  document.getElementById('work-card').style.display = 'block';
+
   clearDZ();
   document.getElementById('picker-wrap').style.display = 'none';
   document.getElementById('picker-grid').innerHTML = '';
 
-  if (manualPos >= manualIndices.length) { finishUp(); return; }
-
   const idx = manualIndices[manualPos];
   fetch('/api/product/' + idx).then(r=>r.json()).then(d => {
-    if (d.done) { finishUp(); return; }
+    if (d.done) { manualPos++; loadManualProduct(); return; }
     document.getElementById('work-cur').textContent = (manualPos + 1);
     document.getElementById('work-total').textContent = manualIndices.length;
     document.getElementById('work-sku').textContent = d.sku || 'No SKU';
@@ -633,6 +791,15 @@ function loadManualProduct() {
       scrapeImagesManual(d.sku);
     }
   });
+}
+
+function showWaitingForMore() {
+  document.getElementById('work-card').style.display = 'none';
+  document.getElementById('waiting-card').style.display = 'block';
+  document.getElementById('work-cur').textContent = manualIndices.length;
+  document.getElementById('work-total').textContent = manualIndices.length;
+  clearTimeout(waitingPollTimer);
+  waitingPollTimer = setTimeout(() => { if (manualReviewActive) loadManualProduct(); }, 900);
 }
 
 function scrapeImagesManual(sku) {
@@ -730,36 +897,30 @@ async function doPush() {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Pushing...';
   try {
     const idx = manualIndices[manualPos];
-    // Set server index before pushing
-    await fetch('/api/product/' + idx);
-    const r = await fetch('/api/push', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image_url:currentUrl})});
+    const r = await fetch('/api/push', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({index: idx, image_url:currentUrl})});
     const d = await r.json();
     if (!r.ok) throw new Error(d.error);
     pushed++;
     toast('Image pushed!','ok');
     manualPos++;
-    if (manualPos >= manualIndices.length) finishUp(); else loadManualProduct();
+    loadManualProduct();
   } catch(e) { toast('Push failed: '+e.message,'err'); btn.disabled=false; btn.textContent='Push to ShipStation'; }
 }
 function doSkip() {
   const idx = manualIndices[manualPos];
-  fetch('/api/product/' + idx).then(() => {
+  fetch('/api/skip',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({index: idx})}).then(r=>r.json()).then(d => {
     skipped++;
-    fetch('/api/skip',{method:'POST'}).then(r=>r.json()).then(d => {
-      manualPos++;
-      if (manualPos >= manualIndices.length) finishUp(); else loadManualProduct();
-    });
+    manualPos++;
+    loadManualProduct();
   });
 }
 function doCloseout() {
   const idx = manualIndices[manualPos];
-  fetch('/api/product/' + idx).then(() => {
+  fetch('/api/closeout',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({index: idx})}).then(r=>r.json()).then(d => {
     closeouts++;
-    fetch('/api/closeout',{method:'POST'}).then(r=>r.json()).then(d => {
-      toast('Marked as closeout','info');
-      manualPos++;
-      if (manualPos >= manualIndices.length) finishUp(); else loadManualProduct();
-    });
+    toast('Marked as closeout','info');
+    manualPos++;
+    loadManualProduct();
   });
 }
 function finishUp() {
@@ -820,28 +981,63 @@ def api_fetch():
         # Build set of SKUs already handled (pushed, skipped, closeout)
         handled_skus = {e["sku"] for e in state["log"] if e.get("sku")}
 
+        # Auto-closeout any missing product flagged Store Closeout? = Y in the
+        # uploaded Compass enrichment export, before it ever reaches the queue.
+        closeout_skus = state.get("closeout_skus") or set()
+        auto_closeout_count = 0
+        if closeout_skus:
+            for p in missing:
+                sku = p.get("sku", "")
+                if sku and sku in closeout_skus and sku not in handled_skus:
+                    state["log"].append({
+                        "sku": sku,
+                        "name": p.get("name", ""),
+                        "url": "",
+                        "action": "closeout",
+                        "source": "enrichment",
+                        "timestamp": datetime.now().isoformat(),
+                    })
+                    handled_skus.add(sku)
+                    auto_closeout_count += 1
+            if auto_closeout_count:
+                save_progress()
+
         # Filter missing to only unhandled products
         remaining = [p for p in missing if p.get("sku", "") not in handled_skus]
 
         state["missing"] = remaining
-        state["current_index"] = 0
 
         return jsonify({
             "total": len(all_prods),
             "have_images": len(all_prods) - len(missing),
             "missing_total": len(missing),
             "already_handled": len(handled_skus),
+            "auto_closeout_enrichment": auto_closeout_count,
             "remaining": len(remaining),
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/upload_enrichment", methods=["POST"])
+def api_upload_enrichment():
+    """Accept a Compass enrichment .xlsx and store its closeout SKUs for
+    filtering on the next /api/fetch."""
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file uploaded"}), 400
+    try:
+        closeout_skus = parse_closeout_skus(file.read())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    state["closeout_skus"] = closeout_skus
+    return jsonify({"ok": True, "closeout_count": len(closeout_skus)})
+
+
 @app.route("/api/product/<int:idx>")
 def api_product(idx):
     if idx >= len(state["missing"]):
         return jsonify({"done": True})
-    state["current_index"] = idx
     p = state["missing"][idx]
     return jsonify({
         "sku": p.get("sku", ""),
@@ -862,73 +1058,51 @@ def api_closeout_at():
     """Closeout a product at a specific index (used during auto-pass)."""
     data = request.json
     idx = data.get("index", 0)
-    if idx >= len(state["missing"]):
+    if idx is None or idx >= len(state["missing"]):
         return jsonify({"error": "Index out of range"}), 400
-    state["current_index"] = idx
     product = state["missing"][idx]
-    state["log"].append({
-        "sku": product.get("sku", ""),
-        "name": product.get("name", ""),
-        "url": "",
-        "action": "closeout",
-        "timestamp": datetime.now().isoformat(),
-    })
-    save_progress()
+    log_action(product, "closeout")
     return jsonify({"ok": True})
 
 
 @app.route("/api/push", methods=["POST"])
 def api_push():
+    # index is passed explicitly (rather than relying on shared server state)
+    # because auto-match (background) and manual review can push concurrently.
     data = request.json
     image_url = data["image_url"]
-    idx = state["current_index"]
+    idx = data.get("index")
+    if idx is None or idx >= len(state["missing"]):
+        return jsonify({"error": "Invalid index"}), 400
     product = state["missing"][idx]
     try:
         update_product_image(state["api_key"], state["api_secret"], product, image_url)
-        state["log"].append({
-            "sku": product.get("sku", ""),
-            "name": product.get("name", ""),
-            "url": image_url,
-            "action": "pushed",
-            "timestamp": datetime.now().isoformat(),
-        })
-        save_progress()
-        next_idx = idx + 1
-        return jsonify({"ok": True, "next_index": next_idx, "done": next_idx >= len(state["missing"])})
+        log_action(product, "pushed", image_url=image_url)
+        return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/skip", methods=["POST"])
 def api_skip():
-    idx = state["current_index"]
+    data = request.json or {}
+    idx = data.get("index")
+    if idx is None or idx >= len(state["missing"]):
+        return jsonify({"error": "Invalid index"}), 400
     product = state["missing"][idx]
-    state["log"].append({
-        "sku": product.get("sku", ""),
-        "name": product.get("name", ""),
-        "url": "",
-        "action": "skipped",
-        "timestamp": datetime.now().isoformat(),
-    })
-    save_progress()
-    next_idx = idx + 1
-    return jsonify({"next_index": next_idx, "done": next_idx >= len(state["missing"])})
+    log_action(product, "skipped")
+    return jsonify({"ok": True})
 
 
 @app.route("/api/closeout", methods=["POST"])
 def api_closeout():
-    idx = state["current_index"]
+    data = request.json or {}
+    idx = data.get("index")
+    if idx is None or idx >= len(state["missing"]):
+        return jsonify({"error": "Invalid index"}), 400
     product = state["missing"][idx]
-    state["log"].append({
-        "sku": product.get("sku", ""),
-        "name": product.get("name", ""),
-        "url": "",
-        "action": "closeout",
-        "timestamp": datetime.now().isoformat(),
-    })
-    save_progress()
-    next_idx = idx + 1
-    return jsonify({"next_index": next_idx, "done": next_idx >= len(state["missing"])})
+    log_action(product, "closeout")
+    return jsonify({"ok": True})
 
 
 @app.route("/api/scrape")
@@ -1076,7 +1250,7 @@ def api_scrape():
     # Step 1: Fetch search results page
     search_url = f"https://www.cheshirehorse.com/search?q={query}"
     try:
-        resp = requests.get(search_url, timeout=15, headers=headers)
+        resp = scrape_session.get(search_url, timeout=15, headers=headers)
         resp.raise_for_status()
     except Exception as e:
         return jsonify({"images": [], "error": f"Could not fetch search page: {e}"})
@@ -1086,21 +1260,28 @@ def api_scrape():
     # Get images from search results page itself
     images = extract_images_from_soup(soup)
 
-    # Step 2: Follow through to PDPs to get variant images
-    pdp_links = find_product_links(soup)
-    for pdp_url in pdp_links:
+    # Step 2: Follow through to PDPs to get variant images. Fetched concurrently
+    # (rather than one at a time) since this is the slow part of each scrape —
+    # up to 5 page fetches per product otherwise done in series.
+    def fetch_pdp_images(pdp_url):
         try:
-            pdp_resp = requests.get(pdp_url, timeout=15, headers=headers)
+            pdp_resp = scrape_session.get(pdp_url, timeout=15, headers=headers)
             pdp_resp.raise_for_status()
             pdp_soup = BeautifulSoup(pdp_resp.text, "html.parser")
-            pdp_images = extract_images_from_soup(pdp_soup)
-            existing_urls = {img["url"] for img in images}
-            for img in pdp_images:
-                if img["url"] not in existing_urls:
-                    images.append(img)
-                    existing_urls.add(img["url"])
+            return extract_images_from_soup(pdp_soup)
         except Exception:
-            pass
+            return []
+
+    pdp_links = find_product_links(soup)
+    if pdp_links:
+        existing_urls = {img["url"] for img in images}
+        with ThreadPoolExecutor(max_workers=min(3, len(pdp_links))) as executor:
+            futures = [executor.submit(fetch_pdp_images, url) for url in pdp_links]
+            for future in as_completed(futures):
+                for img in future.result():
+                    if img["url"] not in existing_urls:
+                        images.append(img)
+                        existing_urls.add(img["url"])
 
     # Step 3: Sort images — exact SKU match (including -1 suffix) first
     if sku:
@@ -1124,7 +1305,6 @@ def api_scrape():
 @app.route("/api/reset", methods=["POST"])
 def api_reset():
     state["log"] = []
-    state["current_index"] = 0
     if os.path.exists(PROGRESS_FILE):
         os.remove(PROGRESS_FILE)
     return jsonify({"ok": True})
@@ -1226,16 +1406,24 @@ def main():
     parser = argparse.ArgumentParser(description="ShipStation Product Image Tool v2")
     parser.add_argument("--port", type=int, default=5050)
     parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--no-browser", action="store_true", help="Don't auto-open a browser tab")
     args = parser.parse_args()
+
+    url = f"http://{args.host}:{args.port}"
 
     print("=" * 52)
     print("  ShipStation Image Tool v2")
     print("=" * 52)
-    print(f"  Open http://{args.host}:{args.port} in your browser")
+    print(f"  Open {url} in your browser")
     print(f"  Press Ctrl+C to stop")
     print("=" * 52)
 
-    app.run(host=args.host, port=args.port, debug=False)
+    if not args.no_browser:
+        Timer(1.0, lambda: webbrowser.open(url)).start()
+
+    # threaded=True so the browser can run auto-match (concurrent scrape
+    # requests) and manual review requests at the same time.
+    app.run(host=args.host, port=args.port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
