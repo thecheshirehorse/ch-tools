@@ -1,4 +1,5 @@
 customers/rewards-customer-upload/cheshire_eagle_data.json
+marketing/promotion-reports/*.json
 __pycache__/
 *.pyc
 ch-tools-master/

@@ -12,15 +12,9 @@ The Promotions dashboard export gives you per-promotion rows, but any "total" ro
 
 always from the summed raw counts, whether that's rolling up sub-promotions within one campaign, or comparing one campaign across years.
 
-## Hosting it on GitHub Pages
+## Running it
 
-1. Create a repo (or use an existing one) and add `index.html` to the root — or to a `/docs` folder if you'd rather keep it separate from other code.
-2. In the repo, go to **Settings → Pages**.
-3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
-4. Pick your branch (usually `main`) and the folder (`/root` or `/docs`, matching where you put the file).
-5. Save. GitHub gives you a URL like `https://yourusername.github.io/your-repo/` within a minute or two.
-
-No build step, no dependencies to install — it's one static HTML file.
+No build step, no server — open `index.html` directly in a browser. This holds revenue and campaign data, so it's kept off GitHub Pages: `ch-tools` is a public repo, and Pages would serve this file at a public URL even without a link from the dashboard. Run it locally only.
 
 ## Using it
 
@@ -29,7 +23,7 @@ No build step, no dependencies to install — it's one static HTML file.
    - Re-importing the same promotion (same Promotion ID + Site) updates it in place rather than duplicating it — safe to re-paste a corrected export.
 2. **Ledger** — every recurring campaign shows up as a card with its latest year's Revenue Per Order and the year-over-year change. Click a card to see the full year-by-year table and charts.
 3. **All Rows** — every individual row you've imported, with a delete button for anything added by mistake.
-4. **Backup** — because this is a static page with no server, all data lives in your browser's local storage. Export a JSON backup after each import session and commit it to your repo (e.g. as `data.json`) so it's versioned and recoverable on another device. Use Restore to load a backup back in — it merges rather than replaces.
+4. **Backup** — because this is a static page with no server, all data lives in your browser's local storage. Export a JSON backup after each import session and keep it somewhere private (a local folder or a private repo) — not this repo, since `ch-tools` is public and the backup contains real revenue figures. `marketing/promotion-reports/*.json` is gitignored here as a safety net, but treat that as a backstop, not a place to intentionally store backups. Use Restore to load a backup back in — it merges rather than replaces.
 
 ## A note on "same promotion"
 
