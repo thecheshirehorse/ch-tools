@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promotion Ledger — CheshireHorse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1E2420;
+    --ink-soft:#262E28;
+    --ink-line:#3A443C;
+    --parchment:#F1EBDD;
+    --parchment-dim:#E7DFC9;
+    --brass:#B98A3E;
+    --brass-bright:#D3A855;
+    --hunter:#3B5541;
+    --hunter-bright:#4C7A52;
+    --rust:#A8452F;
+    --ivory:#EDE6D4;
+    --charcoal-text:#23201A;
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--ivory);
+    font-family:var(--font-body);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  a{color:var(--brass-bright);}
+  ::selection{background:var(--brass); color:var(--ink);}
+  :focus-visible{outline:2px solid var(--brass-bright); outline-offset:2px;}
+
+  header{
+    padding:28px 32px 0 32px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .brand h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:28px;
+    letter-spacing:0.01em;
+    margin:0;
+  }
+  .brand h1 small{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:400;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--brass-bright);
+    margin-bottom:4px;
+  }
+  .brand .meta{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:#9BA79C;
+  }
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    margin-top:22px;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    background:var(--ink-soft);
+    color:#B7C1B8;
+    border:1px solid var(--ink-line);
+    border-bottom:none;
+    padding:10px 18px;
+    border-radius:6px 6px 0 0;
+    cursor:pointer;
+    position:relative;
+    top:1px;
+  }
+  nav.tabs button.active{
+    background:var(--parchment);
+    color:var(--charcoal-text);
+    border-color:var(--parchment);
+  }
+  nav.tabs button:hover:not(.active){ color:var(--ivory); }
+
+  .nail-rule{
+    height:5px;
+    background-image: radial-gradient(circle, var(--brass) 1.4px, transparent 1.6px);
+    background-size: 14px 5px;
+    background-position: center;
+    opacity:.65;
+  }
+
+  main{
+    background:var(--parchment);
+    color:var(--charcoal-text);
+    min-height:60vh;
+  }
+  .view{
+    max-width:1200px;
+    margin:0 auto;
+    padding:34px 32px 60px 32px;
+    display:none;
+  }
+  .view.active{display:block;}
+
+  h2.section-title{
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:600;
+    margin:0 0 6px 0;
+  }
+  p.section-sub{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    color:#5B5548;
+    margin:0 0 24px 0;
+    max-width:640px;
+  }
+
+  /* ---- Ledger view: campaign cards ---- */
+  .ledger-layout{
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .ledger-layout{ grid-template-columns: 1fr; }
+  }
+  .campaign-list{ display:flex; flex-direction:column; gap:26px; }
+  .campaign-card{
+    position:relative;
+    margin-top:20px;
+    background:#fff;
+    border:1px solid var(--parchment-dim);
+    border-radius:2px 10px 10px 10px;
+    padding:16px 16px 14px 16px;
+    cursor:pointer;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  }
+  .campaign-card.selected{
+    border-color:var(--brass);
+    box-shadow: 0 0 0 1px var(--brass);
+  }
+  .campaign-card .tab{
+    position:absolute;
+    top:-16px; left:14px;
+    background:var(--brass);
+    color:var(--ink);
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:4px 4px 0 0;
+    letter-spacing:0.04em;
+  }
+  .campaign-card h3{
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:600;
+    margin:6px 0 8px 0;
+  }
+  .campaign-card .stat-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:#5B5548;
+  }
+  .delta{ font-weight:600; }
+  .delta.up{ color:var(--hunter); }
+  .delta.down{ color:var(--rust); }
+  .delta.flat{ color:#8a8474; }
+
+  .empty-state{
+    border:1px dashed var(--parchment-dim);
+    border-radius:8px;
+    padding:36px 24px;
+    text-align:center;
+    color:#8a8474;
+    font-size:13.5px;
+  }
+  .empty-state b{ display:block; color:var(--charcoal-text); font-family:var(--font-display); font-size:16px; margin-bottom:6px; }
+
+  /* ---- Compare panel ---- */
+  .compare-panel{ background:#fff; border:1px solid var(--parchment-dim); border-radius:10px; padding:22px; }
+  .compare-header{ display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .compare-header h3{ font-family:var(--font-display); font-size:20px; margin:0; }
+  .compare-header span{ font-family:var(--font-mono); font-size:12px; color:#8a8474; }
+
+  table.ledger-table{ width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:12.5px; }
+  table.ledger-table th, table.ledger-table td{ padding:9px 10px; text-align:right; border-bottom:1px solid var(--parchment-dim); white-space:nowrap; }
+  table.ledger-table th:first-child, table.ledger-table td:first-child{ text-align:left; }
+  table.ledger-table thead th{ font-family:var(--font-body); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#8a8474; border-bottom:2px solid var(--charcoal-text); }
+  table.ledger-table tbody tr:hover{ background:#FAF7F0; }
+
+  .charts-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:22px; }
+  @media (max-width:700px){ .charts-grid{ grid-template-columns:1fr; } }
+  .chart-box{ border:1px solid var(--parchment-dim); border-radius:8px; padding:14px; }
+  .chart-box h4{ font-family:var(--font-body); font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:#8a8474; margin:0 0 10px 0; }
+  .chart-box canvas{ max-height:220px; }
+
+  details.drilldown{ margin-top:20px; }
+  details.drilldown summary{ cursor:pointer; font-family:var(--font-mono); font-size:12px; color:#5B5548; text-transform:uppercase; letter-spacing:0.05em; }
+  details.drilldown table{ margin-top:12px; }
+
+  /* ---- Import view ---- */
+  .import-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:860px){ .import-grid{ grid-template-columns:1fr; } }
+  textarea{
+    width:100%; min-height:220px; font-family:var(--font-mono); font-size:12.5px;
+    border:1px solid var(--parchment-dim); border-radius:8px; padding:12px; resize:vertical;
+    background:#fff; color:var(--charcoal-text);
+  }
+  .field-label{ font-family:var(--font-body); font-size:12.5px; font-weight:600; margin-bottom:6px; display:block; }
+  .file-drop{ border:1px dashed var(--parchment-dim); border-radius:8px; padding:20px; text-align:center; font-size:12.5px; color:#8a8474; margin-bottom:14px; }
+  input[type=file]{ font-family:var(--font-body); font-size:12.5px; }
+  input[type=number], input[type=text]{
+    font-family:var(--font-mono); padding:8px 10px; border:1px solid var(--parchment-dim); border-radius:6px; background:#fff; color:var(--charcoal-text);
+  }
+  button.btn{
+    font-family:var(--font-body); font-weight:600; font-size:13px;
+    background:var(--hunter); color:#fff; border:none; border-radius:6px;
+    padding:10px 20px; cursor:pointer;
+  }
+  button.btn:hover{ background:var(--hunter-bright); }
+  button.btn.secondary{ background:transparent; color:var(--charcoal-text); border:1px solid var(--parchment-dim); }
+  button.btn.secondary:hover{ background:var(--parchment-dim); }
+  button.btn.danger{ background:transparent; color:var(--rust); border:1px solid var(--rust); }
+  button.btn.danger:hover{ background:var(--rust); color:#fff; }
+  button.btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  .preview-wrap{ margin-top:18px; }
+  .yr-override{ display:flex; align-items:center; gap:10px; margin:14px 0; font-size:13px; }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--ivory); border:1px solid var(--brass);
+    padding:11px 20px; border-radius:8px; font-family:var(--font-body); font-size:13px;
+    opacity:0; pointer-events:none; transition:opacity 0.25s ease;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; }
+
+  .backup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:860px){ .backup-grid{ grid-template-columns:1fr; } }
+  .panel{ background:#fff; border:1px solid var(--parchment-dim); border-radius:10px; padding:20px; }
+  .panel h3{ font-family:var(--font-display); font-size:16px; margin:0 0 8px 0; }
+  .panel p{ font-size:13px; color:#5B5548; margin:0 0 14px 0; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  .raw-table-wrap{ margin-top:14px; max-height:420px; overflow:auto; }
+  .row-del{ background:none; border:none; color:var(--rust); cursor:pointer; font-family:var(--font-mono); font-size:11px; }
+
+  footer{ text-align:center; padding:18px; font-family:var(--font-mono); font-size:11px; color:#B7C1B8; background:var(--ink); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1><small>CheshireHorse · Reports &amp; Dashboards</small>Promotion Ledger</h1>
+    <div class="meta" id="datasetMeta">0 rows on file</div>
+  </div>
+  <nav class="tabs">
+    <button data-view="ledger" class="active">Ledger</button>
+    <button data-view="import">Import</button>
+    <button data-view="raw">All Rows</button>
+    <button data-view="backup">Backup</button>
+  </nav>
+</header>
+<div class="nail-rule"></div>
+
+<main>
+
+  <!-- LEDGER VIEW -->
+  <section class="view active" id="view-ledger">
+    <h2 class="section-title">Campaigns</h2>
+    <p class="section-sub">Each card is a recurring promotion tracked across every year you've imported it. Click one to compare years side by side.</p>
+    <div class="ledger-layout">
+      <div class="campaign-list" id="campaignList"></div>
+      <div id="comparePanelWrap"></div>
+    </div>
+  </section>
+
+  <!-- IMPORT VIEW -->
+  <section class="view" id="view-import">
+    <h2 class="section-title">Import an export</h2>
+    <p class="section-sub">Paste the export from the Promotions dashboard (tab or comma separated), or upload the file. Revenue Per Order, Units Per Order, and Conversion Rate are always recalculated from the raw counts here — the export's own ratio columns are ignored, so an averaging error can't sneak back in.</p>
+    <div class="import-grid">
+      <div>
+        <label class="field-label" for="pasteArea">Paste export</label>
+        <textarea id="pasteArea" placeholder="promotion_id&#9;site&#9;campaign_id&#9;promotion_type&#9;visits_with_promotion_count&#9;orders_with_promotion_count&#9;std_order_net&#9;..."></textarea>
+        <div style="margin-top:10px;">
+          <label class="field-label" for="fileInput">...or upload a file</label>
+          <input type="file" id="fileInput" accept=".csv,.txt,.tsv">
+        </div>
+      </div>
+      <div>
+        <div class="file-drop">Rows whose Promotion ID doesn't start with a 4-digit year will need a year assigned manually below before they're added to the ledger.</div>
+        <div class="yr-override">
+          <label class="field-label" style="margin-bottom:0;">Fallback year for undated rows</label>
+          <input type="number" id="fallbackYear" placeholder="e.g. 2026" style="width:110px;">
+        </div>
+        <button class="btn" id="parseBtn">Parse export</button>
+        <div class="preview-wrap" id="previewWrap"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RAW DATA VIEW -->
+  <section class="view" id="view-raw">
+    <h2 class="section-title">All imported rows</h2>
+    <p class="section-sub">Every promotion row currently stored, across every year and campaign. Delete a row if it was imported by mistake or duplicated.</p>
+    <div class="raw-table-wrap" id="rawTableWrap"></div>
+  </section>
+
+  <!-- BACKUP VIEW -->
+  <section class="view" id="view-backup">
+    <h2 class="section-title">Backup &amp; restore</h2>
+    <p class="section-sub">This tool has no server — everything lives in this browser's local storage. Export a backup after each import and commit it to your GitHub repo so the history survives a cleared cache or a new device.</p>
+    <div class="backup-grid">
+      <div class="panel">
+        <h3>Export</h3>
+        <p>Download the full dataset as JSON. Commit this file to your repo (e.g. <code>data.json</code>) so it's versioned alongside the tool.</p>
+        <div class="btn-row"><button class="btn" id="exportBtn">Export JSON backup</button></div>
+      </div>
+      <div class="panel">
+        <h3>Restore</h3>
+        <p>Load a previously exported JSON backup. Rows are merged in — matching Promotion ID + Site will be updated, not duplicated.</p>
+        <input type="file" id="restoreInput" accept=".json">
+      </div>
+    </div>
+    <div class="panel" style="margin-top:20px;">
+      <h3>Reset</h3>
+      <p>Clears every row from this browser. Export a backup first if you want to keep it.</p>
+      <div class="btn-row"><button class="btn danger" id="clearBtn">Clear all data</button></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Promotion Ledger — data stays in your browser · hosted as a static page</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "cheshirehorse_promo_ledger_v1";
+  var dataset = loadDataset();
+  var selectedCampaign = null;
+  var parsedPreviewRows = null;
+  var charts = {};
+
+  // ---------- storage ----------
+  function loadDataset(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveDataset(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset)); }catch(e){
+      showToast("Couldn't save to local storage — export a backup manually.");
+    }
+    renderDatasetMeta();
+  }
+  function renderDatasetMeta(){
+    var years = uniq(dataset.map(function(r){return r.year;})).filter(Boolean).sort();
+    document.getElementById("datasetMeta").textContent =
+      dataset.length + " row" + (dataset.length===1?"":"s") + " on file" +
+      (years.length ? " · " + years[0] + "–" + years[years.length-1] : "");
+  }
+
+  // ---------- helpers ----------
+  function num(v){
+    if (v===undefined || v===null || v==="") return 0;
+    var n = parseFloat(String(v).replace(/[$,]/g,"").trim());
+    return isNaN(n) ? 0 : n;
+  }
+  function uniq(arr){ return arr.filter(function(v,i){return arr.indexOf(v)===i;}); }
+  function fmtCurrency(v){ return "$" + Math.round(v).toLocaleString("en-US"); }
+  function fmtNum(v, dec){
+    dec = dec || 0;
+    return Number(v).toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec});
+  }
+  function fmtPct(v, dec){ dec = (dec===undefined)?1:dec; return (v*100).toFixed(dec) + "%"; }
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function(){ t.classList.remove("show"); }, 2600);
+  }
+
+  // ---------- parsing ----------
+  var FIELD_ALIASES = {
+    promotion_id: ["promotion_id","promotion id"],
+    site: ["site"],
+    campaign_id: ["campaign_id","campaign id"],
+    promotion_type: ["promotion_type","promotion type","class"],
+    visits: ["visits_with_promotion_count","visits"],
+    orders: ["orders_with_promotion_count","orders"],
+    order_net: ["std_order_net","order_net","order net"],
+    units: ["units"],
+    revenue: ["usd_revenue","revenue"],
+    discount: ["std_discount","discount"]
+  };
+
+  function parseCSVLine(line){
+    var result = [], cur = "", inQuotes = false;
+    for (var i=0; i<line.length; i++){
+      var c = line[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (line[i+1] === '"'){ cur += '"'; i++; }
+          else inQuotes = false;
+        } else cur += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ",") { result.push(cur); cur=""; }
+        else cur += c;
+      }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  function parseDelimited(text){
+    var lines = text.replace(/\r/g,"").split("\n").filter(function(l){return l.trim().length>0;});
+    if (!lines.length) return {headers:[], rows:[]};
+    var delim = lines[0].indexOf("\t") !== -1 ? "\t" : ",";
+    var splitLine = delim === "\t" ? function(l){return l.split("\t");} : parseCSVLine;
+    var rawHeaders = splitLine(lines[0]).map(function(h){return h.trim().toLowerCase();});
+
+    var fieldIndex = {};
+    Object.keys(FIELD_ALIASES).forEach(function(field){
+      var idx = -1;
+      FIELD_ALIASES[field].forEach(function(alias){
+        var found = rawHeaders.indexOf(alias);
+        if (found !== -1) idx = found;
+      });
+      fieldIndex[field] = idx;
+    });
+
+    var rows = [];
+    for (var i=1; i<lines.length; i++){
+      var cols = splitLine(lines[i]);
+      var get = function(field){
+        var idx = fieldIndex[field];
+        return idx === -1 ? "" : (cols[idx] || "").trim();
+      };
+      var promoId = get("promotion_id");
+      if (!promoId) continue; // skip blank/total rows — we recompute totals ourselves
+      rows.push({
+        promotion_id: promoId,
+        site: get("site"),
+        campaign_id: get("campaign_id"),
+        promotion_type: get("promotion_type"),
+        visits: num(get("visits")),
+        orders: num(get("orders")),
+        order_net: num(get("order_net")),
+        units: num(get("units")),
+        revenue: num(get("revenue")),
+        discount: num(get("discount"))
+      });
+    }
+    return {headers: rawHeaders, rows: rows};
+  }
+
+  function parseYearAndName(raw){
+    if (!raw) return {year:null, name:""};
+    var m = raw.match(/^\s*(\d{4})\s*[-–—]\s*(.+)$/);
+    if (m) return {year: parseInt(m[1],10), name: m[2].trim()};
+    return {year:null, name: raw.trim()};
+  }
+
+  function buildRecord(row, fallbackYear){
+    var camp = parseYearAndName(row.campaign_id);
+    var promo = parseYearAndName(row.promotion_id);
+    var year = camp.year || promo.year || fallbackYear || null;
+    return {
+      key: row.promotion_id + "|" + row.site,
+      promotion_id: row.promotion_id,
+      site: row.site,
+      campaign_id: row.campaign_id,
+      campaignName: camp.name || row.campaign_id || "(uncategorized)",
+      promotion_type: row.promotion_type,
+      year: year,
+      visits: row.visits, orders: row.orders, order_net: row.order_net,
+      units: row.units, revenue: row.revenue, discount: row.discount,
+      importedAt: new Date().toISOString()
+    };
+  }
+
+  // ---------- import view wiring ----------
+  document.getElementById("fileInput").addEventListener("change", function(e){
+    var f = e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){ document.getElementById("pasteArea").value = ev.target.result; };
+    reader.readAsText(f);
+  });
+
+  document.getElementById("parseBtn").addEventListener("click", function(){
+    var text = document.getElementById("pasteArea").value;
+    if (!text.trim()){ showToast("Paste or upload an export first."); return; }
+    var fallback = num(document.getElementById("fallbackYear").value) || null;
+    var parsed = parseDelimited(text);
+    if (!parsed.rows.length){ showToast("Couldn't find any data rows — check the header names."); return; }
+    parsedPreviewRows = parsed.rows.map(function(r){ return buildRecord(r, fallback); });
+    renderPreview();
+  });
+
+  function renderPreview(){
+    var wrap = document.getElementById("previewWrap");
+    var missingYear = parsedPreviewRows.some(function(r){return !r.year;});
+    var html = "";
+    if (missingYear){
+      html += '<div class="empty-state" style="margin-bottom:14px;"><b>Some rows have no detectable year</b>Set a fallback year above and re-parse, or edit the Promotion/Campaign ID to start with "YYYY - ".</div>';
+    }
+    html += '<table class="ledger-table"><thead><tr><th>Campaign</th><th>Year</th><th>Type</th><th>Orders</th><th>Order Net</th></tr></thead><tbody>';
+    parsedPreviewRows.forEach(function(r){
+      html += "<tr><td>"+escapeHtml(r.campaignName)+"</td><td>"+(r.year||"—")+"</td><td>"+escapeHtml(r.promotion_type)+"</td><td>"+fmtNum(r.orders)+"</td><td>"+fmtCurrency(r.order_net)+"</td></tr>";
+    });
+    html += "</tbody></table>";
+    html += '<div style="margin-top:14px;"><button class="btn" id="confirmImportBtn"'+(missingYear?" disabled":"")+'>Add '+parsedPreviewRows.length+' row(s) to ledger</button></div>';
+    wrap.innerHTML = html;
+    var btn = document.getElementById("confirmImportBtn");
+    if (btn) btn.addEventListener("click", confirmImport);
+  }
+
+  function confirmImport(){
+    var added = 0, updated = 0;
+    parsedPreviewRows.forEach(function(r){
+      var idx = dataset.findIndex(function(d){return d.key === r.key;});
+      if (idx === -1){ dataset.push(r); added++; }
+      else { dataset[idx] = r; updated++; }
+    });
+    saveDataset();
+    showToast("Added " + added + ", updated " + updated + " row(s).");
+    document.getElementById("pasteArea").value = "";
+    document.getElementById("previewWrap").innerHTML = "";
+    parsedPreviewRows = null;
+    renderCampaignList();
+    renderRawTable();
+  }
+
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  // ---------- aggregation ----------
+  function aggregate(rows){
+    var visits=0, orders=0, order_net=0, units=0, revenue=0, discount=0;
+    rows.forEach(function(r){
+      visits+=r.visits; orders+=r.orders; order_net+=r.order_net;
+      units+=r.units; revenue+=r.revenue; discount+=r.discount;
+    });
+    return {
+      visits:visits, orders:orders, order_net:order_net, units:units, revenue:revenue, discount:discount,
+      revPerOrder: orders ? order_net/orders : 0,
+      unitsPerOrder: orders ? units/orders : 0,
+      convRate: visits ? orders/visits : 0
+    };
+  }
+
+  function groupByCampaign(){
+    var map = {};
+    dataset.forEach(function(r){
+      if (!map[r.campaignName]) map[r.campaignName] = {};
+      if (!map[r.campaignName][r.year]) map[r.campaignName][r.year] = [];
+      map[r.campaignName][r.year].push(r);
+    });
+    return map;
+  }
+
+  // ---------- ledger view ----------
+  function renderCampaignList(){
+    var map = groupByCampaign();
+    var names = Object.keys(map).sort();
+    var container = document.getElementById("campaignList");
+    if (!names.length){
+      container.innerHTML = '<div class="empty-state"><b>No promotions yet</b>Head to Import and paste your first export to start building the ledger.</div>';
+      document.getElementById("comparePanelWrap").innerHTML = "";
+      return;
+    }
+    var html = "";
+    names.forEach(function(name){
+      var years = Object.keys(map[name]).map(Number).sort(function(a,b){return a-b;});
+      var latestYear = years[years.length-1];
+      var prevYear = years.length>1 ? years[years.length-2] : null;
+      var latestAgg = aggregate(map[name][latestYear]);
+      var deltaHtml = "";
+      if (prevYear){
+        var prevAgg = aggregate(map[name][prevYear]);
+        var delta = prevAgg.revPerOrder ? (latestAgg.revPerOrder - prevAgg.revPerOrder)/prevAgg.revPerOrder : 0;
+        var cls = Math.abs(delta) < 0.005 ? "flat" : (delta > 0 ? "up" : "down");
+        var arrow = cls==="flat" ? "→" : (cls==="up" ? "▲" : "▼");
+        deltaHtml = '<span class="delta '+cls+'">'+arrow+' '+fmtPct(Math.abs(delta))+' vs '+prevYear+'</span>';
+      } else {
+        deltaHtml = '<span class="delta flat">first year on file</span>';
+      }
+      html += '<div class="campaign-card'+(name===selectedCampaign?" selected":"")+'" data-campaign="'+escapeHtml(name)+'">'+
+        '<div class="tab">'+latestYear+'</div>'+
+        '<h3>'+escapeHtml(name)+'</h3>'+
+        '<div class="stat-row"><span>Rev / Order</span><span>'+fmtCurrency(latestAgg.revPerOrder)+'</span></div>'+
+        '<div class="stat-row"><span>Orders</span><span>'+fmtNum(latestAgg.orders)+'</span></div>'+
+        '<div class="stat-row" style="margin-top:6px;">'+deltaHtml+'</div>'+
+        '</div>';
+    });
+    container.innerHTML = html;
+    Array.prototype.forEach.call(container.querySelectorAll(".campaign-card"), function(card){
+      card.addEventListener("click", function(){
+        selectedCampaign = card.getAttribute("data-campaign");
+        renderCampaignList();
+        renderComparePanel();
+      });
+    });
+    if (selectedCampaign && names.indexOf(selectedCampaign) !== -1){
+      renderComparePanel();
+    } else if (!selectedCampaign) {
+      selectedCampaign = names[0];
+      renderCampaignList();
+      renderComparePanel();
+    }
+  }
+
+  function renderComparePanel(){
+    var wrap = document.getElementById("comparePanelWrap");
+    if (!selectedCampaign){ wrap.innerHTML = ""; return; }
+    var map = groupByCampaign();
+    var yearsMap = map[selectedCampaign];
+    if (!yearsMap){ wrap.innerHTML = ""; return; }
+    var years = Object.keys(yearsMap).map(Number).sort(function(a,b){return a-b;});
+    var aggs = years.map(function(y){ return {year:y, agg: aggregate(yearsMap[y]), rows: yearsMap[y]}; });
+
+    var html = '<div class="compare-panel">';
+    html += '<div class="compare-header"><h3>'+escapeHtml(selectedCampaign)+'</h3><span>'+years.length+' year(s) on file</span></div>';
+    html += '<table class="ledger-table"><thead><tr>'+
+      '<th>Year</th><th>Visits</th><th>Orders</th><th>Order Net</th><th>Revenue</th><th>Units</th>'+
+      '<th>Rev / Order</th><th>Units / Order</th><th>Conv Rate</th><th>Discount</th><th>Δ Rev/Order</th>'+
+      '</tr></thead><tbody>';
+    aggs.forEach(function(item, i){
+      var deltaCell = "—";
+      if (i>0){
+        var prev = aggs[i-1].agg.revPerOrder;
+        var delta = prev ? (item.agg.revPerOrder - prev)/prev : 0;
+        var cls = Math.abs(delta)<0.005 ? "flat" : (delta>0?"up":"down");
+        var arrow = cls==="flat" ? "→" : (cls==="up"?"▲":"▼");
+        deltaCell = '<span class="delta '+cls+'">'+arrow+' '+fmtPct(Math.abs(delta))+'</span>';
+      }
+      html += '<tr><td>'+item.year+'</td><td>'+fmtNum(item.agg.visits)+'</td><td>'+fmtNum(item.agg.orders)+'</td>'+
+        '<td>'+fmtCurrency(item.agg.order_net)+'</td><td>'+fmtCurrency(item.agg.revenue)+'</td><td>'+fmtNum(item.agg.units)+'</td>'+
+        '<td>'+fmtCurrency(item.agg.revPerOrder)+'</td><td>'+fmtNum(item.agg.unitsPerOrder,1)+'</td>'+
+        '<td>'+fmtPct(item.agg.convRate)+'</td><td>'+fmtCurrency(item.agg.discount)+'</td><td>'+deltaCell+'</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    html += '<div class="charts-grid">'+
+      '<div class="chart-box"><h4>Visits &amp; Orders by year</h4><canvas id="chartVolume"></canvas></div>'+
+      '<div class="chart-box"><h4>Revenue / Order &amp; Conversion Rate</h4><canvas id="chartRate"></canvas></div>'+
+      '</div>';
+
+    html += '<details class="drilldown"><summary>View underlying promotion rows</summary>';
+    html += '<table class="ledger-table"><thead><tr><th>Year</th><th>Promotion</th><th>Site</th><th>Type</th><th>Orders</th><th>Order Net</th></tr></thead><tbody>';
+    aggs.forEach(function(item){
+      item.rows.forEach(function(r){
+        html += '<tr><td>'+r.year+'</td><td>'+escapeHtml(r.promotion_id)+'</td><td>'+escapeHtml(r.site)+'</td><td>'+escapeHtml(r.promotion_type)+'</td><td>'+fmtNum(r.orders)+'</td><td>'+fmtCurrency(r.order_net)+'</td></tr>';
+      });
+    });
+    html += '</tbody></table></details>';
+    html += '</div>';
+
+    wrap.innerHTML = html;
+    renderCharts(aggs);
+  }
+
+  function renderCharts(aggs){
+    if (typeof Chart === "undefined") return;
+    var labels = aggs.map(function(a){return String(a.year);});
+    ["chartVolume","chartRate"].forEach(function(id){
+      if (charts[id]) { charts[id].destroy(); }
+    });
+    var ctx1 = document.getElementById("chartVolume");
+    if (ctx1){
+      charts.chartVolume = new Chart(ctx1, {
+        type:"bar",
+        data:{ labels:labels, datasets:[
+          {label:"Visits", data:aggs.map(function(a){return a.agg.visits;}), backgroundColor:"#3B5541"},
+          {label:"Orders", data:aggs.map(function(a){return a.agg.orders;}), backgroundColor:"#B98A3E"}
+        ]},
+        options:{ responsive:true, plugins:{legend:{position:"bottom", labels:{boxWidth:12,font:{size:11}}}}, scales:{y:{beginAtZero:true}} }
+      });
+    }
+    var ctx2 = document.getElementById("chartRate");
+    if (ctx2){
+      charts.chartRate = new Chart(ctx2, {
+        type:"line",
+        data:{ labels:labels, datasets:[
+          {label:"Rev / Order ($)", data:aggs.map(function(a){return a.agg.revPerOrder;}), borderColor:"#B98A3E", backgroundColor:"#B98A3E", yAxisID:"y", tension:0.25},
+          {label:"Conversion Rate (%)", data:aggs.map(function(a){return +(a.agg.convRate*100).toFixed(2);}), borderColor:"#3B5541", backgroundColor:"#3B5541", yAxisID:"y1", tension:0.25}
+        ]},
+        options:{
+          responsive:true,
+          plugins:{legend:{position:"bottom", labels:{boxWidth:12,font:{size:11}}}},
+          scales:{
+            y:{ position:"left", beginAtZero:true, title:{display:true,text:"$ / order"} },
+            y1:{ position:"right", beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true,text:"%"} }
+          }
+        }
+      });
+    }
+  }
+
+  // ---------- raw data view ----------
+  function renderRawTable(){
+    var wrap = document.getElementById("rawTableWrap");
+    if (!dataset.length){
+      wrap.innerHTML = '<div class="empty-state"><b>Nothing imported yet</b>Rows you add from the Import tab will show up here.</div>';
+      return;
+    }
+    var sorted = dataset.slice().sort(function(a,b){
+      if (a.campaignName !== b.campaignName) return a.campaignName.localeCompare(b.campaignName);
+      return (a.year||0) - (b.year||0);
+    });
+    var html = '<table class="ledger-table"><thead><tr><th>Campaign</th><th>Year</th><th>Promotion</th><th>Site</th><th>Orders</th><th>Order Net</th><th></th></tr></thead><tbody>';
+    sorted.forEach(function(r){
+      html += '<tr><td>'+escapeHtml(r.campaignName)+'</td><td>'+(r.year||"—")+'</td><td>'+escapeHtml(r.promotion_id)+'</td><td>'+escapeHtml(r.site)+'</td><td>'+fmtNum(r.orders)+'</td><td>'+fmtCurrency(r.order_net)+'</td>'+
+        '<td><button class="row-del" data-key="'+escapeHtml(r.key)+'">delete</button></td></tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    Array.prototype.forEach.call(wrap.querySelectorAll(".row-del"), function(btn){
+      btn.addEventListener("click", function(){
+        var key = btn.getAttribute("data-key");
+        dataset = dataset.filter(function(r){ return r.key !== key; });
+        saveDataset();
+        renderRawTable();
+        renderCampaignList();
+      });
+    });
+  }
+
+  // ---------- backup view ----------
+  document.getElementById("exportBtn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(dataset, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var stamp = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = "promotion-ledger-backup-"+stamp+".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Backup downloaded.");
+  });
+
+  document.getElementById("restoreInput").addEventListener("change", function(e){
+    var f = e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var incoming = JSON.parse(ev.target.result);
+        if (!Array.isArray(incoming)) throw new Error("not an array");
+        var added=0, updated=0;
+        incoming.forEach(function(r){
+          if (!r.key) r.key = (r.promotion_id||"") + "|" + (r.site||"");
+          var idx = dataset.findIndex(function(d){return d.key===r.key;});
+          if (idx===-1){ dataset.push(r); added++; } else { dataset[idx]=r; updated++; }
+        });
+        saveDataset();
+        renderCampaignList(); renderRawTable();
+        showToast("Restored: added "+added+", updated "+updated+".");
+      }catch(err){ showToast("That file doesn't look like a valid backup."); }
+    };
+    reader.readAsText(f);
+    e.target.value = "";
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    if (!confirm("This clears every row in this browser. Continue?")) return;
+    dataset = [];
+    selectedCampaign = null;
+    saveDataset();
+    renderCampaignList(); renderRawTable();
+    showToast("Ledger cleared.");
+  });
+
+  // ---------- tab navigation ----------
+  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(btn){
+    btn.addEventListener("click", function(){
+      Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(b){b.classList.remove("active");});
+      Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){v.classList.remove("active");});
+      btn.classList.add("active");
+      document.getElementById("view-"+btn.getAttribute("data-view")).classList.add("active");
+      if (btn.getAttribute("data-view") === "raw") renderRawTable();
+    });
+  });
+
+  // ---------- init ----------
+  renderDatasetMeta();
+  renderCampaignList();
+  renderRawTable();
+})();
+</script>
+</body>
+</html>
