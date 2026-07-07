@@ -265,8 +265,6 @@
   }
   .toast.show{ opacity:1; }
 
-  .backup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-  @media (max-width:860px){ .backup-grid{ grid-template-columns:1fr; } }
   .panel{ background:#fff; border:1px solid var(--parchment-dim); border-radius:10px; padding:20px; }
   .panel h3{ font-family:var(--font-display); font-size:16px; margin:0 0 8px 0; }
   .panel p{ font-size:13px; color:#5B5548; margin:0 0 14px 0; }
@@ -286,10 +284,9 @@
     <div class="meta" id="datasetMeta">0 rows on file</div>
   </div>
   <nav class="tabs">
-    <button data-view="ledger" class="active">Ledger</button>
-    <button data-view="import">Import</button>
-    <button data-view="raw">All Rows</button>
-    <button data-view="backup">Backup</button>
+    <button data-view="import" class="active">1. Import</button>
+    <button data-view="ledger">2. Ledger</button>
+    <button data-view="raw">3. All Rows</button>
   </nav>
 </header>
 <div class="nail-rule"></div>
@@ -297,7 +294,7 @@
 <main>
 
   <!-- LEDGER VIEW -->
-  <section class="view active" id="view-ledger">
+  <section class="view" id="view-ledger">
     <h2 class="section-title">Campaigns</h2>
     <p class="section-sub">Each card is a recurring promotion tracked across every year you've imported it. Click one to compare years side by side.</p>
     <div class="ledger-layout">
@@ -307,7 +304,7 @@
   </section>
 
   <!-- IMPORT VIEW -->
-  <section class="view" id="view-import">
+  <section class="view active" id="view-import">
     <h2 class="section-title">Import an export</h2>
     <p class="section-sub">Paste the export from the Promotions dashboard (tab or comma separated), or upload the file. Revenue Per Order, Units Per Order, and Conversion Rate are always recalculated from the raw counts here — the export's own ratio columns are ignored, so an averaging error can't sneak back in.</p>
     <div class="import-grid">
@@ -338,29 +335,6 @@
     <div class="raw-table-wrap" id="rawTableWrap"></div>
   </section>
 
-  <!-- BACKUP VIEW -->
-  <section class="view" id="view-backup">
-    <h2 class="section-title">Backup &amp; restore</h2>
-    <p class="section-sub">This tool has no server — everything lives in this browser's local storage. Export a backup after each import and commit it to your GitHub repo so the history survives a cleared cache or a new device.</p>
-    <div class="backup-grid">
-      <div class="panel">
-        <h3>Export</h3>
-        <p>Download the full dataset as JSON. Commit this file to your repo (e.g. <code>data.json</code>) so it's versioned alongside the tool.</p>
-        <div class="btn-row"><button class="btn" id="exportBtn">Export JSON backup</button></div>
-      </div>
-      <div class="panel">
-        <h3>Restore</h3>
-        <p>Load a previously exported JSON backup. Rows are merged in — matching Promotion ID + Site will be updated, not duplicated.</p>
-        <input type="file" id="restoreInput" accept=".json">
-      </div>
-    </div>
-    <div class="panel" style="margin-top:20px;">
-      <h3>Reset</h3>
-      <p>Clears every row from this browser. Export a backup first if you want to keep it.</p>
-      <div class="btn-row"><button class="btn danger" id="clearBtn">Clear all data</button></div>
-    </div>
-  </section>
-
 </main>
 
 <footer>Promotion Ledger — data stays in your browser · hosted as a static page</footer>
@@ -385,7 +359,7 @@
   }
   function saveDataset(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset)); }catch(e){
-      showToast("Couldn't save to local storage — export a backup manually.");
+      showToast("Couldn't save to local storage.");
     }
     renderDatasetMeta();
   }
@@ -403,7 +377,7 @@
     return isNaN(n) ? 0 : n;
   }
   function uniq(arr){ return arr.filter(function(v,i){return arr.indexOf(v)===i;}); }
-  function fmtCurrency(v){ return "$" + Math.round(v).toLocaleString("en-US"); }
+  function fmtCurrency(v){ return "$" + Number(v).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
   function fmtNum(v, dec){
     dec = dec || 0;
     return Number(v).toLocaleString("en-US", {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -493,8 +467,17 @@
 
   function parseYearAndName(raw){
     if (!raw) return {year:null, name:""};
-    var m = raw.match(/^\s*(\d{4})\s*[-–—]\s*(.+)$/);
+    var m = raw.match(/^\s*(\d{4})\s*(?:[-–—]\s*)?(.+)$/);
     if (m) return {year: parseInt(m[1],10), name: m[2].trim()};
+    m = raw.match(/^(.+?)\s*(?:[-–—]\s*)?(\d{4})\s*$/);
+    if (m) return {year: parseInt(m[2],10), name: m[1].trim()};
+    // year buried mid-string, e.g. "Oct 2021 Pre Holiday Sale"
+    m = raw.match(/\b(20\d{2})\b/);
+    if (m){
+      var name = (raw.slice(0,m.index) + " " + raw.slice(m.index+m[0].length))
+        .replace(/\s+/g," ").trim().replace(/^[-–—\s]+|[-–—\s]+$/g,"");
+      return {year: parseInt(m[1],10), name: name};
+    }
     return {year:null, name: raw.trim()};
   }
 
@@ -537,36 +520,72 @@
 
   function renderPreview(){
     var wrap = document.getElementById("previewWrap");
-    var missingYear = parsedPreviewRows.some(function(r){return !r.year;});
     var html = "";
-    if (missingYear){
-      html += '<div class="empty-state" style="margin-bottom:14px;"><b>Some rows have no detectable year</b>Set a fallback year above and re-parse, or edit the Promotion/Campaign ID to start with "YYYY - ".</div>';
-    }
-    html += '<table class="ledger-table"><thead><tr><th>Campaign</th><th>Year</th><th>Type</th><th>Orders</th><th>Order Net</th></tr></thead><tbody>';
-    parsedPreviewRows.forEach(function(r){
-      html += "<tr><td>"+escapeHtml(r.campaignName)+"</td><td>"+(r.year||"—")+"</td><td>"+escapeHtml(r.promotion_type)+"</td><td>"+fmtNum(r.orders)+"</td><td>"+fmtCurrency(r.order_net)+"</td></tr>";
+    html += '<p class="section-sub">Uncheck rows you don\'t want. Set a Year for anything missing one before adding.</p>';
+    html += '<table class="ledger-table"><thead><tr><th><input type="checkbox" id="previewCheckAll" checked></th>'+
+      '<th>Promotion</th><th>Campaign</th><th>Year</th><th>Type</th><th>Orders</th><th>Order Net</th></tr></thead><tbody>';
+    parsedPreviewRows.forEach(function(r, i){
+      html += '<tr><td><input type="checkbox" class="preview-check" data-idx="'+i+'" checked></td>'+
+        '<td>'+escapeHtml(r.promotion_id)+'</td>'+
+        '<td>'+escapeHtml(r.campaignName)+'</td>'+
+        '<td><input type="number" class="preview-year" data-idx="'+i+'" value="'+(r.year||"")+'" placeholder="YYYY" style="width:70px;"></td>'+
+        '<td>'+escapeHtml(r.promotion_type)+'</td>'+
+        '<td>'+fmtNum(r.orders)+'</td><td>'+fmtCurrency(r.order_net)+'</td></tr>';
     });
     html += "</tbody></table>";
-    html += '<div style="margin-top:14px;"><button class="btn" id="confirmImportBtn"'+(missingYear?" disabled":"")+'>Add '+parsedPreviewRows.length+' row(s) to ledger</button></div>';
+    html += '<div style="margin-top:14px;"><button class="btn" id="confirmImportBtn">Add row(s) to ledger</button></div>';
     wrap.innerHTML = html;
+
+    var checkAll = document.getElementById("previewCheckAll");
+    var rowChecks = Array.prototype.slice.call(wrap.querySelectorAll(".preview-check"));
+    checkAll.addEventListener("change", function(){
+      rowChecks.forEach(function(c){ c.checked = checkAll.checked; });
+      updateConfirmState();
+    });
+    rowChecks.forEach(function(c){ c.addEventListener("change", updateConfirmState); });
+    Array.prototype.forEach.call(wrap.querySelectorAll(".preview-year"), function(inp){
+      inp.addEventListener("input", updateConfirmState);
+    });
+    document.getElementById("confirmImportBtn").addEventListener("click", confirmImport);
+    updateConfirmState();
+  }
+
+  function updateConfirmState(){
+    var wrap = document.getElementById("previewWrap");
     var btn = document.getElementById("confirmImportBtn");
-    if (btn) btn.addEventListener("click", confirmImport);
+    var checked = Array.prototype.slice.call(wrap.querySelectorAll(".preview-check")).filter(function(c){return c.checked;});
+    var missingYear = checked.some(function(c){
+      var yearInput = wrap.querySelector('.preview-year[data-idx="'+c.getAttribute("data-idx")+'"]');
+      return !yearInput.value;
+    });
+    btn.disabled = checked.length === 0 || missingYear;
+    btn.textContent = missingYear ? "Set a year for all checked rows first" : "Add " + checked.length + " row(s) to ledger";
   }
 
   function confirmImport(){
-    var added = 0, updated = 0;
-    parsedPreviewRows.forEach(function(r){
+    var wrap = document.getElementById("previewWrap");
+    var checkedIdx = Array.prototype.slice.call(wrap.querySelectorAll(".preview-check"))
+      .filter(function(c){return c.checked;})
+      .map(function(c){return Number(c.getAttribute("data-idx"));});
+    var added = 0, updated = 0, lastCampaign = null;
+    checkedIdx.forEach(function(i){
+      var r = parsedPreviewRows[i];
+      var yearInput = wrap.querySelector('.preview-year[data-idx="'+i+'"]');
+      r.year = parseInt(yearInput.value, 10);
+      lastCampaign = r.campaignName;
       var idx = dataset.findIndex(function(d){return d.key === r.key;});
       if (idx === -1){ dataset.push(r); added++; }
       else { dataset[idx] = r; updated++; }
     });
     saveDataset();
     showToast("Added " + added + ", updated " + updated + " row(s).");
+    if (lastCampaign) selectedCampaign = lastCampaign;
     document.getElementById("pasteArea").value = "";
     document.getElementById("previewWrap").innerHTML = "";
     parsedPreviewRows = null;
     renderCampaignList();
     renderRawTable();
+    activateView("ledger");
   }
 
   function escapeHtml(s){
@@ -662,9 +681,10 @@
 
     var html = '<div class="compare-panel">';
     html += '<div class="compare-header"><h3>'+escapeHtml(selectedCampaign)+'</h3><span>'+years.length+' year(s) on file</span></div>';
+    html += '<p class="section-sub" style="margin-top:-8px;">Columns match the order in the "SF Analytics - Promotions" sheet\'s tabs — read left to right and type into the matching row.</p>';
     html += '<table class="ledger-table"><thead><tr>'+
-      '<th>Year</th><th>Visits</th><th>Orders</th><th>Order Net</th><th>Revenue</th><th>Units</th>'+
-      '<th>Rev / Order</th><th>Units / Order</th><th>Conv Rate</th><th>Discount</th><th>Δ Rev/Order</th>'+
+      '<th>Year</th><th>Visits</th><th>Orders</th><th>Order Net</th><th>Rev / Order</th><th>Units</th>'+
+      '<th>Revenue</th><th>Units / Order</th><th>Conv Rate</th><th>Discount</th><th>Δ Rev/Order</th>'+
       '</tr></thead><tbody>';
     aggs.forEach(function(item, i){
       var deltaCell = "—";
@@ -676,8 +696,8 @@
         deltaCell = '<span class="delta '+cls+'">'+arrow+' '+fmtPct(Math.abs(delta))+'</span>';
       }
       html += '<tr><td>'+item.year+'</td><td>'+fmtNum(item.agg.visits)+'</td><td>'+fmtNum(item.agg.orders)+'</td>'+
-        '<td>'+fmtCurrency(item.agg.order_net)+'</td><td>'+fmtCurrency(item.agg.revenue)+'</td><td>'+fmtNum(item.agg.units)+'</td>'+
-        '<td>'+fmtCurrency(item.agg.revPerOrder)+'</td><td>'+fmtNum(item.agg.unitsPerOrder,1)+'</td>'+
+        '<td>'+fmtCurrency(item.agg.order_net)+'</td><td>'+fmtCurrency(item.agg.revPerOrder)+'</td><td>'+fmtNum(item.agg.units)+'</td>'+
+        '<td>'+fmtCurrency(item.agg.revenue)+'</td><td>'+fmtNum(item.agg.unitsPerOrder,1)+'</td>'+
         '<td>'+fmtPct(item.agg.convRate)+'</td><td>'+fmtCurrency(item.agg.discount)+'</td><td>'+deltaCell+'</td></tr>';
     });
     html += '</tbody></table>';
@@ -767,59 +787,18 @@
     });
   }
 
-  // ---------- backup view ----------
-  document.getElementById("exportBtn").addEventListener("click", function(){
-    var blob = new Blob([JSON.stringify(dataset, null, 2)], {type:"application/json"});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    var stamp = new Date().toISOString().slice(0,10);
-    a.href = url; a.download = "promotion-ledger-backup-"+stamp+".json";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast("Backup downloaded.");
-  });
-
-  document.getElementById("restoreInput").addEventListener("change", function(e){
-    var f = e.target.files[0];
-    if (!f) return;
-    var reader = new FileReader();
-    reader.onload = function(ev){
-      try{
-        var incoming = JSON.parse(ev.target.result);
-        if (!Array.isArray(incoming)) throw new Error("not an array");
-        var added=0, updated=0;
-        incoming.forEach(function(r){
-          if (!r.key) r.key = (r.promotion_id||"") + "|" + (r.site||"");
-          var idx = dataset.findIndex(function(d){return d.key===r.key;});
-          if (idx===-1){ dataset.push(r); added++; } else { dataset[idx]=r; updated++; }
-        });
-        saveDataset();
-        renderCampaignList(); renderRawTable();
-        showToast("Restored: added "+added+", updated "+updated+".");
-      }catch(err){ showToast("That file doesn't look like a valid backup."); }
-    };
-    reader.readAsText(f);
-    e.target.value = "";
-  });
-
-  document.getElementById("clearBtn").addEventListener("click", function(){
-    if (!confirm("This clears every row in this browser. Continue?")) return;
-    dataset = [];
-    selectedCampaign = null;
-    saveDataset();
-    renderCampaignList(); renderRawTable();
-    showToast("Ledger cleared.");
-  });
-
   // ---------- tab navigation ----------
-  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(btn){
-    btn.addEventListener("click", function(){
-      Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(b){b.classList.remove("active");});
-      Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){v.classList.remove("active");});
-      btn.classList.add("active");
-      document.getElementById("view-"+btn.getAttribute("data-view")).classList.add("active");
-      if (btn.getAttribute("data-view") === "raw") renderRawTable();
+  function activateView(name){
+    Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(b){
+      b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
+    Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){v.classList.remove("active");});
+    document.getElementById("view-"+name).classList.add("active");
+    if (name === "raw") renderRawTable();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function(btn){
+    btn.addEventListener("click", function(){ activateView(btn.getAttribute("data-view")); });
   });
 
   // ---------- init ----------

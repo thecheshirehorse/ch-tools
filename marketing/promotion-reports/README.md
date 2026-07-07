@@ -18,12 +18,13 @@ No build step, no server — open `index.html` directly in a browser. This holds
 
 ## Using it
 
-1. **Import** — paste the export from the Promotions dashboard (tab- or comma-separated both work), or upload the file directly. Click **Parse export**, review the preview, then **Add to ledger**.
+1. **Import** — paste the export from the Promotions dashboard (tab- or comma-separated both work), or upload the file directly. Click **Parse export**, uncheck any rows you don't want, then **Add row(s) to ledger**. This jumps you straight to the Ledger tab on the campaign you just added.
    - If a Promotion ID or Campaign ID doesn't start with a 4-digit year (e.g. `2026 - 4th of July Sale`), set a fallback year before confirming.
    - Re-importing the same promotion (same Promotion ID + Site) updates it in place rather than duplicating it — safe to re-paste a corrected export.
-2. **Ledger** — every recurring campaign shows up as a card with its latest year's Revenue Per Order and the year-over-year change. Click a card to see the full year-by-year table and charts.
+2. **Ledger** — every recurring campaign shows up as a card with its latest year's Revenue Per Order and the year-over-year change. Click a card to see the full year-by-year table and charts. The table's columns are ordered to match the "SF Analytics - Promotions" Google Sheet's per-campaign tabs, so you can read a row and type it straight into the matching sheet.
 3. **All Rows** — every individual row you've imported, with a delete button for anything added by mistake.
-4. **Backup** — because this is a static page with no server, all data lives in your browser's local storage. Export a JSON backup after each import session and keep it somewhere private (a local folder or a private repo) — not this repo, since `ch-tools` is public and the backup contains real revenue figures. `marketing/promotion-reports/*.json` is gitignored here as a safety net, but treat that as a backstop, not a place to intentionally store backups. Use Restore to load a backup back in — it merges rather than replaces.
+
+All data lives in this browser's local storage — it isn't backed up anywhere. Since the Google Sheet is the durable record, transcribe each month's numbers there after importing.
 
 ## A note on "same promotion"
 
