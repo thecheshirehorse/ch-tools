@@ -16,11 +16,11 @@ pip install flask requests
 python shipstation_fulfillment_dashboard.py
 ```
 
-Open **http://localhost:5060** in your browser (it opens automatically).
+Open **http://localhost:5058** in your browser (it opens automatically).
 
 | Flag     | Default     | Description       |
 |----------|-------------|-------------------|
-| `--port` | 5060        | Port to run on    |
+| `--port` | 5058        | Port to run on    |
 | `--host` | 127.0.0.1   | Host to bind to   |
 
 ## How It Works

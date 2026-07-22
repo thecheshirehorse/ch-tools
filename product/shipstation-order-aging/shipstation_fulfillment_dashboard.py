@@ -20,7 +20,7 @@ Usage:
     pip install flask requests
     python shipstation_fulfillment_dashboard.py
 
-Then open http://localhost:5060 in your browser.
+Then open http://localhost:5058 in your browser.
 """
 
 import argparse
@@ -112,9 +112,10 @@ AGING_BUCKETS = [
 def parse_ss_date(s):
     if not s:
         return None
-    # ShipStation dates look like "2026-07-21T14:32:00.0000000"
+    # Most ShipStation timestamps look like "2026-07-21T14:32:00.0000000",
+    # but shipDate comes back date-only, e.g. "2026-07-21".
     s = s.split(".")[0]
-    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
         try:
             return datetime.strptime(s, fmt)
         except ValueError:
@@ -250,6 +251,9 @@ def build_trend(shipped_orders, warehouses, sla_hours=48):
 # ─── Flask App ────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
+
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "chart.umd.min.js"), "r", encoding="utf-8") as _f:
+    CHARTJS_JS = _f.read()
 
 state = {
     "api_key": "",
@@ -405,8 +409,8 @@ def run_pipeline(api_key, api_secret, sla_hours, months):
         }
 
         out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fulfillment_dashboard.html")
-        html = DASHBOARD_TEMPLATE.replace("__DATA_JSON__", json.dumps(payload))
-        with open(out_path, "w") as f:
+        html = DASHBOARD_TEMPLATE.replace("__CHARTJS_JS__", CHARTJS_JS).replace("__DATA_JSON__", json.dumps(payload))
+        with open(out_path, "w", encoding="utf-8") as f:
             f.write(html)
 
         with state_lock:
@@ -469,7 +473,7 @@ DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <title>ShipStation Fulfillment Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>__CHARTJS_JS__</script>
 <style>
   :root { --purple:#5b21b6; --red:#dc2626; --bg:#f4f5f7; --card:#ffffff; --text:#1f2430; --muted:#6b7280; --border:#e5e7eb; }
   * { box-sizing: border-box; }
@@ -635,7 +639,7 @@ breachBody.innerHTML = snap.breach_list.map(o =>
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5060)
+    parser.add_argument("--port", type=int, default=5058)
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
 

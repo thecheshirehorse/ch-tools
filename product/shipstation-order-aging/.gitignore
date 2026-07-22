@@ -1,3 +1,9 @@
+# --- Generated output ---
+# Contains real order/customer data pulled from ShipStation. Only commit a
+# specific snapshot deliberately with `git add -f`.
+fulfillment_dashboard.html
+*.log
+
 # --- Python ---
 __pycache__/
 *.py[cod]
