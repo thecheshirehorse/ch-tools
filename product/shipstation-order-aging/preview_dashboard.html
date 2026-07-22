@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ShipStation Fulfillment Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root { --purple:#5b21b6; --red:#dc2626; --bg:#f4f5f7; --card:#ffffff; --text:#1f2430; --muted:#6b7280; --border:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .meta { color:var(--muted); font-size:13px; margin-bottom:24px; }
+  .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px; }
+  .card.full { grid-column: 1 / -1; }
+  .card h2 { font-size:15px; margin:0 0 14px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:600; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+  .tag.swanzey { background:#ede9fe; color:#5b21b6; }
+  .tag.saratoga { background:#fee2e2; color:#dc2626; }
+  .tag.other { background:#f3f4f6; color:#374151; }
+  .kpis { display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 20px; min-width:140px; }
+  .kpi .num { font-size:24px; font-weight:700; }
+  .kpi .lbl { font-size:12px; color:var(--muted); }
+  select { padding:6px 10px; border-radius:6px; border:1px solid var(--border); font-size:13px; }
+  canvas { max-width:100%; }
+</style>
+</head>
+<body>
+<h1>Open Order Aging &amp; Fulfillment History</h1>
+<div class="meta" id="meta"></div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Current Aging &mdash; Overall</h2>
+    <canvas id="agingOverall" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h2>Current Aging &mdash; By Location</h2>
+    <select id="locSelect"></select>
+    <canvas id="agingByLoc" height="220"></canvas>
+  </div>
+  <div class="card full">
+    <h2>Weekly Fill-Time Trend (avg hours to ship)</h2>
+    <canvas id="trendChart" height="110"></canvas>
+  </div>
+  <div class="card">
+    <h2>Carrier Breakdown (SLA breach rate)</h2>
+    <canvas id="carrierChart" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h2>Top SKUs by SLA Breach Count</h2>
+    <table id="skuTable"><thead><tr><th>SKU</th><th>Shipped</th><th>Breaches</th><th>Breach %</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="card full">
+    <h2>Currently Open &amp; Past SLA (sorted oldest first)</h2>
+    <table id="breachTable"><thead><tr><th>Order #</th><th>Order Date</th><th>Hours Open</th><th>Location</th><th>Carrier</th><th>SKU</th><th>Status</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<script>
+const DATA = {"generated_at": "2026-07-22T14:49:08.858291Z", "sla_hours": 48, "months": 12, "snapshot": {"overall_counts": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 1}, "overall_pct": {"<1": 0.0, "1-2": 0.0, "2-4": 33.3, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 33.3, "72-96": 0.0, "96+": 33.3}, "by_location_counts": {"Swanzey": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 0, "72-96": 0, "96+": 1}, "Saratoga": {"<1": 0, "1-2": 0, "2-4": 0, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 0}}, "by_location_pct": {"Swanzey": {"<1": 0.0, "1-2": 0.0, "2-4": 50.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 0.0, "72-96": 0.0, "96+": 50.0}, "Saratoga": {"<1": 0.0, "1-2": 0.0, "2-4": 0.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 100.0, "72-96": 0.0, "96+": 0.0}}, "breach_list": [{"orderNumber": "1003", "orderDate": "2026-07-18T10:49:08", "hoursOpen": 100.0, "location": "Swanzey", "carrier": "ups", "sku": "ABC", "status": "on_hold"}, {"orderNumber": "1002", "orderDate": "2026-07-20T02:49:08", "hoursOpen": 60.0, "location": "Saratoga", "carrier": "ups", "sku": "XYZ", "status": "awaiting_shipment"}], "total_open": 3}, "history": {"trend": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08"], "avg_fill_hours": [10.5, 15.0, 22.0, 27.5], "pct_breach": [0.0, 0.0, 0.0, 0.0], "by_location": {"Swanzey": [10.0, 15.0, 22.0, 27.0], "Saratoga": [11.0, 15.0, 22.0, 28.0]}}, "carrier_breakdown": {"ups": {"count": 10, "breach": 0}, "fedex": {"count": 10, "breach": 0}}, "top_sku_breaches": [{"sku": "XYZ", "count": 7, "breach": 0}, {"sku": "ABC", "count": 13, "breach": 0}]}, "bucket_labels": ["<1", "1-2", "2-4", "4-8", "8-24", "24-36", "36-48", "48-72", "72-96", "96+"]};
+
+function locTagClass(loc) {
+  const l = (loc||"").toLowerCase();
+  if (l.includes("swanzey")) return "swanzey";
+  if (l.includes("saratoga")) return "saratoga";
+  return "other";
+}
+
+document.getElementById('meta').textContent =
+  `Generated ${new Date(DATA.generated_at).toLocaleString()} · SLA: ${DATA.sla_hours}h · History window: ${DATA.months} months`;
+
+// KPIs
+const snap = DATA.snapshot;
+const totalOpen = Object.values(snap.overall_counts).reduce((a,b)=>a+b,0);
+const breachCount = snap.breach_list.length;
+const breachPct = totalOpen ? (100*breachCount/totalOpen).toFixed(1) : 0;
+const avgFillRecent = DATA.history.trend.avg_fill_hours.length ? DATA.history.trend.avg_fill_hours[DATA.history.trend.avg_fill_hours.length-1] : null;
+const kpis = [
+  {num: totalOpen, lbl: "Open Orders"},
+  {num: breachCount, lbl: "Past SLA Now"},
+  {num: breachPct + "%", lbl: "% Currently Breaching"},
+  {num: (avgFillRecent!==null ? avgFillRecent+"h" : "—"), lbl: "Avg Fill Time (latest week)"},
+];
+document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div class="num">${k.num}</div><div class="lbl">${k.lbl}</div></div>`).join('');
+
+// Aging overall
+const labels = DATA.bucket_labels;
+const slaIdx = labels.indexOf("48-72");
+function barColors() {
+  return labels.map((_, i) => i >= slaIdx ? "#dc2626" : "#5b21b6");
+}
+new Chart(document.getElementById('agingOverall'), {
+  type: 'bar',
+  data: { labels, datasets: [{ label: '% of open orders', data: labels.map(l => snap.overall_pct[l] || 0), backgroundColor: barColors() }] },
+  options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => v + '%' } } } }
+});
+
+// Aging by location
+const locSelect = document.getElementById('locSelect');
+const locs = Object.keys(snap.by_location_pct);
+locSelect.innerHTML = locs.map(l => `<option value="${l}">${l}</option>`).join('');
+let locChart;
+function renderLocChart(loc) {
+  const pct = snap.by_location_pct[loc] || {};
+  const data = labels.map(l => pct[l] || 0);
+  if (locChart) locChart.destroy();
+  locChart = new Chart(document.getElementById('agingByLoc'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '% of open orders — ' + loc, data, backgroundColor: barColors() }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => v + '%' } } } }
+  });
+}
+if (locs.length) renderLocChart(locs[0]);
+locSelect.addEventListener('change', e => renderLocChart(e.target.value));
+
+// Trend
+const trend = DATA.history.trend;
+const trendDatasets = [{ label: 'Overall avg fill time (h)', data: trend.avg_fill_hours, borderColor: '#5b21b6', backgroundColor: '#5b21b6', tension: 0.2 }];
+Object.keys(trend.by_location).forEach((loc, i) => {
+  trendDatasets.push({ label: loc + ' avg fill time (h)', data: trend.by_location[loc], borderColor: i===0 ? '#dc2626' : '#059669', tension: 0.2 });
+});
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: { labels: trend.weeks, datasets: trendDatasets },
+  options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display:true, text:'hours' } } } }
+});
+
+// Carrier breakdown
+const carriers = Object.entries(DATA.history.carrier_breakdown);
+new Chart(document.getElementById('carrierChart'), {
+  type: 'bar',
+  data: {
+    labels: carriers.map(c => c[0]),
+    datasets: [{ label: 'Breach %', data: carriers.map(c => c[1].count ? Math.round(1000*c[1].breach/c[1].count)/10 : 0), backgroundColor: '#5b21b6' }]
+  },
+  options: { plugins: { legend: { display:false } }, scales: { y: { ticks: { callback: v => v + '%' } } } }
+});
+
+// SKU table
+const skuBody = document.querySelector('#skuTable tbody');
+skuBody.innerHTML = DATA.history.top_sku_breaches.map(s =>
+  `<tr><td>${s.sku}</td><td>${s.count}</td><td>${s.breach}</td><td>${s.count ? Math.round(1000*s.breach/s.count)/10 : 0}%</td></tr>`
+).join('');
+
+// Breach table
+const breachBody = document.querySelector('#breachTable tbody');
+breachBody.innerHTML = snap.breach_list.map(o =>
+  `<tr><td>${o.orderNumber||''}</td><td>${o.orderDate ? new Date(o.orderDate).toLocaleString() : ''}</td><td>${o.hoursOpen}</td>` +
+  `<td><span class="tag ${locTagClass(o.location)}">${o.location}</span></td><td>${o.carrier||''}</td><td>${o.sku||''}</td><td>${o.status||''}</td></tr>`
+).join('');
+</script>
+</body>
+</html>
