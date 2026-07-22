@@ -32,6 +32,11 @@ and how many months of history to analyze (default 12). **Credentials are held
 in memory for this run only and are never written to disk** — same as the
 ShipStation Image Tool.
 
+Optionally click **load tags** to pull your account's actual ShipStation tags
+and check off the ones that mean an order isn't a normal fulfillment — e.g.
+ISPU (in-store pickup), problem orders, backorders. Checked tags are excluded
+from the "Normal Order Aging" section (see below).
+
 ### Step 2: Fetch
 
 The tool pulls:
@@ -54,15 +59,20 @@ minutes — a progress bar shows what's happening.
 
 Once done, click the download link to save `fulfillment_dashboard.html`.
 Commit that file to your GitHub tools dashboard repo — it's fully
-self-contained (data is baked in as JSON; charts render with Chart.js from a
-CDN), no backend or live API calls needed to view it.
+self-contained (data and Chart.js are both baked directly into the file), no
+backend, CDN, or live API calls needed to view it.
 
 ## What's in the Dashboard
 
 - **KPI row** — open orders, orders currently past SLA, breach %, latest
-  week's average fill time
+  week's average fill time, and normal orders past SLA (weekend-adjusted)
 - **Current aging** — overall bar chart, plus a per-location chart (dropdown
   to switch between Swanzey / Saratoga)
+- **Normal Order Aging (weekend-adjusted)** — same aging buckets, but
+  excludes any order carrying a tag you checked off at login (ISPU, problem,
+  backorder, etc.), and measures elapsed time in business hours — a Friday
+  order still sitting Monday morning isn't counted as a weekend of delay.
+  Includes its own breach list.
 - **Weekly fill-time trend** — line chart, overall + by location, over the
   requested history window
 - **Carrier breakdown** — SLA breach rate by carrier
@@ -82,6 +92,9 @@ CDN), no backend or live API calls needed to view it.
   with fresh data — there's no incremental/progress file like the image
   tool, since this is a read-only reporting pull, not something you're
   working through item by item.
+- "Weekend-adjusted" hours treat Saturday and Sunday as fully closed (no
+  hours counted), regardless of order volume on those days. Weekday hours
+  count in full — there's no finer-grained store-hours model.
 
 ## Troubleshooting
 
@@ -91,7 +104,3 @@ Regenerate in ShipStation → Settings → Account → API Settings.
 **Takes a long time** — expected for large history windows; each page of 500
 orders takes ~1.6s due to rate limiting. Reduce the "History (months)" field
 if you just want a faster look.
-
-**Chart area is blank when opened offline** — the dashboard loads Chart.js
-from a CDN (`cdnjs.cloudflare.com`), so it needs an internet connection to
-render, even though the data itself is fully local.
