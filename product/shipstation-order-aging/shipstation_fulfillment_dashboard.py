@@ -158,22 +158,19 @@ def location_name(order, warehouses):
     return warehouses.get(wid, "Unassigned")
 
 
-def build_snapshot(open_orders, warehouses, sla_hours=48, exclude_tag_ids=None):
+def build_snapshot(open_orders, warehouses, sla_hours=48):
     """Current aging snapshot, overall + by location, plus the breach list.
 
-    Also computes a parallel "normal order" view that drops orders carrying
-    any of exclude_tag_ids (e.g. ISPU / problem / backorder tags) and uses
-    business_hours_elapsed instead of raw wall-clock hours, so a Friday
-    order sitting over the weekend isn't counted as a fulfillment delay.
+    Also returns an `order_detail` row per open order (hours open, both raw
+    and weekend-adjusted, plus tagIds) so the dashboard can let the viewer
+    toggle tag-based exclusions live in the browser after the fact, rather
+    than locking in a choice of "normal order" tags at generation time.
     """
-    exclude_tag_ids = set(exclude_tag_ids or [])
     now = datetime.utcnow()
     by_location = {}
     overall_counts = {label: 0 for label, _, _ in AGING_BUCKETS}
     breach_list = []
-
-    normal_counts = {label: 0 for label, _, _ in AGING_BUCKETS}
-    normal_breach_list = []
+    order_detail = []
 
     for o in open_orders:
         order_date = parse_ss_date(o.get("orderDate"))
@@ -184,6 +181,7 @@ def build_snapshot(open_orders, warehouses, sla_hours=48, exclude_tag_ids=None):
         loc = location_name(o, warehouses)
         items = o.get("items") or []
         top_sku = items[0].get("sku") if items else ""
+        carrier = o.get("carrierCode") or o.get("requestedShippingService") or ""
 
         overall_counts[label] += 1
         by_location.setdefault(loc, {lb: 0 for lb, _, _ in AGING_BUCKETS})
@@ -195,30 +193,24 @@ def build_snapshot(open_orders, warehouses, sla_hours=48, exclude_tag_ids=None):
                 "orderDate": o.get("orderDate"),
                 "hoursOpen": round(hours, 1),
                 "location": loc,
-                "carrier": o.get("carrierCode") or o.get("requestedShippingService") or "",
+                "carrier": carrier,
                 "sku": top_sku,
                 "status": o.get("orderStatus"),
             })
 
-        tag_ids = set(o.get("tagIds") or [])
-        if tag_ids & exclude_tag_ids:
-            continue
-
-        normal_hours = business_hours_elapsed(order_date, now)
-        normal_counts[bucket_for_hours(normal_hours)] += 1
-        if normal_hours >= sla_hours:
-            normal_breach_list.append({
-                "orderNumber": o.get("orderNumber"),
-                "orderDate": o.get("orderDate"),
-                "hoursOpen": round(normal_hours, 1),
-                "location": loc,
-                "carrier": o.get("carrierCode") or o.get("requestedShippingService") or "",
-                "sku": top_sku,
-                "status": o.get("orderStatus"),
-            })
+        order_detail.append({
+            "orderNumber": o.get("orderNumber"),
+            "orderDate": o.get("orderDate"),
+            "hoursOpen": round(hours, 1),
+            "normalHoursOpen": round(business_hours_elapsed(order_date, now), 1),
+            "location": loc,
+            "carrier": carrier,
+            "sku": top_sku,
+            "status": o.get("orderStatus"),
+            "tagIds": sorted(o.get("tagIds") or []),
+        })
 
     breach_list.sort(key=lambda r: r["hoursOpen"], reverse=True)
-    normal_breach_list.sort(key=lambda r: r["hoursOpen"], reverse=True)
 
     total = sum(overall_counts.values()) or 1
     overall_pct = {k: round(100 * v / total, 1) for k, v in overall_counts.items()}
@@ -227,9 +219,6 @@ def build_snapshot(open_orders, warehouses, sla_hours=48, exclude_tag_ids=None):
         loc_total = sum(counts.values()) or 1
         location_pct[loc] = {k: round(100 * v / loc_total, 1) for k, v in counts.items()}
 
-    normal_total = sum(normal_counts.values()) or 1
-    normal_pct = {k: round(100 * v / normal_total, 1) for k, v in normal_counts.items()}
-
     return {
         "overall_counts": overall_counts,
         "overall_pct": overall_pct,
@@ -237,10 +226,7 @@ def build_snapshot(open_orders, warehouses, sla_hours=48, exclude_tag_ids=None):
         "by_location_pct": location_pct,
         "breach_list": breach_list,
         "total_open": sum(overall_counts.values()),
-        "normal_counts": normal_counts,
-        "normal_pct": normal_pct,
-        "normal_total": sum(normal_counts.values()),
-        "normal_breach_list": normal_breach_list,
+        "order_detail": order_detail,
     }
 
 
@@ -349,9 +335,6 @@ LOGIN_HTML = r"""
   .bar { height:8px; background:#eee; border-radius:4px; overflow:hidden; margin-top:8px; }
   .bar > div { height:100%; background:#5b21b6; width:0%; transition:width .3s; }
   a.dl { display:inline-block; margin-top:14px; color:#5b21b6; font-weight:600; }
-  a.tag-link { color:#5b21b6; cursor:pointer; }
-  .tag-cb-row { display:flex; align-items:center; gap:6px; font-weight:400; font-size:13px; margin:4px 0; }
-  .tag-dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -375,63 +358,22 @@ LOGIN_HTML = r"""
     </div>
   </div>
 
-  <label>Exclude from "Normal Order" Analysis</label>
-  <div id="tagsBox" style="font-size:13px;color:#666;">
-    Enter your API key/secret above, then <a class="tag-link" onclick="loadTags()">load tags</a>
-    to pick which ones represent ISPU / problem / backorder orders.
-  </div>
-
   <button onclick="generate()">Generate Dashboard</button>
   <div id="status"></div>
 </div>
 
 <script>
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-async function loadTags() {
-  const api_key = document.getElementById('api_key').value.trim();
-  const api_secret = document.getElementById('api_secret').value.trim();
-  const box = document.getElementById('tagsBox');
-  if (!api_key || !api_secret) { alert('Enter API key and secret first'); return; }
-
-  box.textContent = 'Loading tags...';
-  const r = await fetch('/api/tags', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({api_key, api_secret})
-  });
-  const data = await r.json();
-  if (!r.ok) { box.textContent = 'Error: ' + (data.error || 'unknown'); return; }
-  if (!data.tags.length) { box.textContent = 'No tags found on this account.'; return; }
-
-  box.innerHTML = data.tags.map(t => `
-    <label class="tag-cb-row">
-      <input type="checkbox" class="tag-cb" value="${t.tagId}">
-      <span class="tag-dot" style="background:${esc(t.color || '#999')}"></span>
-      ${esc(t.name)}
-    </label>`
-  ).join('');
-}
-
-function getExcludeTagIds() {
-  return Array.from(document.querySelectorAll('.tag-cb:checked')).map(el => parseInt(el.value, 10));
-}
-
 async function generate() {
   const api_key = document.getElementById('api_key').value.trim();
   const api_secret = document.getElementById('api_secret').value.trim();
   const sla_hours = parseInt(document.getElementById('sla_hours').value) || 48;
   const months = parseInt(document.getElementById('months').value) || 12;
-  const exclude_tag_ids = getExcludeTagIds();
   if (!api_key || !api_secret) { alert('Enter API key and secret'); return; }
 
   document.getElementById('status').textContent = 'Connecting...';
   const r = await fetch('/api/generate', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({api_key, api_secret, sla_hours, months, exclude_tag_ids})
+    body: JSON.stringify({api_key, api_secret, sla_hours, months})
   });
   const data = await r.json();
   if (!r.ok) { document.getElementById('status').textContent = 'Error: ' + (data.error || 'unknown'); return; }
@@ -462,13 +404,17 @@ def index():
     return render_template_string(LOGIN_HTML)
 
 
-def run_pipeline(api_key, api_secret, sla_hours, months, exclude_tag_ids=None):
+def run_pipeline(api_key, api_secret, sla_hours, months):
     try:
         with state_lock:
             state["status"] = "fetching_open"
             state["message"] = "Fetching open orders..."
 
         warehouses = fetch_warehouses(api_key, api_secret)
+        tag_catalog = {
+            t["tagId"]: {"name": t.get("name") or f"Tag {t['tagId']}", "color": t.get("color") or "#999999"}
+            for t in fetch_tags(api_key, api_secret)
+        }
 
         open_orders = []
         for status_val in OPEN_STATUSES:
@@ -499,7 +445,7 @@ def run_pipeline(api_key, api_secret, sla_hours, months, exclude_tag_ids=None):
             state["status"] = "building"
             state["message"] = "Building dashboard..."
 
-        snapshot = build_snapshot(open_orders, warehouses, sla_hours, exclude_tag_ids)
+        snapshot = build_snapshot(open_orders, warehouses, sla_hours)
         history = build_trend(shipped_orders, warehouses, sla_hours)
 
         payload = {
@@ -509,6 +455,8 @@ def run_pipeline(api_key, api_secret, sla_hours, months, exclude_tag_ids=None):
             "snapshot": snapshot,
             "history": history,
             "bucket_labels": [lb for lb, _, _ in AGING_BUCKETS],
+            "bucket_ranges": [[lo, hi] for _, lo, hi in AGING_BUCKETS],
+            "tag_catalog": tag_catalog,
         }
 
         out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fulfillment_dashboard.html")
@@ -532,20 +480,6 @@ def run_pipeline(api_key, api_secret, sla_hours, months, exclude_tag_ids=None):
             state["message"] = f"Error: {e}"
 
 
-@app.route("/api/tags", methods=["POST"])
-def api_tags():
-    data = request.get_json(force=True)
-    api_key = data.get("api_key", "")
-    api_secret = data.get("api_secret", "")
-    try:
-        tags = fetch_tags(api_key, api_secret)
-        return jsonify({"tags": tags})
-    except requests.HTTPError as e:
-        return jsonify({"error": f"ShipStation API error: {e}"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     data = request.get_json(force=True)
@@ -553,7 +487,6 @@ def api_generate():
     api_secret = data.get("api_secret", "")
     sla_hours = data.get("sla_hours", 48)
     months = data.get("months", 12)
-    exclude_tag_ids = data.get("exclude_tag_ids") or []
     with state_lock:
         if state["status"] not in ("idle", "done", "error"):
             return jsonify({"error": "A generation is already in progress"}), 409
@@ -561,7 +494,7 @@ def api_generate():
         state["message"] = "Starting..."
         state["pct"] = 0
         state["error"] = None
-    Thread(target=run_pipeline, args=(api_key, api_secret, sla_hours, months, exclude_tag_ids), daemon=True).start()
+    Thread(target=run_pipeline, args=(api_key, api_secret, sla_hours, months), daemon=True).start()
     return jsonify({"ok": True})
 
 
@@ -615,6 +548,8 @@ DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
   .kpi .lbl { font-size:12px; color:var(--muted); }
   select { padding:6px 10px; border-radius:6px; border:1px solid var(--border); font-size:13px; }
   canvas { max-width:100%; }
+  .tag-cb-row { display:inline-flex; align-items:center; gap:6px; font-size:13px; margin:0 14px 8px 0; cursor:pointer; }
+  .tag-dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -635,6 +570,7 @@ DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
   </div>
   <div class="card full">
     <h2>Normal Order Aging &mdash; Weekend-Adjusted</h2>
+    <div id="tagFilters" style="margin-bottom:10px;"></div>
     <div class="meta" id="normalMeta" style="margin-bottom:10px;"></div>
     <canvas id="agingNormal" height="160"></canvas>
   </div>
@@ -685,15 +621,14 @@ const totalOpen = Object.values(snap.overall_counts).reduce((a,b)=>a+b,0);
 const breachCount = snap.breach_list.length;
 const breachPct = totalOpen ? (100*breachCount/totalOpen).toFixed(1) : 0;
 const avgFillRecent = DATA.history.trend.avg_fill_hours.length ? DATA.history.trend.avg_fill_hours[DATA.history.trend.avg_fill_hours.length-1] : null;
-const normalBreachCount = (snap.normal_breach_list || []).length;
 const kpis = [
   {num: totalOpen, lbl: "Open Orders"},
   {num: breachCount, lbl: "Past SLA Now"},
   {num: breachPct + "%", lbl: "% Currently Breaching"},
   {num: (avgFillRecent!==null ? avgFillRecent+"h" : "—"), lbl: "Avg Fill Time (latest week)"},
-  {num: normalBreachCount, lbl: "Normal Orders Past SLA (Wknd-Adj)"},
+  {num: 0, lbl: "Normal Orders Past SLA (Wknd-Adj)", id: "kpiNormalBreach"},
 ];
-document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div class="num">${k.num}</div><div class="lbl">${k.lbl}</div></div>`).join('');
+document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div class="num"${k.id ? ` id="${k.id}"` : ''}>${k.num}</div><div class="lbl">${k.lbl}</div></div>`).join('');
 
 // Aging overall
 const labels = DATA.bucket_labels;
@@ -725,16 +660,67 @@ function renderLocChart(loc) {
 if (locs.length) renderLocChart(locs[0]);
 locSelect.addEventListener('change', e => renderLocChart(e.target.value));
 
-// Normal order aging (tag-excluded, weekend-adjusted)
-const normalTotal = snap.normal_total || 0;
-document.getElementById('normalMeta').textContent = normalTotal
-  ? `${normalTotal} normal orders analyzed (excludes tagged orders; elapsed time skips full weekend days)`
-  : 'No normal orders to analyze (all open orders were excluded, or there are none).';
-new Chart(document.getElementById('agingNormal'), {
-  type: 'bar',
-  data: { labels, datasets: [{ label: '% of normal open orders', data: labels.map(l => snap.normal_pct[l] || 0), backgroundColor: barColors() }] },
-  options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => v + '%' } } } }
-});
+// Normal order aging — interactive: pick tags to exclude, live in the browser
+const orderDetail = snap.order_detail || [];
+const bucketRanges = DATA.bucket_ranges;
+function bucketForHours(hours) {
+  for (let i = 0; i < bucketRanges.length; i++) {
+    if (hours >= bucketRanges[i][0] && hours < bucketRanges[i][1]) return labels[i];
+  }
+  return labels[labels.length - 1];
+}
+
+const tagCatalog = DATA.tag_catalog || {};
+const presentTagIds = new Set();
+orderDetail.forEach(o => (o.tagIds || []).forEach(id => presentTagIds.add(id)));
+const presentTags = Array.from(presentTagIds).filter(id => tagCatalog[id]);
+const tagFilterBox = document.getElementById('tagFilters');
+tagFilterBox.innerHTML = presentTags.length
+  ? '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Exclude tagged orders from the "normal" view below:</div>' +
+    presentTags.map(id => `
+      <label class="tag-cb-row">
+        <input type="checkbox" class="tag-cb" value="${id}">
+        <span class="tag-dot" style="background:${esc(tagCatalog[id].color)}"></span>
+        ${esc(tagCatalog[id].name)}
+      </label>`).join('')
+  : '<div style="font-size:12px;color:var(--muted);">No tags found on currently-open orders.</div>';
+
+let normalChart;
+function recomputeNormal() {
+  const excluded = new Set(Array.from(document.querySelectorAll('.tag-cb:checked')).map(el => parseInt(el.value, 10)));
+  const normalOrders = orderDetail.filter(o => !(o.tagIds || []).some(id => excluded.has(id)));
+  const counts = {};
+  labels.forEach(l => counts[l] = 0);
+  const breaches = [];
+  normalOrders.forEach(o => {
+    counts[bucketForHours(o.normalHoursOpen)]++;
+    if (o.normalHoursOpen >= DATA.sla_hours) breaches.push(o);
+  });
+  breaches.sort((a, b) => b.normalHoursOpen - a.normalHoursOpen);
+  const total = normalOrders.length || 1;
+  const pct = labels.map(l => Math.round(1000 * counts[l] / total) / 10);
+
+  document.getElementById('normalMeta').textContent = normalOrders.length
+    ? `${normalOrders.length} normal orders analyzed (elapsed time skips full weekend days)`
+    : 'No normal orders to analyze (all open orders excluded, or there are none).';
+
+  if (normalChart) normalChart.destroy();
+  normalChart = new Chart(document.getElementById('agingNormal'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '% of normal open orders', data: pct, backgroundColor: barColors() }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => v + '%' } } } }
+  });
+
+  document.getElementById('kpiNormalBreach').textContent = breaches.length;
+
+  const normalBreachBody = document.querySelector('#normalBreachTable tbody');
+  normalBreachBody.innerHTML = breaches.map(o =>
+    `<tr><td>${esc(o.orderNumber)}</td><td>${o.orderDate ? esc(new Date(o.orderDate).toLocaleString()) : ''}</td><td>${o.normalHoursOpen}</td>` +
+    `<td><span class="tag ${locTagClass(o.location)}">${esc(o.location)}</span></td><td>${esc(o.carrier)}</td><td>${esc(o.sku)}</td><td>${esc(o.status)}</td></tr>`
+  ).join('');
+}
+document.querySelectorAll('.tag-cb').forEach(cb => cb.addEventListener('change', recomputeNormal));
+recomputeNormal();
 
 // Trend
 const trend = DATA.history.trend;
@@ -768,13 +754,6 @@ skuBody.innerHTML = DATA.history.top_sku_breaches.map(s =>
 // Breach table
 const breachBody = document.querySelector('#breachTable tbody');
 breachBody.innerHTML = snap.breach_list.map(o =>
-  `<tr><td>${esc(o.orderNumber)}</td><td>${o.orderDate ? esc(new Date(o.orderDate).toLocaleString()) : ''}</td><td>${o.hoursOpen}</td>` +
-  `<td><span class="tag ${locTagClass(o.location)}">${esc(o.location)}</span></td><td>${esc(o.carrier)}</td><td>${esc(o.sku)}</td><td>${esc(o.status)}</td></tr>`
-).join('');
-
-// Normal-order breach table
-const normalBreachBody = document.querySelector('#normalBreachTable tbody');
-normalBreachBody.innerHTML = (snap.normal_breach_list || []).map(o =>
   `<tr><td>${esc(o.orderNumber)}</td><td>${o.orderDate ? esc(new Date(o.orderDate).toLocaleString()) : ''}</td><td>${o.hoursOpen}</td>` +
   `<td><span class="tag ${locTagClass(o.location)}">${esc(o.location)}</span></td><td>${esc(o.carrier)}</td><td>${esc(o.sku)}</td><td>${esc(o.status)}</td></tr>`
 ).join('');

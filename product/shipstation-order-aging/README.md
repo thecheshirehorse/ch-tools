@@ -32,11 +32,6 @@ and how many months of history to analyze (default 12). **Credentials are held
 in memory for this run only and are never written to disk** — same as the
 ShipStation Image Tool.
 
-Optionally click **load tags** to pull your account's actual ShipStation tags
-and check off the ones that mean an order isn't a normal fulfillment — e.g.
-ISPU (in-store pickup), problem orders, backorders. Checked tags are excluded
-from the "Normal Order Aging" section (see below).
-
 ### Step 2: Fetch
 
 The tool pulls:
@@ -46,6 +41,9 @@ The tool pulls:
   `72-96`, `96+` hours).
 - **Shipped orders** for the trailing N months — used to compute historical
   fill-time trend (order date → ship date), split by week.
+- **Your account's ShipStation tags** (name + color) — embedded in the
+  dashboard so you can filter by tag interactively after the fact (see below),
+  without needing to decide upfront which tags matter.
 
 Both are split by warehouse location (Swanzey / Saratoga, or whatever your
 `/warehouses` are named), so the dashboard shows overall and per-location
@@ -68,11 +66,14 @@ backend, CDN, or live API calls needed to view it.
   week's average fill time, and normal orders past SLA (weekend-adjusted)
 - **Current aging** — overall bar chart, plus a per-location chart (dropdown
   to switch between Swanzey / Saratoga)
-- **Normal Order Aging (weekend-adjusted)** — same aging buckets, but
-  excludes any order carrying a tag you checked off at login (ISPU, problem,
-  backorder, etc.), and measures elapsed time in business hours — a Friday
-  order still sitting Monday morning isn't counted as a weekend of delay.
-  Includes its own breach list.
+- **Normal Order Aging (weekend-adjusted)** — same aging buckets, but lets
+  you check off tags *inside the dashboard itself* (ISPU, problem, backorder,
+  etc.) to exclude those orders live — no need to decide upfront or
+  regenerate to try a different combination. Elapsed time is measured in
+  business hours, so a Friday order still sitting Monday morning isn't
+  counted as a weekend of delay. Includes its own breach list and KPI tile,
+  both of which update as you check/uncheck tags. Only tags that actually
+  appear on a currently-open order are shown as options.
 - **Weekly fill-time trend** — line chart, overall + by location, over the
   requested history window
 - **Carrier breakdown** — SLA breach rate by carrier
