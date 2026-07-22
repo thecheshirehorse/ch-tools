@@ -27,10 +27,11 @@ import argparse
 import base64
 import json
 import os
+import socket
 import time
 import webbrowser
 from datetime import datetime, timedelta
-from threading import Lock, Thread, Timer
+from threading import Lock, Thread
 
 from flask import Flask, render_template_string, request, jsonify, send_file
 import requests
@@ -638,10 +639,17 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
 
-    def open_browser():
+    def wait_and_open_browser():
+        deadline = time.time() + 30
+        while time.time() < deadline:
+            try:
+                with socket.create_connection((args.host, args.port), timeout=0.5):
+                    break
+            except OSError:
+                time.sleep(0.2)
         webbrowser.open(f"http://{args.host}:{args.port}")
 
-    Timer(1.0, open_browser).start()
+    Thread(target=wait_and_open_browser, daemon=True).start()
     app.run(host=args.host, port=args.port, debug=False)
 
 
