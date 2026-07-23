@@ -45,10 +45,12 @@ The tool pulls:
   dashboard so you can filter by tag interactively after the fact (see below),
   without needing to decide upfront which tags matter.
 
-Both are split by location using ShipStation **Stores** (Cheshire Horse
-uses a separate Store/sales-channel integration per physical location,
-not separate Warehouses), so the dashboard shows overall and per-location
-views.
+Both are split by location using a tag: any order carrying the **"Ship
+from Saratoga"** ShipStation tag is labeled "Saratoga, NY"; every other
+order is labeled "Swanzey, NH." So the dashboard shows overall and
+per-location views. If that exact tag name doesn't exist on the account,
+every order falls back to "Swanzey, NH" and a warning shows up in the
+status message.
 
 Requests are throttled to ~37/minute to stay under ShipStation's 40 req/min
 cap, so a full year (52 weeks) pull for a few thousand orders/month takes a
@@ -88,8 +90,9 @@ backend, CDN, or live API calls needed to view it.
 - Uses the Order resource's own `orderDate`/`shipDate` fields (fill time =
   shipDate − orderDate), rather than a separate `/shipments` call — this
   keeps the historical pull to a single paginated endpoint.
-- If a store isn't returned by `/stores` or an order has no
-  `advancedOptions.storeId`, it's grouped under "Unassigned."
+- There's no "Unassigned" bucket for location — every order is either
+  tagged "Ship from Saratoga" or it isn't, so it always lands in exactly
+  one of the two locations.
 - Re-running the tool regenerates `fulfillment_dashboard.html` from scratch
   with fresh data — there's no incremental/progress file like the image
   tool, since this is a read-only reporting pull, not something you're

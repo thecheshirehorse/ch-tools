@@ -64,20 +64,22 @@ def ss_request(method, path, api_key, api_secret, json_data=None, params=None):
     return resp.json() if resp.text else {}
 
 
-def fetch_stores(api_key, api_secret):
-    """Returns {storeId: storeName}. Cheshire Horse uses separate ShipStation
-    Stores (sales channels) per physical location, not separate Warehouses."""
-    data = ss_request("GET", "/stores", api_key, api_secret)
-    out = {}
-    for s in data if isinstance(data, list) else data.get("stores", []):
-        out[s.get("storeId")] = s.get("storeName") or "Unknown"
-    return out
-
-
 def fetch_tags(api_key, api_secret):
     """Returns the account's ShipStation tags as [{tagId, name, color}, ...]."""
     data = ss_request("GET", "/accounts/listtags", api_key, api_secret)
     return data if isinstance(data, list) else []
+
+
+SARATOGA_TAG_NAME = "Ship from Saratoga"
+
+
+def find_tag_id(tags, name):
+    """Looks up a tag's id by name (case/whitespace-insensitive). Returns None if not found."""
+    target = name.strip().lower()
+    for t in tags:
+        if (t.get("name") or "").strip().lower() == target:
+            return t.get("tagId")
+    return None
 
 
 def fetch_orders(api_key, api_secret, params_base, progress_cb=None):
@@ -154,12 +156,14 @@ def business_hours_elapsed(start, end, closed_weekdays=(5, 6)):
     return total
 
 
-def location_name(order, stores):
-    sid = (order.get("advancedOptions") or {}).get("storeId")
-    return stores.get(sid, "Unassigned")
+def location_name(order, saratoga_tag_id):
+    tag_ids = set(order.get("tagIds") or [])
+    if saratoga_tag_id is not None and saratoga_tag_id in tag_ids:
+        return "Saratoga, NY"
+    return "Swanzey, NH"
 
 
-def build_snapshot(open_orders, stores, sla_hours=24):
+def build_snapshot(open_orders, saratoga_tag_id, sla_hours=24):
     """Current aging snapshot, overall + by location, plus the breach list.
 
     Also returns an `order_detail` row per open order (hours open, both raw
@@ -179,7 +183,7 @@ def build_snapshot(open_orders, stores, sla_hours=24):
             continue
         hours = (now - order_date).total_seconds() / 3600
         label = bucket_for_hours(hours)
-        loc = location_name(o, stores)
+        loc = location_name(o, saratoga_tag_id)
         items = o.get("items") or []
         top_sku = items[0].get("sku") if items else ""
         carrier = o.get("carrierCode") or o.get("requestedShippingService") or ""
@@ -231,7 +235,7 @@ def build_snapshot(open_orders, stores, sla_hours=24):
     }
 
 
-def build_trend(shipped_orders, stores, sla_hours=24):
+def build_trend(shipped_orders, saratoga_tag_id, sla_hours=24):
     """Weekly fill-time trend, overall + by location, from shipped orders."""
     weekly = {}  # week_start -> {"hours": [...], "loc": {loc: [hours...]}}
     carrier_counts = {}
@@ -245,7 +249,7 @@ def build_trend(shipped_orders, stores, sla_hours=24):
         fill_hours = (ship_date - order_date).total_seconds() / 3600
         if fill_hours < 0:
             continue
-        loc = location_name(o, stores)
+        loc = location_name(o, saratoga_tag_id)
         week_start = (order_date - timedelta(days=order_date.weekday())).strftime("%Y-%m-%d")
 
         wk = weekly.setdefault(week_start, {"all": [], "loc": {}})
@@ -411,11 +415,15 @@ def run_pipeline(api_key, api_secret, sla_hours, weeks):
             state["status"] = "fetching_open"
             state["message"] = "Fetching open orders..."
 
-        stores = fetch_stores(api_key, api_secret)
+        tags = fetch_tags(api_key, api_secret)
         tag_catalog = {
             t["tagId"]: {"name": t.get("name") or f"Tag {t['tagId']}", "color": t.get("color") or "#999999"}
-            for t in fetch_tags(api_key, api_secret)
+            for t in tags
         }
+        saratoga_tag_id = find_tag_id(tags, SARATOGA_TAG_NAME)
+        tag_warning = "" if saratoga_tag_id is not None else (
+            f' Warning: no "{SARATOGA_TAG_NAME}" tag found on this account — every order will show as Swanzey, NH.'
+        )
 
         open_orders = []
         for status_val in OPEN_STATUSES:
@@ -446,8 +454,8 @@ def run_pipeline(api_key, api_secret, sla_hours, weeks):
             state["status"] = "building"
             state["message"] = "Building dashboard..."
 
-        snapshot = build_snapshot(open_orders, stores, sla_hours)
-        history = build_trend(shipped_orders, stores, sla_hours)
+        snapshot = build_snapshot(open_orders, saratoga_tag_id, sla_hours)
+        history = build_trend(shipped_orders, saratoga_tag_id, sla_hours)
 
         payload = {
             "generated_at": datetime.utcnow().isoformat() + "Z",
@@ -467,7 +475,10 @@ def run_pipeline(api_key, api_secret, sla_hours, weeks):
 
         with state_lock:
             state["status"] = "done"
-            state["message"] = f"Done. {len(open_orders)} open orders, {len(shipped_orders)} shipped orders analyzed."
+            state["message"] = (
+                f"Done. {len(open_orders)} open orders, {len(shipped_orders)} shipped orders analyzed."
+                f"{tag_warning}"
+            )
             state["dashboard_path"] = out_path
             state["pct"] = 100
 

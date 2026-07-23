@@ -43,12 +43,15 @@ def build_dashboard_html(config):
     sla_hours = config.get("sla_hours", 24)
     weeks = config.get("weeks", 1)
 
-    print("Fetching stores and tags...")
-    stores = dash.fetch_stores(api_key, api_secret)
+    print("Fetching tags...")
+    tags = dash.fetch_tags(api_key, api_secret)
     tag_catalog = {
         t["tagId"]: {"name": t.get("name") or f"Tag {t['tagId']}", "color": t.get("color") or "#999999"}
-        for t in dash.fetch_tags(api_key, api_secret)
+        for t in tags
     }
+    saratoga_tag_id = dash.find_tag_id(tags, dash.SARATOGA_TAG_NAME)
+    if saratoga_tag_id is None:
+        print(f'  Warning: no "{dash.SARATOGA_TAG_NAME}" tag found — every order will show as Swanzey, NH.')
 
     open_orders = []
     for status_val in dash.OPEN_STATUSES:
@@ -70,8 +73,8 @@ def build_dashboard_html(config):
 
     print("Building dashboard...")
 
-    snapshot = dash.build_snapshot(open_orders, stores, sla_hours)
-    history = dash.build_trend(shipped_orders, stores, sla_hours)
+    snapshot = dash.build_snapshot(open_orders, saratoga_tag_id, sla_hours)
+    history = dash.build_trend(shipped_orders, saratoga_tag_id, sla_hours)
 
     payload = {
         "generated_at": datetime.utcnow().isoformat() + "Z",
