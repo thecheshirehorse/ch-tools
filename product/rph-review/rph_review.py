@@ -325,7 +325,7 @@ def upload_page():
 <body>
   <div class="card">
     <div class="brand-row">
-      <img src="https://caitlinsc.github.io/ch-tools/assets/logo-green.svg" alt="Cheshire Horse">
+      <img src="https://thecheshirehorse.github.io/ch-tools/assets/logo-green.svg" alt="Cheshire Horse">
       <span class="divider">|</span>
     </div>
     <h1>RPH Review Tool</h1>
