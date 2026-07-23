@@ -10,7 +10,7 @@ Flow:
   1. Login with ShipStation V1 API key + secret (held in memory only, never
      written to disk).
   2. Fetches all currently-open orders (aging snapshot) and all shipped
-     orders for the trailing N months (historical fill-time trend).
+     orders for the trailing N weeks (historical fill-time trend).
   3. Builds a self-contained fulfillment_dashboard.html with the data baked
      in as JSON, plus charts rendered client-side.
   4. Download the HTML and commit it to your repo. Re-run any time for a
@@ -353,8 +353,8 @@ LOGIN_HTML = r"""
       <input type="number" id="sla_hours" value="48">
     </div>
     <div>
-      <label>History (months)</label>
-      <input type="number" id="months" value="12">
+      <label>History (weeks)</label>
+      <input type="number" id="weeks" value="52">
     </div>
   </div>
 
@@ -367,13 +367,13 @@ async function generate() {
   const api_key = document.getElementById('api_key').value.trim();
   const api_secret = document.getElementById('api_secret').value.trim();
   const sla_hours = parseInt(document.getElementById('sla_hours').value) || 48;
-  const months = parseInt(document.getElementById('months').value) || 12;
+  const weeks = parseInt(document.getElementById('weeks').value) || 52;
   if (!api_key || !api_secret) { alert('Enter API key and secret'); return; }
 
   document.getElementById('status').textContent = 'Connecting...';
   const r = await fetch('/api/generate', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({api_key, api_secret, sla_hours, months})
+    body: JSON.stringify({api_key, api_secret, sla_hours, weeks})
   });
   const data = await r.json();
   if (!r.ok) { document.getElementById('status').textContent = 'Error: ' + (data.error || 'unknown'); return; }
@@ -404,7 +404,7 @@ def index():
     return render_template_string(LOGIN_HTML)
 
 
-def run_pipeline(api_key, api_secret, sla_hours, months):
+def run_pipeline(api_key, api_secret, sla_hours, weeks):
     try:
         with state_lock:
             state["status"] = "fetching_open"
@@ -425,10 +425,10 @@ def run_pipeline(api_key, api_secret, sla_hours, months):
 
         with state_lock:
             state["status"] = "fetching_history"
-            state["message"] = f"Fetching {months} months of shipped orders..."
+            state["message"] = f"Fetching {weeks} weeks of shipped orders..."
 
         date_end = datetime.utcnow()
-        date_start = date_end - timedelta(days=30 * months)
+        date_start = date_end - timedelta(weeks=weeks)
 
         def cb2(n, total_pages, page):
             with state_lock:
@@ -451,7 +451,7 @@ def run_pipeline(api_key, api_secret, sla_hours, months):
         payload = {
             "generated_at": datetime.utcnow().isoformat() + "Z",
             "sla_hours": sla_hours,
-            "months": months,
+            "weeks": weeks,
             "snapshot": snapshot,
             "history": history,
             "bucket_labels": [lb for lb, _, _ in AGING_BUCKETS],
@@ -486,7 +486,7 @@ def api_generate():
     api_key = data.get("api_key", "")
     api_secret = data.get("api_secret", "")
     sla_hours = data.get("sla_hours", 48)
-    months = data.get("months", 12)
+    weeks = data.get("weeks", 52)
     with state_lock:
         if state["status"] not in ("idle", "done", "error"):
             return jsonify({"error": "A generation is already in progress"}), 409
@@ -494,7 +494,7 @@ def api_generate():
         state["message"] = "Starting..."
         state["pct"] = 0
         state["error"] = None
-    Thread(target=run_pipeline, args=(api_key, api_secret, sla_hours, months), daemon=True).start()
+    Thread(target=run_pipeline, args=(api_key, api_secret, sla_hours, weeks), daemon=True).start()
     return jsonify({"ok": True})
 
 
@@ -613,7 +613,7 @@ function esc(s) {
 }
 
 document.getElementById('meta').textContent =
-  `Generated ${new Date(DATA.generated_at).toLocaleString()} · SLA: ${DATA.sla_hours}h · History window: ${DATA.months} months`;
+  `Generated ${new Date(DATA.generated_at).toLocaleString()} · SLA: ${DATA.sla_hours}h · History window: ${DATA.weeks} weeks`;
 
 // KPIs
 const snap = DATA.snapshot;

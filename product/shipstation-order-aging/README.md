@@ -28,7 +28,7 @@ Open **http://localhost:5058** in your browser (it opens automatically).
 ### Step 1: Login
 
 Enter your ShipStation V1 API key and secret, your SLA in hours (default 48),
-and how many months of history to analyze (default 12). **Credentials are held
+and how many weeks of history to analyze (default 52). **Credentials are held
 in memory for this run only and are never written to disk** — same as the
 ShipStation Image Tool.
 
@@ -39,7 +39,7 @@ The tool pulls:
   current aging snapshot, same buckets as ShipStation's built-in "Open Order
   Aging" report (`<1`, `1-2`, `2-4`, `4-8`, `8-24`, `24-36`, `36-48`, `48-72`,
   `72-96`, `96+` hours).
-- **Shipped orders** for the trailing N months — used to compute historical
+- **Shipped orders** for the trailing N weeks — used to compute historical
   fill-time trend (order date → ship date), split by week.
 - **Your account's ShipStation tags** (name + color) — embedded in the
   dashboard so you can filter by tag interactively after the fact (see below),
@@ -50,8 +50,8 @@ Both are split by warehouse location (Swanzey / Saratoga, or whatever your
 views.
 
 Requests are throttled to ~37/minute to stay under ShipStation's 40 req/min
-cap, so a full 12-month pull for a few thousand orders/month takes a few
-minutes — a progress bar shows what's happening.
+cap, so a full year (52 weeks) pull for a few thousand orders/month takes a
+few minutes — a progress bar shows what's happening.
 
 ### Step 3: Download
 
@@ -103,5 +103,80 @@ backend, CDN, or live API calls needed to view it.
 Regenerate in ShipStation → Settings → Account → API Settings.
 
 **Takes a long time** — expected for large history windows; each page of 500
-orders takes ~1.6s due to rate limiting. Reduce the "History (months)" field
+orders takes ~1.6s due to rate limiting. Reduce the "History (weeks)" field
 if you just want a faster look.
+
+## One-Click Weekly Report
+
+`weekly_report.py` is a one-click companion to the interactive tool, meant
+for a coworker to run without needing a ShipStation API key or the browser
+login flow. It reuses the same fetch/build logic, regenerates
+`fulfillment_dashboard.html`, and opens it — ready to attach to an email
+and send from whatever email client is already logged in.
+
+Since this is meant to run weekly, its history window defaults to **1 week**
+in `config.json` (vs. the interactive tool's 52-week default) — each report
+only covers the shipped-order activity since the last one, not a rolling
+year every time.
+
+**No email credentials are ever stored.** The only thing saved to disk is
+the ShipStation API key/secret (needed so the fetch can run without
+someone typing it in each time) — nothing that could send mail or access
+anything beyond ShipStation order data.
+
+### One-time setup
+
+1. Run the interactive tool (`start_dashboard_tool.bat`) at least once
+   first, so its `.venv` and dependencies already exist.
+2. Copy `config.example.json` to `config.json` (already gitignored — never
+   commit it) and fill in your ShipStation V1 API key/secret.
+3. Double-click `run_weekly_report.bat` to test it. It fetches fresh data,
+   regenerates `fulfillment_dashboard.html`, and opens it in your browser.
+
+### Weekly use
+
+Whoever's covering it double-clicks `run_weekly_report.bat`, waits for it
+to finish (progress prints in the console window), and attaches the
+dashboard that opens to an email themselves.
+
+## Auto-Published Version (GitHub Actions)
+
+There's also a fully automated path that needs no one to run anything
+locally: `.github/workflows/shipstation-weekly-report.yml` runs on a
+schedule (Sunday nights) and on-demand (the Actions tab's "Run workflow"
+button), fetches the same data, and commits the result as
+`weekly_dashboard.html` — which shows up as **"ShipStation Weekly Report
+(Auto)"** on the ch-tools dashboard, viewable directly with no
+download/attach step.
+
+This only works because the credential moves from a local file to a
+**GitHub Actions secret** — encrypted at rest, never exposed in the page
+itself (unlike a browser-side approach, which isn't possible anyway since
+GitHub Pages is fully static and ShipStation's API doesn't allow
+cross-origin browser requests).
+
+### One-time setup
+
+1. In the repo on GitHub: **Settings → Secrets and variables → Actions →
+   New repository secret**. Add two secrets:
+   - `SHIPSTATION_API_KEY`
+   - `SHIPSTATION_API_SECRET`
+
+   (Enter these directly on GitHub's site — never paste real credentials
+   into a chat/AI tool.)
+2. That's it. The workflow will run on its next scheduled trigger, or
+   manually via **Actions → ShipStation weekly report → Run workflow**.
+
+### Notes
+
+- The workflow writes an ephemeral `config.json` from the secrets, runs
+  `weekly_report.py` exactly as it runs locally, then deletes that file
+  before finishing — nothing from the secrets ever gets committed.
+- `weekly_dashboard.html` is a separate, deliberately-named file from the
+  gitignored `fulfillment_dashboard.html` used by the local tools — this
+  one *is* meant to be committed automatically every week.
+- The existing "Encrypt and deploy to Pages" workflow already re-runs on
+  every push to `master`, so once this workflow commits, the site
+  redeploys with the fresh report automatically — no extra wiring needed.
+- Cron schedules are UTC and don't follow daylight saving time, so the
+  actual local time drifts by an hour between EDT and EST.

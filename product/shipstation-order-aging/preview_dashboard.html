@@ -40,6 +40,8 @@
   .kpi .lbl { font-size:12px; color:var(--muted); }
   select { padding:6px 10px; border-radius:6px; border:1px solid var(--border); font-size:13px; }
   canvas { max-width:100%; }
+  .tag-cb-row { display:inline-flex; align-items:center; gap:6px; font-size:13px; margin:0 14px 8px 0; cursor:pointer; }
+  .tag-dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -59,6 +61,12 @@
     <canvas id="agingByLoc" height="220"></canvas>
   </div>
   <div class="card full">
+    <h2>Normal Order Aging &mdash; Weekend-Adjusted</h2>
+    <div id="tagFilters" style="margin-bottom:10px;"></div>
+    <div class="meta" id="normalMeta" style="margin-bottom:10px;"></div>
+    <canvas id="agingNormal" height="160"></canvas>
+  </div>
+  <div class="card full">
     <h2>Weekly Fill-Time Trend (avg hours to ship)</h2>
     <canvas id="trendChart" height="110"></canvas>
   </div>
@@ -74,10 +82,14 @@
     <h2>Currently Open &amp; Past SLA (sorted oldest first)</h2>
     <table id="breachTable"><thead><tr><th>Order #</th><th>Order Date</th><th>Hours Open</th><th>Location</th><th>Carrier</th><th>SKU</th><th>Status</th></tr></thead><tbody></tbody></table>
   </div>
+  <div class="card full">
+    <h2>Normal Orders Past SLA &mdash; Weekend-Adjusted (sorted oldest first)</h2>
+    <table id="normalBreachTable"><thead><tr><th>Order #</th><th>Order Date</th><th>Hours Open (Wknd-Adj)</th><th>Location</th><th>Carrier</th><th>SKU</th><th>Status</th></tr></thead><tbody></tbody></table>
+  </div>
 </div>
 
 <script>
-const DATA = {"generated_at": "2026-07-22T14:49:08.858291Z", "sla_hours": 48, "months": 12, "snapshot": {"overall_counts": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 1}, "overall_pct": {"<1": 0.0, "1-2": 0.0, "2-4": 33.3, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 33.3, "72-96": 0.0, "96+": 33.3}, "by_location_counts": {"Swanzey": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 0, "72-96": 0, "96+": 1}, "Saratoga": {"<1": 0, "1-2": 0, "2-4": 0, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 0}}, "by_location_pct": {"Swanzey": {"<1": 0.0, "1-2": 0.0, "2-4": 50.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 0.0, "72-96": 0.0, "96+": 50.0}, "Saratoga": {"<1": 0.0, "1-2": 0.0, "2-4": 0.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 100.0, "72-96": 0.0, "96+": 0.0}}, "breach_list": [{"orderNumber": "1003", "orderDate": "2026-07-18T10:49:08", "hoursOpen": 100.0, "location": "Swanzey", "carrier": "ups", "sku": "ABC", "status": "on_hold"}, {"orderNumber": "1002", "orderDate": "2026-07-20T02:49:08", "hoursOpen": 60.0, "location": "Saratoga", "carrier": "ups", "sku": "XYZ", "status": "awaiting_shipment"}], "total_open": 3}, "history": {"trend": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08"], "avg_fill_hours": [10.5, 15.0, 22.0, 27.5], "pct_breach": [0.0, 0.0, 0.0, 0.0], "by_location": {"Swanzey": [10.0, 15.0, 22.0, 27.0], "Saratoga": [11.0, 15.0, 22.0, 28.0]}}, "carrier_breakdown": {"ups": {"count": 10, "breach": 0}, "fedex": {"count": 10, "breach": 0}}, "top_sku_breaches": [{"sku": "XYZ", "count": 7, "breach": 0}, {"sku": "ABC", "count": 13, "breach": 0}]}, "bucket_labels": ["<1", "1-2", "2-4", "4-8", "8-24", "24-36", "36-48", "48-72", "72-96", "96+"]};
+const DATA = {"generated_at": "2026-07-22T14:49:08.858291Z", "sla_hours": 48, "weeks": 12, "snapshot": {"overall_counts": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 1}, "overall_pct": {"<1": 0.0, "1-2": 0.0, "2-4": 33.3, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 33.3, "72-96": 0.0, "96+": 33.3}, "by_location_counts": {"Swanzey": {"<1": 0, "1-2": 0, "2-4": 1, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 0, "72-96": 0, "96+": 1}, "Saratoga": {"<1": 0, "1-2": 0, "2-4": 0, "4-8": 0, "8-24": 0, "24-36": 0, "36-48": 0, "48-72": 1, "72-96": 0, "96+": 0}}, "by_location_pct": {"Swanzey": {"<1": 0.0, "1-2": 0.0, "2-4": 50.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 0.0, "72-96": 0.0, "96+": 50.0}, "Saratoga": {"<1": 0.0, "1-2": 0.0, "2-4": 0.0, "4-8": 0.0, "8-24": 0.0, "24-36": 0.0, "36-48": 0.0, "48-72": 100.0, "72-96": 0.0, "96+": 0.0}}, "breach_list": [{"orderNumber": "1003", "orderDate": "2026-07-18T10:49:08", "hoursOpen": 100.0, "location": "Swanzey", "carrier": "ups", "sku": "ABC", "status": "on_hold"}, {"orderNumber": "1002", "orderDate": "2026-07-20T02:49:08", "hoursOpen": 60.0, "location": "Saratoga", "carrier": "ups", "sku": "XYZ", "status": "awaiting_shipment"}], "total_open": 3, "order_detail": [{"orderNumber": "1001", "orderDate": "2026-07-21T20:49:08", "hoursOpen": 18.0, "normalHoursOpen": 18.0, "location": "Swanzey", "carrier": "fedex", "sku": "DEF", "status": "awaiting_shipment", "tagIds": []}, {"orderNumber": "1002", "orderDate": "2026-07-20T02:49:08", "hoursOpen": 60.0, "normalHoursOpen": 60.0, "location": "Saratoga", "carrier": "ups", "sku": "XYZ", "status": "awaiting_shipment", "tagIds": [2]}, {"orderNumber": "1003", "orderDate": "2026-07-18T10:49:08", "hoursOpen": 100.0, "normalHoursOpen": 76.0, "location": "Swanzey", "carrier": "ups", "sku": "ABC", "status": "on_hold", "tagIds": [1]}]}, "history": {"trend": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08"], "avg_fill_hours": [10.5, 15.0, 22.0, 27.5], "pct_breach": [0.0, 0.0, 0.0, 0.0], "by_location": {"Swanzey": [10.0, 15.0, 22.0, 27.0], "Saratoga": [11.0, 15.0, 22.0, 28.0]}}, "carrier_breakdown": {"ups": {"count": 10, "breach": 0}, "fedex": {"count": 10, "breach": 0}}, "top_sku_breaches": [{"sku": "XYZ", "count": 7, "breach": 0}, {"sku": "ABC", "count": 13, "breach": 0}]}, "bucket_labels": ["<1", "1-2", "2-4", "4-8", "8-24", "24-36", "36-48", "48-72", "72-96", "96+"], "bucket_ranges": [[0, 1], [1, 2], [2, 4], [4, 8], [8, 24], [24, 36], [36, 48], [48, 72], [72, 96], [96, Infinity]], "tag_catalog": {"1": {"name": "ISPU", "color": "#5b21b6"}, "2": {"name": "Problem", "color": "#dc2626"}}};
 
 function locTagClass(loc) {
   const l = (loc||"").toLowerCase();
@@ -86,8 +98,14 @@ function locTagClass(loc) {
   return "other";
 }
 
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
 document.getElementById('meta').textContent =
-  `Generated ${new Date(DATA.generated_at).toLocaleString()} · SLA: ${DATA.sla_hours}h · History window: ${DATA.months} months`;
+  `Generated ${new Date(DATA.generated_at).toLocaleString()} · SLA: ${DATA.sla_hours}h · History window: ${DATA.weeks} weeks`;
 
 // KPIs
 const snap = DATA.snapshot;
@@ -100,8 +118,9 @@ const kpis = [
   {num: breachCount, lbl: "Past SLA Now"},
   {num: breachPct + "%", lbl: "% Currently Breaching"},
   {num: (avgFillRecent!==null ? avgFillRecent+"h" : "—"), lbl: "Avg Fill Time (latest week)"},
+  {num: 0, lbl: "Normal Orders Past SLA (Wknd-Adj)", id: "kpiNormalBreach"},
 ];
-document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div class="num">${k.num}</div><div class="lbl">${k.lbl}</div></div>`).join('');
+document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div class="num"${k.id ? ` id="${k.id}"` : ''}>${k.num}</div><div class="lbl">${k.lbl}</div></div>`).join('');
 
 // Aging overall
 const labels = DATA.bucket_labels;
@@ -133,6 +152,68 @@ function renderLocChart(loc) {
 if (locs.length) renderLocChart(locs[0]);
 locSelect.addEventListener('change', e => renderLocChart(e.target.value));
 
+// Normal order aging — interactive: pick tags to exclude, live in the browser
+const orderDetail = snap.order_detail || [];
+const bucketRanges = DATA.bucket_ranges;
+function bucketForHours(hours) {
+  for (let i = 0; i < bucketRanges.length; i++) {
+    if (hours >= bucketRanges[i][0] && hours < bucketRanges[i][1]) return labels[i];
+  }
+  return labels[labels.length - 1];
+}
+
+const tagCatalog = DATA.tag_catalog || {};
+const presentTagIds = new Set();
+orderDetail.forEach(o => (o.tagIds || []).forEach(id => presentTagIds.add(id)));
+const presentTags = Array.from(presentTagIds).filter(id => tagCatalog[id]);
+const tagFilterBox = document.getElementById('tagFilters');
+tagFilterBox.innerHTML = presentTags.length
+  ? '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Exclude tagged orders from the "normal" view below:</div>' +
+    presentTags.map(id => `
+      <label class="tag-cb-row">
+        <input type="checkbox" class="tag-cb" value="${id}">
+        <span class="tag-dot" style="background:${esc(tagCatalog[id].color)}"></span>
+        ${esc(tagCatalog[id].name)}
+      </label>`).join('')
+  : '<div style="font-size:12px;color:var(--muted);">No tags found on currently-open orders.</div>';
+
+let normalChart;
+function recomputeNormal() {
+  const excluded = new Set(Array.from(document.querySelectorAll('.tag-cb:checked')).map(el => parseInt(el.value, 10)));
+  const normalOrders = orderDetail.filter(o => !(o.tagIds || []).some(id => excluded.has(id)));
+  const counts = {};
+  labels.forEach(l => counts[l] = 0);
+  const breaches = [];
+  normalOrders.forEach(o => {
+    counts[bucketForHours(o.normalHoursOpen)]++;
+    if (o.normalHoursOpen >= DATA.sla_hours) breaches.push(o);
+  });
+  breaches.sort((a, b) => b.normalHoursOpen - a.normalHoursOpen);
+  const total = normalOrders.length || 1;
+  const pct = labels.map(l => Math.round(1000 * counts[l] / total) / 10);
+
+  document.getElementById('normalMeta').textContent = normalOrders.length
+    ? `${normalOrders.length} normal orders analyzed (elapsed time skips full weekend days)`
+    : 'No normal orders to analyze (all open orders excluded, or there are none).';
+
+  if (normalChart) normalChart.destroy();
+  normalChart = new Chart(document.getElementById('agingNormal'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '% of normal open orders', data: pct, backgroundColor: barColors() }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => v + '%' } } } }
+  });
+
+  document.getElementById('kpiNormalBreach').textContent = breaches.length;
+
+  const normalBreachBody = document.querySelector('#normalBreachTable tbody');
+  normalBreachBody.innerHTML = breaches.map(o =>
+    `<tr><td>${esc(o.orderNumber)}</td><td>${o.orderDate ? esc(new Date(o.orderDate).toLocaleString()) : ''}</td><td>${o.normalHoursOpen}</td>` +
+    `<td><span class="tag ${locTagClass(o.location)}">${esc(o.location)}</span></td><td>${esc(o.carrier)}</td><td>${esc(o.sku)}</td><td>${esc(o.status)}</td></tr>`
+  ).join('');
+}
+document.querySelectorAll('.tag-cb').forEach(cb => cb.addEventListener('change', recomputeNormal));
+recomputeNormal();
+
 // Trend
 const trend = DATA.history.trend;
 const trendDatasets = [{ label: 'Overall avg fill time (h)', data: trend.avg_fill_hours, borderColor: '#5b21b6', backgroundColor: '#5b21b6', tension: 0.2 }];
@@ -159,14 +240,14 @@ new Chart(document.getElementById('carrierChart'), {
 // SKU table
 const skuBody = document.querySelector('#skuTable tbody');
 skuBody.innerHTML = DATA.history.top_sku_breaches.map(s =>
-  `<tr><td>${s.sku}</td><td>${s.count}</td><td>${s.breach}</td><td>${s.count ? Math.round(1000*s.breach/s.count)/10 : 0}%</td></tr>`
+  `<tr><td>${esc(s.sku)}</td><td>${s.count}</td><td>${s.breach}</td><td>${s.count ? Math.round(1000*s.breach/s.count)/10 : 0}%</td></tr>`
 ).join('');
 
 // Breach table
 const breachBody = document.querySelector('#breachTable tbody');
 breachBody.innerHTML = snap.breach_list.map(o =>
-  `<tr><td>${o.orderNumber||''}</td><td>${o.orderDate ? new Date(o.orderDate).toLocaleString() : ''}</td><td>${o.hoursOpen}</td>` +
-  `<td><span class="tag ${locTagClass(o.location)}">${o.location}</span></td><td>${o.carrier||''}</td><td>${o.sku||''}</td><td>${o.status||''}</td></tr>`
+  `<tr><td>${esc(o.orderNumber)}</td><td>${o.orderDate ? esc(new Date(o.orderDate).toLocaleString()) : ''}</td><td>${o.hoursOpen}</td>` +
+  `<td><span class="tag ${locTagClass(o.location)}">${esc(o.location)}</span></td><td>${esc(o.carrier)}</td><td>${esc(o.sku)}</td><td>${esc(o.status)}</td></tr>`
 ).join('');
 </script>
 </body>

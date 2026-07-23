@@ -1,0 +1,63 @@
+name: ShipStation weekly report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 03:00 UTC Monday ≈ Sunday 11:00 PM Eastern (drifts to ~10 PM Eastern
+    # during EST in winter — cron doesn't follow DST).
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shipstation-weekly-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: product/shipstation-order-aging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install flask requests
+
+      - name: Write ShipStation config
+        env:
+          SHIPSTATION_API_KEY: ${{ secrets.SHIPSTATION_API_KEY }}
+          SHIPSTATION_API_SECRET: ${{ secrets.SHIPSTATION_API_SECRET }}
+        run: |
+          python3 -c "
+          import json, os
+          json.dump({
+              'shipstation_api_key': os.environ['SHIPSTATION_API_KEY'],
+              'shipstation_api_secret': os.environ['SHIPSTATION_API_SECRET'],
+              'sla_hours': 48,
+              'weeks': 1,
+          }, open('config.json', 'w'))
+          "
+
+      - name: Generate report
+        run: python weekly_report.py
+
+      - name: Remove ephemeral config
+        if: always()
+        run: rm -f config.json
+
+      - name: Publish to dashboard
+        run: |
+          cp fulfillment_dashboard.html weekly_dashboard.html
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add weekly_dashboard.html
+          git diff --staged --quiet || git commit -m "Auto-update weekly ShipStation report"
+          git push

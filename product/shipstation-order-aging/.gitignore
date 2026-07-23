@@ -4,6 +4,12 @@
 fulfillment_dashboard.html
 *.log
 
+# --- Secrets ---
+# ShipStation API key/secret + Gmail app password for the unattended weekly
+# report. Real values live only in config.json on this machine; the
+# committed config.example.json has placeholders only.
+config.json
+
 # --- Python ---
 __pycache__/
 *.py[cod]

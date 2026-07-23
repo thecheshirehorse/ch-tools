@@ -217,6 +217,24 @@ const TOOLS = [
     cmd: "start_dashboard_tool.bat",
     note: "Double-click in product\\shipstation-order-aging",
   },
+  {
+    name: "ShipStation Weekly Report",
+    icon: "📧",
+    desc: "One-click version of the ShipStation Order Aging tool — no login needed. Fetches the latest week of data and opens a ready-to-email dashboard.",
+    type: "python",
+    category: "product",
+    private: true,
+    cmd: "run_weekly_report.bat",
+    note: "Double-click in product\\shipstation-order-aging",
+  },
+  {
+    name: "ShipStation Weekly Report (Auto)",
+    icon: "🗓️",
+    desc: "Auto-generated every Sunday night by GitHub Actions — click to view the latest week's fulfillment report directly, no download needed.",
+    type: "html",
+    category: "product",
+    url: "product/shipstation-order-aging/weekly_dashboard.html",
+  },
 
   // ── CUSTOMERS ─────────────────────────────────────────────
   {
