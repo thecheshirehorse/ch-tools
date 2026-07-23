@@ -64,12 +64,13 @@ def ss_request(method, path, api_key, api_secret, json_data=None, params=None):
     return resp.json() if resp.text else {}
 
 
-def fetch_warehouses(api_key, api_secret):
-    """Returns {warehouseId: displayName}."""
-    data = ss_request("GET", "/warehouses", api_key, api_secret)
+def fetch_stores(api_key, api_secret):
+    """Returns {storeId: storeName}. Cheshire Horse uses separate ShipStation
+    Stores (sales channels) per physical location, not separate Warehouses."""
+    data = ss_request("GET", "/stores", api_key, api_secret)
     out = {}
-    for w in data if isinstance(data, list) else data.get("warehouses", []):
-        out[w.get("warehouseId")] = w.get("warehouseName") or w.get("originAddress", {}).get("name") or "Unknown"
+    for s in data if isinstance(data, list) else data.get("stores", []):
+        out[s.get("storeId")] = s.get("storeName") or "Unknown"
     return out
 
 
@@ -153,12 +154,12 @@ def business_hours_elapsed(start, end, closed_weekdays=(5, 6)):
     return total
 
 
-def location_name(order, warehouses):
-    wid = (order.get("advancedOptions") or {}).get("warehouseId")
-    return warehouses.get(wid, "Unassigned")
+def location_name(order, stores):
+    sid = (order.get("advancedOptions") or {}).get("storeId")
+    return stores.get(sid, "Unassigned")
 
 
-def build_snapshot(open_orders, warehouses, sla_hours=24):
+def build_snapshot(open_orders, stores, sla_hours=24):
     """Current aging snapshot, overall + by location, plus the breach list.
 
     Also returns an `order_detail` row per open order (hours open, both raw
@@ -178,7 +179,7 @@ def build_snapshot(open_orders, warehouses, sla_hours=24):
             continue
         hours = (now - order_date).total_seconds() / 3600
         label = bucket_for_hours(hours)
-        loc = location_name(o, warehouses)
+        loc = location_name(o, stores)
         items = o.get("items") or []
         top_sku = items[0].get("sku") if items else ""
         carrier = o.get("carrierCode") or o.get("requestedShippingService") or ""
@@ -230,7 +231,7 @@ def build_snapshot(open_orders, warehouses, sla_hours=24):
     }
 
 
-def build_trend(shipped_orders, warehouses, sla_hours=24):
+def build_trend(shipped_orders, stores, sla_hours=24):
     """Weekly fill-time trend, overall + by location, from shipped orders."""
     weekly = {}  # week_start -> {"hours": [...], "loc": {loc: [hours...]}}
     carrier_counts = {}
@@ -244,7 +245,7 @@ def build_trend(shipped_orders, warehouses, sla_hours=24):
         fill_hours = (ship_date - order_date).total_seconds() / 3600
         if fill_hours < 0:
             continue
-        loc = location_name(o, warehouses)
+        loc = location_name(o, stores)
         week_start = (order_date - timedelta(days=order_date.weekday())).strftime("%Y-%m-%d")
 
         wk = weekly.setdefault(week_start, {"all": [], "loc": {}})
@@ -410,7 +411,7 @@ def run_pipeline(api_key, api_secret, sla_hours, weeks):
             state["status"] = "fetching_open"
             state["message"] = "Fetching open orders..."
 
-        warehouses = fetch_warehouses(api_key, api_secret)
+        stores = fetch_stores(api_key, api_secret)
         tag_catalog = {
             t["tagId"]: {"name": t.get("name") or f"Tag {t['tagId']}", "color": t.get("color") or "#999999"}
             for t in fetch_tags(api_key, api_secret)
@@ -445,8 +446,8 @@ def run_pipeline(api_key, api_secret, sla_hours, weeks):
             state["status"] = "building"
             state["message"] = "Building dashboard..."
 
-        snapshot = build_snapshot(open_orders, warehouses, sla_hours)
-        history = build_trend(shipped_orders, warehouses, sla_hours)
+        snapshot = build_snapshot(open_orders, stores, sla_hours)
+        history = build_trend(shipped_orders, stores, sla_hours)
 
         payload = {
             "generated_at": datetime.utcnow().isoformat() + "Z",
