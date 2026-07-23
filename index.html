@@ -70,6 +70,8 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg
 .copy-btn:hover{background:#d8eaf3}
 .card-note{font-size:10px;color:var(--text-faint);margin-top:-3px}
 .card-action{display:block;width:100%;padding:8px;text-align:center;font-size:12px;font-weight:600;border-radius:7px;cursor:pointer;text-decoration:none;border:none;margin-top:auto}
+.card-actions-row{display:flex;gap:8px;margin-top:auto}
+.card-actions-row .card-action{flex:1;width:auto;margin-top:0}
 .action-open{background:var(--green);color:#fff}
 .action-open:hover{background:var(--green-dark)}
 .action-cmd{background:#1a4a7a;color:#fff}
@@ -220,19 +222,12 @@ const TOOLS = [
   {
     name: "ShipStation Weekly Report",
     icon: "📧",
-    desc: "One-click version of the ShipStation Order Aging tool — no login needed. Fetches the latest week of data and opens a ready-to-email dashboard.",
+    desc: "Auto-generated every Sunday night by GitHub Actions — view the latest report with one click, or run it yourself locally for an on-demand refresh.",
     type: "python",
     category: "product",
     private: true,
     cmd: "run_weekly_report.bat",
     note: "Double-click in product\\shipstation-order-aging",
-  },
-  {
-    name: "ShipStation Weekly Report (Auto)",
-    icon: "🗓️",
-    desc: "Auto-generated every Sunday night by GitHub Actions — click to view the latest week's fulfillment report directly, no download needed.",
-    type: "html",
-    category: "product",
     url: "product/shipstation-order-aging/weekly_dashboard.html",
     actionLabel: "View Weekly Report →",
   },
@@ -381,6 +376,12 @@ function render() {
       let action = "";
       if (tool.private && !tool.url && !tool.cmd) {
         action = `<div class="card-action action-private">Private repo</div>`;
+      } else if (tool.url && tool.cmd) {
+        const safeCmd = tool.cmd.replace(/'/g, "\\'");
+        action = `<div class="card-actions-row">
+          <a href="${esc(tool.url)}" target="_blank" rel="noopener" class="card-action action-open">${esc(tool.actionLabel || "Open tool →")}</a>
+          <button class="card-action action-cmd" onclick="copyCmd(event,'${safeCmd}')">Copy command</button>
+        </div>`;
       } else if (tool.url) {
         action = `<a href="${esc(tool.url)}" target="_blank" rel="noopener" class="card-action action-open">${esc(tool.actionLabel || "Open tool →")}</a>`;
       } else if (tool.cmd) {
