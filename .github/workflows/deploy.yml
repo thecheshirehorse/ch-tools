@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
+  workflow_run:
+    # A push made with the default GITHUB_TOKEN (like the weekly report's
+    # auto-commit) doesn't trigger the `push` event above, to prevent
+    # infinite workflow loops — so listen for that workflow's completion
+    # directly instead.
+    workflows: ["ShipStation weekly report"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -16,6 +23,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
