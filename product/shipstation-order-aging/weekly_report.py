@@ -40,7 +40,7 @@ def load_config():
 def build_dashboard_html(config):
     api_key = config["shipstation_api_key"]
     api_secret = config["shipstation_api_secret"]
-    sla_hours = config.get("sla_hours", 48)
+    sla_hours = config.get("sla_hours", 24)
     weeks = config.get("weeks", 1)
 
     print("Fetching warehouses and tags...")

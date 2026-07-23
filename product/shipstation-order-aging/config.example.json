@@ -1,6 +1,6 @@
 {
   "shipstation_api_key": "PASTE_YOUR_SHIPSTATION_API_KEY_HERE",
   "shipstation_api_secret": "PASTE_YOUR_SHIPSTATION_API_SECRET_HERE",
-  "sla_hours": 48,
+  "sla_hours": 24,
   "weeks": 1
 }

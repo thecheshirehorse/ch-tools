@@ -158,7 +158,7 @@ def location_name(order, warehouses):
     return warehouses.get(wid, "Unassigned")
 
 
-def build_snapshot(open_orders, warehouses, sla_hours=48):
+def build_snapshot(open_orders, warehouses, sla_hours=24):
     """Current aging snapshot, overall + by location, plus the breach list.
 
     Also returns an `order_detail` row per open order (hours open, both raw
@@ -230,7 +230,7 @@ def build_snapshot(open_orders, warehouses, sla_hours=48):
     }
 
 
-def build_trend(shipped_orders, warehouses, sla_hours=48):
+def build_trend(shipped_orders, warehouses, sla_hours=24):
     """Weekly fill-time trend, overall + by location, from shipped orders."""
     weekly = {}  # week_start -> {"hours": [...], "loc": {loc: [hours...]}}
     carrier_counts = {}
@@ -350,7 +350,7 @@ LOGIN_HTML = r"""
   <div class="row">
     <div>
       <label>SLA (hours)</label>
-      <input type="number" id="sla_hours" value="48">
+      <input type="number" id="sla_hours" value="24">
     </div>
     <div>
       <label>History (weeks)</label>
@@ -366,7 +366,7 @@ LOGIN_HTML = r"""
 async function generate() {
   const api_key = document.getElementById('api_key').value.trim();
   const api_secret = document.getElementById('api_secret').value.trim();
-  const sla_hours = parseInt(document.getElementById('sla_hours').value) || 48;
+  const sla_hours = parseInt(document.getElementById('sla_hours').value) || 24;
   const weeks = parseInt(document.getElementById('weeks').value) || 52;
   if (!api_key || !api_secret) { alert('Enter API key and secret'); return; }
 
@@ -485,7 +485,7 @@ def api_generate():
     data = request.get_json(force=True)
     api_key = data.get("api_key", "")
     api_secret = data.get("api_secret", "")
-    sla_hours = data.get("sla_hours", 48)
+    sla_hours = data.get("sla_hours", 24)
     weeks = data.get("weeks", 52)
     with state_lock:
         if state["status"] not in ("idle", "done", "error"):
@@ -632,7 +632,7 @@ document.getElementById('kpis').innerHTML = kpis.map(k => `<div class="kpi"><div
 
 // Aging overall
 const labels = DATA.bucket_labels;
-const slaIdx = labels.indexOf("48-72");
+const slaIdx = DATA.bucket_ranges.findIndex(r => r[0] >= DATA.sla_hours);
 function barColors() {
   return labels.map((_, i) => i >= slaIdx ? "#dc2626" : "#5b21b6");
 }

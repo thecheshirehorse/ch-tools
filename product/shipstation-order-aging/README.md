@@ -27,7 +27,7 @@ Open **http://localhost:5058** in your browser (it opens automatically).
 
 ### Step 1: Login
 
-Enter your ShipStation V1 API key and secret, your SLA in hours (default 48),
+Enter your ShipStation V1 API key and secret, your SLA in hours (default 24),
 and how many weeks of history to analyze (default 52). **Credentials are held
 in memory for this run only and are never written to disk** — same as the
 ShipStation Image Tool.

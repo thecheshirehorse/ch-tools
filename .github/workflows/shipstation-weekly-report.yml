@@ -41,7 +41,7 @@ jobs:
           json.dump({
               'shipstation_api_key': os.environ['SHIPSTATION_API_KEY'],
               'shipstation_api_secret': os.environ['SHIPSTATION_API_SECRET'],
-              'sla_hours': 48,
+              'sla_hours': 24,
               'weeks': 1,
           }, open('config.json', 'w'))
           "
