@@ -234,6 +234,7 @@ const TOOLS = [
     type: "html",
     category: "product",
     url: "product/shipstation-order-aging/weekly_dashboard.html",
+    actionLabel: "View Weekly Report →",
   },
 
   // ── CUSTOMERS ─────────────────────────────────────────────
@@ -381,7 +382,7 @@ function render() {
       if (tool.private && !tool.url && !tool.cmd) {
         action = `<div class="card-action action-private">Private repo</div>`;
       } else if (tool.url) {
-        action = `<a href="${esc(tool.url)}" target="_blank" rel="noopener" class="card-action action-open">Open tool →</a>`;
+        action = `<a href="${esc(tool.url)}" target="_blank" rel="noopener" class="card-action action-open">${esc(tool.actionLabel || "Open tool →")}</a>`;
       } else if (tool.cmd) {
         const safeCmd = tool.cmd.replace(/'/g, "\\'");
         action = `<button class="card-action action-cmd" onclick="copyCmd(event,'${safeCmd}')">Copy command</button>`;
