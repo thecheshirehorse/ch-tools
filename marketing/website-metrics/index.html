@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Metrics · Cheshire Horse</title>
+<link rel="icon" href="favicon.ico">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #f6f8f6;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.15);
+    --border-strong: rgba(0,0,0,0.3);
+    --text: #1b231f;
+    --text-muted: #57645c;
+    --accent: #056A45;
+    --accent-bg: #e3f3ec;
+    --danger: #A32D2D;
+    --danger-bg: #FCEBEB;
+    --success: #0F6E56;
+    --success-bg: #E1F5EE;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.5;
+    font-size:14px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  header{background:linear-gradient(135deg,#034a31,#056A45 60%,#0e8f5e);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  header h1{font-size:19px;font-weight:700;letter-spacing:-0.2px;margin:0}
+  header p{font-size:12px;color:rgba(255,255,255,0.7);margin:3px 0 0}
+  .ch-brand-row{display:flex;align-items:center;gap:14px}
+  .ch-divider{opacity:.4;font-size:13px;font-weight:300}
+  .ch-back{font-size:12px;color:rgba(255,255,255,.85);text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:4px 10px;border-radius:20px;white-space:nowrap}
+  .ch-back:hover{background:rgba(255,255,255,.15)}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    background:var(--surface);
+    border-bottom:0.5px solid var(--border);
+    padding:0 28px;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:500;
+    background:transparent;
+    color:var(--text-muted);
+    border:none;
+    border-bottom:2px solid transparent;
+    padding:13px 16px;
+    cursor:pointer;
+  }
+  nav.tabs button.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+  nav.tabs button:hover:not(.active){ color:var(--text); }
+
+  .container{ max-width:1280px; margin:0 auto; padding:24px 28px 60px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .panel{
+    background:var(--surface);
+    border:0.5px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .toolbar .meta{ font-size:12px; color:var(--text-muted); }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  h2.section-title{
+    font-size:20px;
+    font-weight:600;
+    margin:0 0 6px 0;
+  }
+  p.section-sub{
+    font-size:13.5px;
+    color:var(--text-muted);
+    margin:0 0 20px 0;
+    max-width:720px;
+  }
+
+  h3.subsection-title{
+    font-size:16px;
+    font-weight:600;
+    margin:32px 0 4px 0;
+  }
+  .view h3.subsection-title:first-of-type{ margin-top:6px; }
+
+  details.howto{ margin:4px 0 16px 0; }
+  details.howto summary{
+    cursor:pointer; font-size:12px; color:var(--text-muted);
+  }
+  details.howto .howto-body{
+    margin-top:8px; padding:12px 14px; background:var(--accent-bg); border-radius:8px;
+    font-size:13px; color:var(--text); max-width:760px;
+  }
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:14px; margin-bottom:8px; }
+  .stat-tile{ background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .stat-tile .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); margin-bottom:6px; }
+  .stat-tile .value{ font-size:23px; font-weight:700; line-height:1.2; }
+  .stat-tile .sub{ font-size:12px; color:var(--text-muted); margin-top:5px; }
+
+  .table-scroll{ overflow-x:auto; background:var(--surface); border:0.5px solid var(--border); border-radius:12px; }
+  table.metric-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.metric-table th, table.metric-table td{ padding:8px 10px; text-align:right; border-bottom:0.5px solid var(--border); white-space:nowrap; }
+  table.metric-table th:first-child, table.metric-table td:first-child{ text-align:left; }
+  table.metric-table thead th{ font-weight:500; font-size:12px; color:var(--text-muted); border-bottom:0.5px solid var(--border); background:var(--bg); position:sticky; top:0; }
+  table.metric-table tbody tr:hover{ background:var(--bg); }
+  table.metric-table td.yoy-col, table.metric-table th.yoy-col{ color:var(--text-muted); font-size:12px; }
+  table.metric-table tr.ytd-row td{ font-weight:600; border-top:1.5px solid var(--text); }
+  table.metric-table td.ro{ color:var(--text); }
+
+  .cell-input{
+    width:92px; text-align:right; font-family:inherit; font-size:13px;
+    border:0.5px solid transparent; background:transparent; padding:5px 6px; border-radius:6px; color:var(--text);
+  }
+  .cell-input:hover{ border-color:var(--border); }
+  .cell-input:focus{ border-color:var(--accent); outline:none; background:var(--bg); }
+  .cell-input.narrow{ width:66px; }
+
+  .delta{ font-weight:600; }
+  .delta.up{ color:var(--success); }
+  .delta.down{ color:var(--danger); }
+  .delta.flat{ color:var(--text-muted); }
+
+  .year-picker{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .year-picker button{
+    font-family:inherit; font-size:13px; font-weight:500; padding:7px 16px; border-radius:8px;
+    border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text); cursor:pointer;
+  }
+  .year-picker button.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .year-picker button:hover:not(.active){ background:var(--bg); }
+
+  .charts-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+  @media (max-width:900px){ .charts-grid{ grid-template-columns:1fr; } }
+  .chart-box{ background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:14px; }
+  .chart-box h4{ font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); margin:0 0 10px 0; }
+  .chart-box canvas{ max-height:230px; }
+
+  .disclaimer{ font-size:12px; color:var(--text-muted); max-width:760px; margin:14px 0 0 0; font-style:italic; }
+
+  button{
+    font-family:inherit; font-size:13px; font-weight:500;
+    padding:8px 14px; border-radius:8px; cursor:pointer;
+    background:var(--surface); color:var(--text);
+    border:0.5px solid var(--border-strong);
+    transition:background 0.15s;
+  }
+  button:hover{ background:var(--bg); }
+  button.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.primary:hover{ background:#034a31; }
+  button.danger-outline{ color:var(--danger); border-color:var(--danger); background:var(--surface); }
+  button.danger-outline:hover{ background:var(--danger-bg); }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--text); color:#fff; border:0.5px solid var(--accent);
+    padding:11px 20px; border-radius:8px; font-size:13px;
+    opacity:0; pointer-events:none; transition:opacity 0.25s ease;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; }
+
+  .credit-footer{
+    max-width:1280px; margin:8px auto 24px; padding:16px 28px 0;
+    border-top:0.5px solid var(--border);
+    text-align:center; color:var(--text-muted); font-size:12px;
+  }
+  .credit-footer code{ color:var(--accent); background:var(--accent-bg); padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ch-brand-row">
+    <img src="../../assets/logo-white.svg" alt="Cheshire Horse" style="height:26px;width:auto;display:block">
+    <span class="ch-divider">|</span>
+    <div>
+      <h1>Website Metrics</h1>
+      <p>Monthly revenue, site visits, shipping &amp; search performance — tracked year over year</p>
+    </div>
+  </div>
+  <a href="../../index.html" class="ch-back">&larr; All tools</a>
+</header>
+
+<nav class="tabs">
+  <button data-view="overview" class="active">Overview</button>
+  <button data-view="revenue">Revenue</button>
+  <button data-view="visits">Site Visits</button>
+  <button data-view="shipping">Shipping</button>
+  <button data-view="gsc">Search Console</button>
+</nav>
+
+<div class="container">
+
+  <div class="panel toolbar">
+    <div class="meta" id="datasetMeta">loading…</div>
+    <div class="actions">
+      <button type="button" id="exportBtn">Export data</button>
+      <button type="button" class="danger-outline" id="clearBtn">Clear my local edits</button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="view active" id="view-overview">
+    <h2 class="section-title">Overview</h2>
+    <p class="section-sub">Year-to-date snapshot across every tracked source, compared to the same months last year.</p>
+    <div class="stat-grid" id="overviewStats"></div>
+  </section>
+
+  <!-- REVENUE -->
+  <section class="view" id="view-revenue">
+    <h2 class="section-title">Revenue</h2>
+    <p class="section-sub">Three independent revenue trackers — they are not additive (a Klaviyo-attributed order also counts toward GA's total, for example).</p>
+    <div id="revenueSections"></div>
+    <p class="disclaimer">Epicor (Eagle) shows the amount paid to us for orders shipped. Google Analytics shows the full transaction amount of orders placed on the website. It's normal for them to differ due to back orders, cancelled orders, discounts offered and adjusted, etc.</p>
+  </section>
+
+  <!-- SITE VISITS -->
+  <section class="view" id="view-visits">
+    <h2 class="section-title">Site Visits &amp; Registrations</h2>
+    <p class="section-sub">One row per calendar year.</p>
+    <div id="visitsTableWrap"></div>
+    <div class="charts-grid">
+      <div class="chart-box"><h4>Visits by year</h4><canvas id="visitsChart"></canvas></div>
+      <div class="chart-box"><h4>Total registered shoppers</h4><canvas id="registeredChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- SHIPPING -->
+  <section class="view" id="view-shipping">
+    <h2 class="section-title">Shipping &amp; Fulfillment</h2>
+    <p class="section-sub">Shipping Loss and Sales − Shipping Loss are calculated automatically from Collected/Cost/Sales — they're never entered directly, so they can't drift out of sync.</p>
+    <details class="howto"><summary>Where do these numbers come from?</summary>
+      <div class="howto-body">
+        Go to Insights &gt; Reports &gt; Shipping Cost (and Order Detail for Order Sales). Select SFCC Production, set the date range, then Export to CSV. In the export, sum the Order # column for Orders Shipped, Shipping Paid for Shipping Collected, Shipping Cost for Shipping Cost, Insurance Cost, Weight Shipped, and Items.
+      </div>
+    </details>
+    <div class="year-picker" id="shippingYearPicker"></div>
+    <div id="shippingTableWrap"></div>
+    <div class="charts-grid">
+      <div class="chart-box"><h4>Order sales by month — selected year vs. prior year</h4><canvas id="shippingChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- SEARCH CONSOLE -->
+  <section class="view" id="view-gsc">
+    <h2 class="section-title">Google Search Console</h2>
+    <p class="section-sub">Monthly organic search performance, year over year.</p>
+    <details class="howto"><summary>Where do these numbers come from?</summary>
+      <div class="howto-body">
+        Google Search Console &gt; Performance &gt; Search Results. Set a custom date range for each month and hover over the metrics for exact numbers.
+      </div>
+    </details>
+    <div id="gscSections"></div>
+  </section>
+
+</div>
+
+<div class="credit-footer">Website Metrics — data stays in your browser until you export it · to publish an update for everyone, run <code>python update_data.py &lt;exported.json&gt;</code> in this folder and commit</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// BEGIN SEED_DATA
+const SEED_DATA = {
+  "meta": {
+    "seededOn": "2026-07-24",
+    "note": "Initial import from the 'Website Metrics' Google Sheet. Revenue figures use the sheet's canonical multi-year per-source tables (Revenue (Eagle) / (Google Analytics) / (Klaviyo)); a couple of Aug/Sep 2025 GA cells differ slightly from an older duplicate snapshot elsewhere in that sheet and should be spot-checked against the live source. The 2023 'New Registered Shoppers' figure (228,027) also looks like an outlier compared to Total Registered Shoppers growth in surrounding years and is worth double-checking."
+  },
+  "revenue": {
+    "eagle": {
+      "2023-12": 80087.68,
+      "2024-01": 142850.69,
+      "2024-02": 135620.44,
+      "2024-03": 157661.33,
+      "2024-04": 184367.56,
+      "2024-05": 181319.74,
+      "2024-06": 151257.3,
+      "2024-07": 153880.61,
+      "2024-08": 178358.68,
+      "2024-09": 172799.26,
+      "2024-10": 184346.35,
+      "2024-11": 242997.93,
+      "2024-12": 235688.6,
+      "2025-01": 173115.36,
+      "2025-02": 130769.09,
+      "2025-03": 146191.88,
+      "2025-04": 175457.49,
+      "2025-05": 197814.66,
+      "2025-06": 151649.57,
+      "2025-07": 177486.89,
+      "2025-08": 152660.95,
+      "2025-09": 188826.69,
+      "2025-10": 180292.78,
+      "2025-11": 230929.3,
+      "2025-12": 284252.17,
+      "2026-01": 184782.19,
+      "2026-02": 117792.95,
+      "2026-03": 155621.0
+    },
+    "ga": {
+      "2022-09": 102547.48,
+      "2022-10": 127276.75,
+      "2022-11": 209387.22,
+      "2022-12": 162920.31,
+      "2023-01": 136745.66,
+      "2023-02": 133211.51,
+      "2023-03": 124807.13,
+      "2023-04": 131792.2,
+      "2023-05": 163578.59,
+      "2023-06": 134810.62,
+      "2023-07": 142659.62,
+      "2023-08": 131043.96,
+      "2023-09": 145706.55,
+      "2023-10": 126173.48,
+      "2023-11": 238219.03,
+      "2023-12": 184520.75,
+      "2024-01": 118059.21,
+      "2024-02": 117804.68,
+      "2024-03": 147638.2,
+      "2024-04": 159063.33,
+      "2024-05": 150102.98,
+      "2024-06": 136379.02,
+      "2024-07": 138380.27,
+      "2024-08": 148327.13,
+      "2024-09": 150178.18,
+      "2024-10": 168951.27,
+      "2024-11": 264677.01,
+      "2024-12": 195310.38,
+      "2025-01": 146930.91,
+      "2025-02": 120420.54,
+      "2025-03": 137779.85,
+      "2025-04": 158290.71,
+      "2025-05": 182619.4,
+      "2025-06": 130741.88,
+      "2025-07": 160241.85,
+      "2025-08": 151138.54,
+      "2025-09": 147615.28,
+      "2025-10": 161552.37,
+      "2025-11": 230477.41,
+      "2025-12": 230128.05,
+      "2026-01": 153746.37,
+      "2026-02": 107890.7,
+      "2026-03": 133989.55
+    },
+    "klaviyo": {
+      "2022-01": 153332.77,
+      "2022-02": 107503.42,
+      "2022-03": 139332.59,
+      "2022-04": 137361.92,
+      "2022-05": 137983.51,
+      "2022-06": 116280.77,
+      "2022-07": 139214.86,
+      "2022-08": 123459.95,
+      "2022-09": 157249.09,
+      "2022-10": 146424.15,
+      "2022-11": 234218.34,
+      "2022-12": 187424.7,
+      "2023-01": 159905.88,
+      "2023-02": 146779.34,
+      "2023-03": 146469.76,
+      "2023-04": 157184.98,
+      "2023-05": 187730.93,
+      "2023-06": 157957.32,
+      "2023-07": 169003.62,
+      "2023-08": 157201.69,
+      "2023-09": 173107.58,
+      "2023-10": 149345.09,
+      "2023-11": 265436.95,
+      "2023-12": 216564.77,
+      "2024-01": 143254.8,
+      "2024-02": 145983.75,
+      "2024-03": 175901.9,
+      "2024-04": 192284.11,
+      "2024-05": 187716.25,
+      "2024-06": 162914.31,
+      "2024-07": 166749.89,
+      "2024-08": 181765.91,
+      "2024-09": 182406.94,
+      "2024-10": 200946.5,
+      "2024-11": 281722.07,
+      "2024-12": 233219.0,
+      "2025-01": 175324.72,
+      "2025-02": 144205.82,
+      "2025-03": 165655.28,
+      "2025-04": 186300.67,
+      "2025-05": 215058.39,
+      "2025-06": 155094.16,
+      "2025-07": 190916.65,
+      "2025-08": 180323.59,
+      "2025-09": 180590.8,
+      "2025-10": 191847.07,
+      "2025-11": 278198.21,
+      "2025-12": 282989.99,
+      "2026-01": 176180.12,
+      "2026-02": 129383.66,
+      "2026-03": 164324.15
+    }
+  },
+  "siteVisits": {
+    "2021": {
+      "visits": 997704,
+      "avgDurationSec": 54,
+      "revenuePerVisit": 0.9,
+      "newRegistered": 3476,
+      "totalRegistered": 23712
+    },
+    "2022": {
+      "visits": 1455863,
+      "avgDurationSec": 61,
+      "revenuePerVisit": 1.13,
+      "newRegistered": 4421,
+      "totalRegistered": 28166
+    },
+    "2023": {
+      "visits": 585704,
+      "avgDurationSec": 164,
+      "revenuePerVisit": 3.26,
+      "newRegistered": 228027,
+      "totalRegistered": 33872
+    },
+    "2024": {
+      "visits": 569130,
+      "avgDurationSec": 171,
+      "revenuePerVisit": 3.65,
+      "newRegistered": 5374,
+      "totalRegistered": 39269
+    },
+    "2025": {
+      "visits": 595056,
+      "avgDurationSec": 168,
+      "revenuePerVisit": 3.65,
+      "newRegistered": 4450,
+      "totalRegistered": 43726
+    }
+  },
+  "shipping": {
+    "2023-01": {
+      "ordersShipped": 2655,
+      "orderSales": 139960.83,
+      "shippingCollected": 11794.38,
+      "shippingCost": 20317.76,
+      "insuranceCost": 660.4,
+      "weightShippedOz": 177535,
+      "itemsShipped": 4745
+    },
+    "2023-02": {
+      "ordersShipped": 2187,
+      "orderSales": 127241.44,
+      "shippingCollected": 11169.95,
+      "shippingCost": 18143.83,
+      "insuranceCost": 271.1,
+      "weightShippedOz": 153093,
+      "itemsShipped": 4056
+    },
+    "2023-03": {
+      "ordersShipped": 2502,
+      "orderSales": 123294.02,
+      "shippingCollected": 11847.97,
+      "shippingCost": 19573.3,
+      "insuranceCost": 169.2,
+      "weightShippedOz": 174444,
+      "itemsShipped": 4354
+    },
+    "2023-04": {
+      "ordersShipped": 2682,
+      "orderSales": 134300.83,
+      "shippingCollected": 11764.04,
+      "shippingCost": 19250.12,
+      "insuranceCost": 282.1,
+      "weightShippedOz": 172991,
+      "itemsShipped": 4500
+    },
+    "2023-05": {
+      "ordersShipped": 2860,
+      "orderSales": 165000.6,
+      "shippingCollected": 14743.28,
+      "shippingCost": 24094.25,
+      "insuranceCost": 546.9,
+      "weightShippedOz": 210486,
+      "itemsShipped": 4779
+    },
+    "2023-06": {
+      "ordersShipped": 2576,
+      "orderSales": 139872.89,
+      "shippingCollected": 14040.56,
+      "shippingCost": 22468.96,
+      "insuranceCost": 504.45,
+      "weightShippedOz": 196988,
+      "itemsShipped": 4859
+    },
+    "2023-07": {
+      "ordersShipped": 2755,
+      "orderSales": 147567.43,
+      "shippingCollected": 13364.27,
+      "shippingCost": 20899.67,
+      "insuranceCost": 266.4,
+      "weightShippedOz": 193124,
+      "itemsShipped": 4537
+    },
+    "2023-08": {
+      "ordersShipped": 2696,
+      "orderSales": 140234.06,
+      "shippingCollected": 13537.25,
+      "shippingCost": 22150.03,
+      "insuranceCost": 400.6,
+      "weightShippedOz": 200879,
+      "itemsShipped": 4825
+    },
+    "2023-09": {
+      "ordersShipped": 3127,
+      "orderSales": 159875.42,
+      "shippingCollected": 12033.43,
+      "shippingCost": 20410.99,
+      "insuranceCost": 166.35,
+      "weightShippedOz": 172649,
+      "itemsShipped": 4806
+    },
+    "2023-10": {
+      "ordersShipped": 2605,
+      "orderSales": 141252.42,
+      "shippingCollected": 10840.85,
+      "shippingCost": 19065.38,
+      "insuranceCost": 136.5,
+      "weightShippedOz": 162503,
+      "itemsShipped": 4522
+    },
+    "2023-11": {
+      "ordersShipped": 5206,
+      "orderSales": 261081.22,
+      "shippingCollected": 16136.62,
+      "shippingCost": 27171.32,
+      "insuranceCost": 500.2,
+      "weightShippedOz": 219154,
+      "itemsShipped": 6683
+    },
+    "2023-12": {
+      "ordersShipped": 3784,
+      "orderSales": 222529.58,
+      "shippingCollected": 14767.88,
+      "shippingCost": 24085.51,
+      "insuranceCost": 533.0,
+      "weightShippedOz": 179706,
+      "itemsShipped": 5779
+    },
+    "2024-01": {
+      "ordersShipped": 2376,
+      "orderSales": 132854.16,
+      "shippingCollected": 13515.49,
+      "shippingCost": 19171.67,
+      "insuranceCost": 152.6,
+      "weightShippedOz": 201492,
+      "itemsShipped": 4386
+    },
+    "2024-02": {
+      "ordersShipped": 2273,
+      "orderSales": 137312.85,
+      "shippingCollected": 12285.85,
+      "shippingCost": 17628.32,
+      "insuranceCost": 214.2,
+      "weightShippedOz": 163789,
+      "itemsShipped": 4095
+    },
+    "2024-03": {
+      "ordersShipped": 2823,
+      "orderSales": 160653.41,
+      "shippingCollected": 12826.65,
+      "shippingCost": 19852.09,
+      "insuranceCost": 312.2,
+      "weightShippedOz": 174223,
+      "itemsShipped": 4664
+    },
+    "2024-04": {
+      "ordersShipped": 3103,
+      "orderSales": 190302.25,
+      "shippingCollected": 14369.34,
+      "shippingCost": 22601.93,
+      "insuranceCost": 407.4,
+      "weightShippedOz": 192099,
+      "itemsShipped": 4846
+    },
+    "2024-05": {
+      "ordersShipped": 2944,
+      "orderSales": 177140.32,
+      "shippingCollected": 14730.0,
+      "shippingCost": 22870.98,
+      "insuranceCost": 246.4,
+      "weightShippedOz": 199344,
+      "itemsShipped": 5003
+    },
+    "2024-06": {
+      "ordersShipped": 2592,
+      "orderSales": 151504.64,
+      "shippingCollected": 12550.76,
+      "shippingCost": 19231.02,
+      "insuranceCost": 44.8,
+      "weightShippedOz": 176785,
+      "itemsShipped": 4396
+    },
+    "2024-07": {
+      "ordersShipped": 2775,
+      "orderSales": 161506.84,
+      "shippingCollected": 12819.93,
+      "shippingCost": 19954.13,
+      "insuranceCost": 214.2,
+      "weightShippedOz": 177801,
+      "itemsShipped": 4758
+    },
+    "2024-08": {
+      "ordersShipped": 2902,
+      "orderSales": 181936.76,
+      "shippingCollected": 14274.08,
+      "shippingCost": 22361.04,
+      "insuranceCost": 404.6,
+      "weightShippedOz": 197000,
+      "itemsShipped": 5139
+    },
+    "2024-09": {
+      "ordersShipped": 3270,
+      "orderSales": 178800.21,
+      "shippingCollected": 12301.8,
+      "shippingCost": 20807.39,
+      "insuranceCost": 257.6,
+      "weightShippedOz": 172053,
+      "itemsShipped": 5854
+    },
+    "2024-10": {
+      "ordersShipped": 3686,
+      "orderSales": 184121.93,
+      "shippingCollected": 13307.18,
+      "shippingCost": 22552.18,
+      "insuranceCost": 176.4,
+      "weightShippedOz": 177183,
+      "itemsShipped": 5729
+    },
+    "2024-11": {
+      "ordersShipped": 5415,
+      "orderSales": 283758.53,
+      "shippingCollected": 14190.97,
+      "shippingCost": 27000.69,
+      "insuranceCost": 347.0,
+      "weightShippedOz": 213959,
+      "itemsShipped": 6990
+    },
+    "2024-12": {
+      "ordersShipped": 4588,
+      "orderSales": 216470.31,
+      "shippingCollected": 14640.94,
+      "shippingCost": 28330.13,
+      "insuranceCost": 135.8,
+      "weightShippedOz": 184637,
+      "itemsShipped": 6571
+    },
+    "2025-01": {
+      "ordersShipped": 2700,
+      "orderSales": 166930.65,
+      "shippingCollected": 12631.23,
+      "shippingCost": 21379.37,
+      "insuranceCost": 15.0,
+      "weightShippedOz": 163665,
+      "itemsShipped": 4550
+    },
+    "2025-02": {
+      "ordersShipped": 2411,
+      "orderSales": 138558.64,
+      "shippingCollected": 9884.49,
+      "shippingCost": 17375.64,
+      "insuranceCost": 126.0,
+      "weightShippedOz": 136115,
+      "itemsShipped": 3695
+    },
+    "2025-03": {
+      "ordersShipped": 2670,
+      "orderSales": 159927.27,
+      "shippingCollected": 11741.25,
+      "shippingCost": 19065.81,
+      "insuranceCost": 31.5,
+      "weightShippedOz": 147857,
+      "itemsShipped": 4223
+    },
+    "2025-04": {
+      "ordersShipped": 3158,
+      "orderSales": 176428.88,
+      "shippingCollected": 14511.22,
+      "shippingCost": 23741.94,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 193249,
+      "itemsShipped": 5084
+    },
+    "2025-05": {
+      "ordersShipped": 3394,
+      "orderSales": 214001.99,
+      "shippingCollected": 13125.62,
+      "shippingCost": 23684.67,
+      "insuranceCost": 126.0,
+      "weightShippedOz": 183879,
+      "itemsShipped": 4877
+    },
+    "2025-06": {
+      "ordersShipped": 2396,
+      "orderSales": 149487.88,
+      "shippingCollected": 12215.75,
+      "shippingCost": 20466.03,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 160523,
+      "itemsShipped": 4051
+    },
+    "2025-07": {
+      "ordersShipped": 3164,
+      "orderSales": 181868.34,
+      "shippingCollected": 13419.18,
+      "shippingCost": 23324.46,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 176175,
+      "itemsShipped": 5118
+    },
+    "2025-08": {
+      "ordersShipped": 1624,
+      "orderSales": 179583.85,
+      "shippingCollected": 12284.42,
+      "shippingCost": 20056.59,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 165881,
+      "itemsShipped": 4277
+    },
+    "2025-09": {
+      "ordersShipped": 1608,
+      "orderSales": 182068.3,
+      "shippingCollected": 13636.91,
+      "shippingCost": 24202.2,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 181916,
+      "itemsShipped": 5613
+    },
+    "2025-10": {
+      "ordersShipped": 2755,
+      "orderSales": 179118.7,
+      "shippingCollected": 12567.29,
+      "shippingCost": 22086.54,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 156963,
+      "itemsShipped": 4569
+    },
+    "2025-11": {
+      "ordersShipped": 1826,
+      "orderSales": 215853.41,
+      "shippingCollected": 13368.44,
+      "shippingCost": 28462.68,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 173717,
+      "itemsShipped": 5214
+    },
+    "2025-12": {
+      "ordersShipped": 2765,
+      "orderSales": 252598.13,
+      "shippingCollected": 17461.27,
+      "shippingCost": 35427.03,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 198083,
+      "itemsShipped": 7678
+    },
+    "2026-01": {
+      "ordersShipped": 1730,
+      "orderSales": 171141.73,
+      "shippingCollected": 11927.64,
+      "shippingCost": 21925.97,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 160569,
+      "itemsShipped": 4759
+    },
+    "2026-02": {
+      "ordersShipped": 1080,
+      "orderSales": 126402.88,
+      "shippingCollected": 9449.84,
+      "shippingCost": 15473.45,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 120851,
+      "itemsShipped": 3129
+    },
+    "2026-03": {
+      "ordersShipped": 1379,
+      "orderSales": 169882.02,
+      "shippingCollected": 10569.06,
+      "shippingCost": 20623.27,
+      "insuranceCost": 0.0,
+      "weightShippedOz": 138228,
+      "itemsShipped": 4209
+    }
+  },
+  "searchConsole": {
+    "2025-04": {
+      "clicks": 9038,
+      "impressions": 1242633,
+      "ctr": 0.007,
+      "avgPosition": 26.3
+    },
+    "2025-05": {
+      "clicks": 11416,
+      "impressions": 1591899,
+      "ctr": 0.007,
+      "avgPosition": 28.6
+    },
+    "2025-06": {
+      "clicks": 10589,
+      "impressions": 1599973,
+      "ctr": 0.007,
+      "avgPosition": 27.9
+    },
+    "2025-07": {
+      "clicks": 11117,
+      "impressions": 1839183,
+      "ctr": 0.006,
+      "avgPosition": 27.6
+    },
+    "2025-08": {
+      "clicks": 11070,
+      "impressions": 1841959,
+      "ctr": 0.006,
+      "avgPosition": 27.5
+    },
+    "2025-09": {
+      "clicks": 10038,
+      "impressions": 1286028,
+      "ctr": 0.008,
+      "avgPosition": 21.1
+    },
+    "2025-10": {
+      "clicks": 11602,
+      "impressions": 1144907,
+      "ctr": 0.01,
+      "avgPosition": 12.1
+    },
+    "2025-11": {
+      "clicks": 12251,
+      "impressions": 1356226,
+      "ctr": 0.009,
+      "avgPosition": 12.3
+    },
+    "2025-12": {
+      "clicks": 11069,
+      "impressions": 1458877,
+      "ctr": 0.008,
+      "avgPosition": 14.2
+    },
+    "2026-01": {
+      "clicks": 10945,
+      "impressions": 1611835,
+      "ctr": 0.007,
+      "avgPosition": 13.8
+    },
+    "2026-02": {
+      "clicks": 10013,
+      "impressions": 2043450,
+      "ctr": 0.005,
+      "avgPosition": 11.6
+    },
+    "2026-03": {
+      "clicks": 11712,
+      "impressions": 1965717,
+      "ctr": 0.006,
+      "avgPosition": 9.5
+    }
+  }
+};
+// END SEED_DATA
+
+(function(){
+  "use strict";
+
+  var OVERLAY_KEY = "cheshirehorse_website_metrics_overlay_v1";
+  var MONTH_LABELS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var CURRENT_YEAR = new Date().getFullYear();
+  var charts = {};
+
+  var REVENUE_SOURCES = [
+    { key:"eagle", label:"Eagle POS — Net Sales", instructions:"Open MCR, enter Customer number 500000, go to tab 4 Sales, click the blue link Customer Sales Summary, enter dates, and use the Net Sales column (column 3)." },
+    { key:"ga", label:"Google Analytics — Purchase Revenue", instructions:"Go to GA > Reports > Monetization > Transactions. Set the date range. Under the line graph, use the number at the top of the Purchase Revenue column." },
+    { key:"klaviyo", label:"Klaviyo — Placed Order Revenue", instructions:"Go to Klaviyo > Analytics > Dashboards > Business Review. Select Conversion Metric “(SF logo) Placed Order”, select the time period, hit apply, and use the Total Revenue number in bold." }
+  ];
+
+  var GSC_METRICS = [
+    { key:"clicks", label:"Clicks", kind:"int" },
+    { key:"impressions", label:"Impressions", kind:"int" },
+    { key:"ctr", label:"CTR", kind:"pct" },
+    { key:"avgPosition", label:"Avg. Position", kind:"dec1", lowerIsBetter:true }
+  ];
+
+  var SHIPPING_FIELDS = [
+    { key:"ordersShipped", label:"Orders", kind:"int", editable:true },
+    { key:"orderSales", label:"Order Sales", kind:"currency", editable:true },
+    { key:"shippingCollected", label:"Ship. Collected", kind:"currency", editable:true },
+    { key:"shippingCost", label:"Ship. Cost", kind:"currency", editable:true },
+    { key:"shippingLoss", label:"Ship. Loss", kind:"currency", editable:false },
+    { key:"salesMinusLoss", label:"Sales − Loss", kind:"currency", editable:false },
+    { key:"insuranceCost", label:"Insurance", kind:"currency", editable:true },
+    { key:"weightShippedOz", label:"Weight (oz)", kind:"int", editable:true },
+    { key:"itemsShipped", label:"Items", kind:"int", editable:true }
+  ];
+
+  // ---------- storage ----------
+  function loadOverlay(){
+    try{
+      var raw = localStorage.getItem(OVERLAY_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch(e){ return {}; }
+  }
+  var overlay = loadOverlay();
+  var DATA = deepMerge(SEED_DATA, overlay);
+
+  function saveOverlay(){
+    try{ localStorage.setItem(OVERLAY_KEY, JSON.stringify(overlay)); }
+    catch(e){ showToast("Couldn't save to local storage."); }
+  }
+
+  function setValue(path, val){
+    setDeep(DATA, path, val);
+    setDeep(overlay, path, val);
+    saveOverlay();
+    showToast("Saved");
+  }
+
+  function setDeep(obj, path, val){
+    var cur = obj;
+    for (var i=0; i<path.length-1; i++){
+      var k = path[i];
+      if (typeof cur[k] !== "object" || cur[k] === null) cur[k] = {};
+      cur = cur[k];
+    }
+    cur[path[path.length-1]] = val;
+  }
+
+  function deepMerge(base, over){
+    if (over === undefined) return deepClone(base);
+    if (typeof base !== "object" || base === null || Array.isArray(base)){
+      return over !== undefined ? over : base;
+    }
+    var result = {};
+    var keys = uniq(Object.keys(base).concat(Object.keys(over)));
+    keys.forEach(function(k){
+      var hasOver = Object.prototype.hasOwnProperty.call(over, k);
+      var overVal = over[k];
+      var baseVal = base[k];
+      if (hasOver && overVal !== null && typeof overVal === "object" && !Array.isArray(overVal) &&
+          baseVal !== null && typeof baseVal === "object" && !Array.isArray(baseVal)){
+        result[k] = deepMerge(baseVal, overVal);
+      } else if (hasOver){
+        result[k] = overVal;
+      } else {
+        result[k] = deepClone(baseVal);
+      }
+    });
+    return result;
+  }
+  function deepClone(o){ return o === undefined ? undefined : JSON.parse(JSON.stringify(o)); }
+  function uniq(arr){ return arr.filter(function(v,i){ return arr.indexOf(v) === i; }); }
+  function pad2(n){ return n < 10 ? "0"+n : ""+n; }
+  function monthKey(y, m){ return y + "-" + pad2(m+1); }
+
+  // ---------- formatting ----------
+  function fmtCurrency(v){ return "$" + Number(v).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function fmtInt(v){ return Number(v).toLocaleString("en-US", {maximumFractionDigits:0}); }
+  function fmtDec1(v){ return Number(v).toLocaleString("en-US", {minimumFractionDigits:1, maximumFractionDigits:1}); }
+  function fmtPctVal(v){ return (v*100).toLocaleString("en-US", {minimumFractionDigits:1, maximumFractionDigits:2}) + "%"; }
+  function fmtDuration(sec){
+    sec = Math.round(sec);
+    var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    return h + ":" + pad2(m) + ":" + pad2(s);
+  }
+  function fmtByKind(v, kind){
+    if (kind === "currency") return fmtCurrency(v);
+    if (kind === "int") return fmtInt(v);
+    if (kind === "dec1") return fmtDec1(v);
+    if (kind === "pct") return fmtPctVal(v);
+    return String(v);
+  }
+  function inputValueByKind(v, kind){
+    if (v === undefined || v === null) return "";
+    if (kind === "pct") return String(Math.round(v*10000)/100);
+    if (kind === "currency") return String(v);
+    return String(v);
+  }
+  function parseByKind(str, kind){
+    var n = parseFloat(String(str).replace(/[$,]/g,"").trim());
+    if (isNaN(n)) return NaN;
+    if (kind === "pct") return n/100;
+    return n;
+  }
+  function fmtYoYCell(cur, prev){
+    if (cur === undefined || cur === null || prev === undefined || prev === null || prev === 0){
+      return '<span class="yoy-col">—</span>';
+    }
+    var pct = (cur - prev) / Math.abs(prev) * 100;
+    var cls = pct > 0.05 ? "up" : (pct < -0.05 ? "down" : "flat");
+    var sign = pct > 0 ? "+" : "";
+    return '<span class="delta ' + cls + '">' + sign + pct.toFixed(1) + '%</span>';
+  }
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  // ---------- year range helpers ----------
+  function yearsFromKeys(obj, keyLen){
+    var ys = {};
+    Object.keys(obj || {}).forEach(function(k){ ys[k.slice(0,4)] = true; });
+    return Object.keys(ys).map(Number);
+  }
+  function yearRange(obj){
+    var ys = yearsFromKeys(obj);
+    var minY = ys.length ? Math.min.apply(null, ys) : CURRENT_YEAR;
+    var maxY = Math.max(CURRENT_YEAR, ys.length ? Math.max.apply(null, ys) : CURRENT_YEAR);
+    var out = [];
+    for (var y=minY; y<=maxY; y++) out.push(y);
+    return out;
+  }
+
+  // ---------- generic month-rows x year-columns table ----------
+  function renderYearlyMetricTable(container, cfg){
+    // cfg: {years, getVal(year,m), setVal(year,m,val)|null, kind, showYTD}
+    var html = '<div class="table-scroll"><table class="metric-table"><thead><tr><th>Month</th>';
+    cfg.years.forEach(function(y, idx){
+      html += '<th>' + y + '</th>';
+      if (idx > 0) html += '<th class="yoy-col">YoY</th>';
+    });
+    html += '</tr></thead><tbody>';
+    for (var m=0; m<12; m++){
+      html += '<tr><td>' + MONTH_LABELS[m] + '</td>';
+      cfg.years.forEach(function(y, idx){
+        var v = cfg.getVal(y, m);
+        if (cfg.setVal){
+          html += '<td><input type="text" inputmode="decimal" class="cell-input" value="' +
+            inputValueByKind(v, cfg.kind) + '" data-year="' + y + '" data-month="' + m + '"></td>';
+        } else {
+          html += '<td class="ro">' + (v===undefined||v===null ? '—' : fmtByKind(v, cfg.kind)) + '</td>';
+        }
+        if (idx > 0){
+          var pv = cfg.getVal(cfg.years[idx-1], m);
+          html += '<td class="yoy-col">' + fmtYoYCell(v, pv) + '</td>';
+        }
+      });
+      html += '</tr>';
+    }
+    if (cfg.showYTD){
+      html += '<tr class="ytd-row"><td>YTD</td>';
+      cfg.years.forEach(function(y, idx){
+        var sum = 0, any = false;
+        for (var m=0; m<12; m++){ var v = cfg.getVal(y,m); if (v!==undefined && v!==null){ sum+=v; any=true; } }
+        html += '<td class="ro">' + (any ? fmtByKind(sum, cfg.kind) : '—') + '</td>';
+        if (idx > 0){
+          var psum = 0, pany = false;
+          for (var m2=0; m2<12; m2++){ var pv2 = cfg.getVal(cfg.years[idx-1], m2); if (pv2!==undefined && pv2!==null){ psum+=pv2; pany=true; } }
+          html += '<td class="yoy-col">' + (any && pany ? fmtYoYCell(sum, psum) : '—') + '</td>';
+        }
+      });
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    if (cfg.setVal){
+      Array.prototype.forEach.call(container.querySelectorAll(".cell-input"), function(inp){
+        inp.addEventListener("blur", function(){
+          var y = Number(inp.dataset.year), m = Number(inp.dataset.month);
+          var raw = inp.value.trim();
+          if (raw === ""){ cfg.setVal(y, m, null); renderAll(); return; }
+          var parsed = parseByKind(raw, cfg.kind);
+          if (isNaN(parsed)){ showToast("Enter a number."); inp.value = inputValueByKind(cfg.getVal(y,m), cfg.kind); return; }
+          cfg.setVal(y, m, parsed);
+          renderAll();
+        });
+      });
+    }
+  }
+
+  // ---------- Overview ----------
+  function ytdThroughLatest(obj, year){
+    var latestIdx = -1;
+    for (var m=11; m>=0; m--){ if (obj[monthKey(year,m)] !== undefined && obj[monthKey(year,m)] !== null){ latestIdx = m; break; } }
+    if (latestIdx === -1) return { sum:null, monthIdx:-1 };
+    var sum = 0;
+    for (var i=0; i<=latestIdx; i++){ var v = obj[monthKey(year,i)]; if (v!==undefined && v!==null) sum += v; }
+    return { sum:sum, monthIdx:latestIdx };
+  }
+
+  function renderOverview(){
+    var wrap = document.getElementById("overviewStats");
+    var html = "";
+
+    REVENUE_SOURCES.forEach(function(src){
+      var obj = DATA.revenue[src.key];
+      var cur = ytdThroughLatest(obj, CURRENT_YEAR);
+      var tile;
+      if (cur.monthIdx === -1){
+        tile = { value:"—", sub:"No " + CURRENT_YEAR + " data yet" };
+      } else {
+        var priorSum = 0, priorAny = false;
+        for (var i=0; i<=cur.monthIdx; i++){ var v = obj[monthKey(CURRENT_YEAR-1, i)]; if (v!==undefined && v!==null){ priorSum += v; priorAny = true; } }
+        tile = {
+          value: fmtCurrency(cur.sum),
+          sub: "YTD thru " + MONTH_LABELS[cur.monthIdx] + " · " + (priorAny ? fmtYoYCellText(cur.sum, priorSum) : "no prior-year data")
+        };
+      }
+      html += statTile(src.label.split(" — ")[0] + " Revenue (YTD)", tile.value, tile.sub);
+    });
+
+    var shipKeys = Object.keys(DATA.shipping).sort();
+    var lastShipKey = shipKeys.length ? shipKeys[shipKeys.length-1] : null;
+    if (lastShipKey){
+      var row = DATA.shipping[lastShipKey];
+      var loss = (row.shippingCollected!=null && row.shippingCost!=null) ? (row.shippingCollected - row.shippingCost) : null;
+      html += statTile("Shipping Loss (" + monthLabelFromKey(lastShipKey) + ")", loss!=null ? fmtCurrency(loss) : "—", row.ordersShipped!=null ? fmtInt(row.ordersShipped) + " orders shipped" : "");
+    }
+
+    var gscKeys = Object.keys(DATA.searchConsole).sort();
+    var lastGscKey = gscKeys.length ? gscKeys[gscKeys.length-1] : null;
+    if (lastGscKey){
+      var g = DATA.searchConsole[lastGscKey];
+      html += statTile("Search Clicks (" + monthLabelFromKey(lastGscKey) + ")", g.clicks!=null ? fmtInt(g.clicks) : "—", g.avgPosition!=null ? "Avg. position " + fmtDec1(g.avgPosition) : "");
+    }
+
+    var visYears = Object.keys(DATA.siteVisits).sort();
+    var lastVisYear = visYears.length ? visYears[visYears.length-1] : null;
+    if (lastVisYear){
+      var sv = DATA.siteVisits[lastVisYear];
+      html += statTile("Registered Shoppers (" + lastVisYear + ")", sv.totalRegistered!=null ? fmtInt(sv.totalRegistered) : "—", sv.newRegistered!=null ? "+" + fmtInt(sv.newRegistered) + " new that year" : "");
+    }
+
+    wrap.innerHTML = html;
+  }
+  function fmtYoYCellText(cur, prev){
+    if (!prev) return "—";
+    var pct = (cur-prev)/Math.abs(prev)*100;
+    return (pct>0?"+":"") + pct.toFixed(1) + "% YoY";
+  }
+  function monthLabelFromKey(k){
+    var parts = k.split("-");
+    return MONTH_ABBR[Number(parts[1])-1] + " " + parts[0];
+  }
+  function statTile(label, value, sub){
+    return '<div class="stat-tile"><div class="label">' + label + '</div><div class="value">' + value + '</div><div class="sub">' + (sub||"") + '</div></div>';
+  }
+
+  // ---------- Revenue ----------
+  function renderRevenue(){
+    var wrap = document.getElementById("revenueSections");
+    wrap.innerHTML = "";
+    REVENUE_SOURCES.forEach(function(src){
+      var section = document.createElement("div");
+      var years = yearRange(DATA.revenue[src.key]);
+      section.innerHTML =
+        '<h3 class="subsection-title">' + src.label + '</h3>' +
+        '<details class="howto"><summary>Where does this number come from?</summary><div class="howto-body">' + src.instructions + '</div></details>' +
+        '<div class="table-wrap"></div>' +
+        '<div class="charts-grid"><div class="chart-box" style="grid-column:1/-1;"><h4>' + src.label + ' by year</h4><canvas id="chart-rev-' + src.key + '"></canvas></div></div>';
+      wrap.appendChild(section);
+
+      renderYearlyMetricTable(section.querySelector(".table-wrap"), {
+        years: years,
+        kind: "currency",
+        showYTD: true,
+        getVal: function(y, m){ return DATA.revenue[this.srcKey][monthKey(y,m)]; }.bind({srcKey:src.key}),
+        setVal: function(y, m, v){ setValue(["revenue", this.srcKey, monthKey(y,m)], v); }.bind({srcKey:src.key})
+      });
+
+      renderLineChart("chart-rev-" + src.key, years, function(y,m){ return DATA.revenue[src.key][monthKey(y,m)]; }, fmtCurrency);
+    });
+  }
+
+  // ---------- Site Visits ----------
+  function renderVisits(){
+    var years = yearRange(DATA.siteVisits).map(String);
+    var wrap = document.getElementById("visitsTableWrap");
+    var html = '<div class="table-scroll"><table class="metric-table"><thead><tr>' +
+      '<th>Year</th><th># Visits</th><th class="yoy-col">YoY</th><th>Avg. Duration</th><th>Revenue / Visit</th><th># New Registered</th><th>Total Registered</th></tr></thead><tbody>';
+    years.forEach(function(y, idx){
+      var row = DATA.siteVisits[y] || {};
+      var prevRow = DATA.siteVisits[years[idx-1]];
+      html += '<tr><td>' + y + '</td>' +
+        '<td><input type="text" class="cell-input" data-y="'+y+'" data-f="visits" value="' + (row.visits!=null?row.visits:'') + '"></td>' +
+        '<td class="yoy-col">' + (idx>0 ? fmtYoYCell(row.visits, prevRow?prevRow.visits:undefined) : '—') + '</td>' +
+        '<td><input type="text" class="cell-input narrow" data-y="'+y+'" data-f="avgDurationSec" value="' + (row.avgDurationSec!=null?row.avgDurationSec:'') + '" title="seconds"> sec' + (row.avgDurationSec!=null? ' <span class="yoy-col">('+fmtDuration(row.avgDurationSec)+')</span>':'') + '</td>' +
+        '<td><input type="text" class="cell-input narrow" data-y="'+y+'" data-f="revenuePerVisit" value="' + (row.revenuePerVisit!=null?row.revenuePerVisit:'') + '"></td>' +
+        '<td><input type="text" class="cell-input" data-y="'+y+'" data-f="newRegistered" value="' + (row.newRegistered!=null?row.newRegistered:'') + '"></td>' +
+        '<td><input type="text" class="cell-input" data-y="'+y+'" data-f="totalRegistered" value="' + (row.totalRegistered!=null?row.totalRegistered:'') + '"></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>' +
+      '<p class="disclaimer">The 2023 "# New Registered" figure looks like an outlier relative to Total Registered growth in the surrounding years — worth double-checking against the source before relying on it.</p>';
+    wrap.innerHTML = html;
+
+    Array.prototype.forEach.call(wrap.querySelectorAll(".cell-input"), function(inp){
+      inp.addEventListener("blur", function(){
+        var y = inp.dataset.y, f = inp.dataset.f;
+        var raw = inp.value.trim();
+        if (raw === ""){ setValue(["siteVisits", y, f], null); renderAll(); return; }
+        var n = parseFloat(raw.replace(/[$,]/g,""));
+        if (isNaN(n)){ showToast("Enter a number."); renderAll(); return; }
+        setValue(["siteVisits", y, f], n);
+        renderAll();
+      });
+    });
+
+    renderVisitsCharts(years);
+  }
+
+  function renderVisitsCharts(years){
+    if (!chartsAvailable()) return;
+    destroyChart("visitsChart");
+    destroyChart("registeredChart");
+    var visitVals = years.map(function(y){ return DATA.siteVisits[y] ? DATA.siteVisits[y].visits : null; });
+    var regVals = years.map(function(y){ return DATA.siteVisits[y] ? DATA.siteVisits[y].totalRegistered : null; });
+    try{
+      charts.visitsChart = new Chart(document.getElementById("visitsChart"), {
+        type: "bar",
+        data: { labels: years, datasets: [{ label:"Visits", data:visitVals, backgroundColor:"#056A45" }] },
+        options: chartOptions()
+      });
+      charts.registeredChart = new Chart(document.getElementById("registeredChart"), {
+        type: "bar",
+        data: { labels: years, datasets: [{ label:"Total Registered", data:regVals, backgroundColor:"#854F0B" }] },
+        options: chartOptions()
+      });
+    }catch(e){ /* chart rendering is a nice-to-have; tables must not depend on it */ }
+  }
+
+  // ---------- Shipping ----------
+  var activeShippingYear = null;
+  function renderShipping(){
+    var years = yearRange(DATA.shipping);
+    if (activeShippingYear === null || years.indexOf(activeShippingYear) === -1){
+      var withData = years.filter(function(y){ return Object.keys(DATA.shipping).some(function(k){ return k.indexOf(y+"-")===0; }); });
+      activeShippingYear = withData.length ? withData[withData.length-1] : years[years.length-1];
+    }
+    var picker = document.getElementById("shippingYearPicker");
+    picker.innerHTML = years.map(function(y){
+      return '<button data-y="'+y+'" class="' + (y===activeShippingYear?'active':'') + '">' + y + '</button>';
+    }).join("");
+    Array.prototype.forEach.call(picker.querySelectorAll("button"), function(btn){
+      btn.addEventListener("click", function(){ activeShippingYear = Number(btn.dataset.y); renderShipping(); });
+    });
+
+    renderShippingTable(activeShippingYear);
+    renderShippingChart(activeShippingYear);
+  }
+
+  function shippingRow(year, m){
+    var row = DATA.shipping[monthKey(year,m)];
+    if (!row) return null;
+    var loss = (row.shippingCollected!=null && row.shippingCost!=null) ? (row.shippingCollected - row.shippingCost) : null;
+    var salesMinusLoss = (row.orderSales!=null && loss!=null) ? (row.orderSales + loss) : null;
+    return { raw:row, shippingLoss:loss, salesMinusLoss:salesMinusLoss };
+  }
+
+  function renderShippingTable(year){
+    var wrap = document.getElementById("shippingTableWrap");
+    var html = '<div class="table-scroll"><table class="metric-table"><thead><tr><th>Month</th>';
+    SHIPPING_FIELDS.forEach(function(f){ html += '<th>' + f.label + '</th>'; });
+    html += '</tr></thead><tbody>';
+
+    var totals = {}; SHIPPING_FIELDS.forEach(function(f){ totals[f.key] = 0; });
+    var anyMonth = false;
+
+    for (var m=0; m<12; m++){
+      var r = shippingRow(year, m);
+      html += '<tr><td>' + MONTH_LABELS[m] + '</td>';
+      SHIPPING_FIELDS.forEach(function(f){
+        var v = r ? (f.editable ? r.raw[f.key] : r[f.key]) : (r===null ? undefined : r[f.key]);
+        if (r){
+          if (v !== undefined && v !== null){ totals[f.key] += v; }
+        }
+        if (f.editable){
+          var displayVal = v!=null ? (f.kind === "currency" ? fmtCurrency(v) : v) : '';
+          html += '<td><input type="text" inputmode="decimal" class="cell-input" data-m="'+m+'" data-f="'+f.key+'" value="' + displayVal + '"></td>';
+        } else {
+          html += '<td class="ro">' + (v!=null ? fmtByKind(v, f.kind) : '—') + '</td>';
+        }
+      });
+      html += '</tr>';
+      if (r) anyMonth = true;
+    }
+
+    html += '<tr class="ytd-row"><td>Total</td>';
+    SHIPPING_FIELDS.forEach(function(f){
+      html += '<td class="ro">' + (anyMonth ? fmtByKind(totals[f.key], f.kind) : '—') + '</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr><td class="yoy-col">YoY (same months, prior yr.)</td>';
+    var priorTotals = {}; SHIPPING_FIELDS.forEach(function(f){ priorTotals[f.key] = 0; });
+    var priorAny = false;
+    for (var m2=0; m2<12; m2++){
+      var thisMonthHasData = DATA.shipping[monthKey(year,m2)] !== undefined;
+      if (!thisMonthHasData) continue;
+      var pr = shippingRow(year-1, m2);
+      if (!pr) continue;
+      priorAny = true;
+      SHIPPING_FIELDS.forEach(function(f){
+        var v = f.editable ? pr.raw[f.key] : pr[f.key];
+        if (v !== undefined && v !== null) priorTotals[f.key] += v;
+      });
+    }
+    SHIPPING_FIELDS.forEach(function(f){
+      html += '<td class="yoy-col">' + (anyMonth && priorAny ? fmtYoYCell(totals[f.key], priorTotals[f.key]) : '—') + '</td>';
+    });
+    html += '</tr>';
+
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
+
+    Array.prototype.forEach.call(wrap.querySelectorAll(".cell-input"), function(inp){
+      inp.addEventListener("blur", function(){
+        var m = Number(inp.dataset.m), f = inp.dataset.f;
+        var raw = inp.value.trim();
+        if (raw === ""){ setValue(["shipping", monthKey(year,m), f], null); renderAll(); return; }
+        var n = parseFloat(raw.replace(/[$,]/g,""));
+        if (isNaN(n)){ showToast("Enter a number."); renderAll(); return; }
+        setValue(["shipping", monthKey(year,m), f], n);
+        renderAll();
+      });
+    });
+  }
+
+  function renderShippingChart(year){
+    if (!chartsAvailable()) return;
+    destroyChart("shippingChart");
+    var curVals = [], priorVals = [];
+    for (var m=0; m<12; m++){
+      var cur = DATA.shipping[monthKey(year,m)];
+      var prior = DATA.shipping[monthKey(year-1,m)];
+      curVals.push(cur ? cur.orderSales : null);
+      priorVals.push(prior ? prior.orderSales : null);
+    }
+    try{
+      charts.shippingChart = new Chart(document.getElementById("shippingChart"), {
+        type: "line",
+        data: {
+          labels: MONTH_ABBR,
+          datasets: [
+            { label: String(year), data:curVals, borderColor:"#056A45", backgroundColor:"transparent", tension:0.25 },
+            { label: String(year-1), data:priorVals, borderColor:"#854F0B", backgroundColor:"transparent", tension:0.25, borderDash:[4,3] }
+          ]
+        },
+        options: chartOptions()
+      });
+    }catch(e){ /* chart rendering is a nice-to-have; tables must not depend on it */ }
+  }
+
+  // ---------- Search Console ----------
+  function renderGsc(){
+    var wrap = document.getElementById("gscSections");
+    wrap.innerHTML = "";
+    var years = yearRange(DATA.searchConsole);
+    GSC_METRICS.forEach(function(metric){
+      var section = document.createElement("div");
+      section.innerHTML = '<h3 class="subsection-title">' + metric.label + '</h3><div class="table-wrap"></div>';
+      wrap.appendChild(section);
+      renderYearlyMetricTable(section.querySelector(".table-wrap"), {
+        years: years,
+        kind: metric.kind,
+        showYTD: false,
+        getVal: function(y, m){
+          var row = DATA.searchConsole[monthKey(y,m)];
+          return row ? row[metric.key] : undefined;
+        },
+        setVal: function(y, m, v){ setValue(["searchConsole", monthKey(y,m), metric.key], v); }
+      });
+    });
+  }
+
+  // ---------- charts (shared) ----------
+  function chartOptions(){
+    return {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ font:{ family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", size:11 } } } },
+      scales:{
+        x:{ ticks:{ font:{ family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", size:10 } } },
+        y:{ ticks:{ font:{ family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", size:10 } } }
+      }
+    };
+  }
+  function destroyChart(id){ if (charts[id]){ charts[id].destroy(); delete charts[id]; } }
+  function chartsAvailable(){ return typeof Chart !== "undefined"; }
+  function renderLineChart(canvasId, years, getVal, fmt){
+    if (!chartsAvailable()) return;
+    destroyChart(canvasId);
+    var palette = ["#056A45","#854F0B","#A32D2D","#57645c","#0e8f5e","#0F6E56"];
+    var datasets = years.map(function(y, idx){
+      var data = [];
+      for (var m=0; m<12; m++) data.push(getVal(y,m) !== undefined ? getVal(y,m) : null);
+      return { label:String(y), data:data, borderColor:palette[idx % palette.length], backgroundColor:"transparent", tension:0.25 };
+    });
+    var el = document.getElementById(canvasId);
+    if (!el) return;
+    try{
+      charts[canvasId] = new Chart(el, { type:"line", data:{ labels:MONTH_ABBR, datasets:datasets }, options:chartOptions() });
+    }catch(e){ /* chart rendering is a nice-to-have; tables must not depend on it */ }
+  }
+
+  // ---------- meta / export ----------
+  function renderMeta(){
+    var el = document.getElementById("datasetMeta");
+    var seeded = (DATA.meta && DATA.meta.seededOn) ? DATA.meta.seededOn : "unknown";
+    var hasLocalEdits = Object.keys(overlay).length > 0;
+    el.textContent = "Baseline seeded " + seeded + (hasLocalEdits ? " · unsaved local edits present" : "");
+  }
+
+  function exportData(){
+    var merged = deepClone(DATA);
+    merged.meta = merged.meta || {};
+    merged.meta.seededOn = new Date().toISOString().slice(0,10);
+    var blob = new Blob([JSON.stringify(merged, null, 2)], { type:"application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "website-metrics-export.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast("Exported — run update_data.py on this file, then commit index.html");
+  }
+
+  function clearLocalEdits(){
+    if (!confirm("Clear all local edits stored in this browser? This can't be undone.")) return;
+    localStorage.removeItem(OVERLAY_KEY);
+    overlay = {};
+    DATA = deepMerge(SEED_DATA, overlay);
+    renderAll();
+    showToast("Local edits cleared");
+  }
+
+  // ---------- tabs ----------
+  function initTabs(){
+    var buttons = document.querySelectorAll("nav.tabs button");
+    Array.prototype.forEach.call(buttons, function(btn){
+      btn.addEventListener("click", function(){
+        Array.prototype.forEach.call(buttons, function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        Array.prototype.forEach.call(document.querySelectorAll(".view"), function(v){ v.classList.remove("active"); });
+        document.getElementById("view-" + btn.dataset.view).classList.add("active");
+      });
+    });
+  }
+
+  // ---------- render everything ----------
+  function renderAll(){
+    renderMeta();
+    renderOverview();
+    renderRevenue();
+    renderVisits();
+    renderShipping();
+    renderGsc();
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", exportData);
+  document.getElementById("clearBtn").addEventListener("click", clearLocalEdits);
+  initTabs();
+  renderAll();
+})();
+</script>
+</body>
+</html>
