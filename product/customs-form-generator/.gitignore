@@ -1,0 +1,31 @@
+# --- Operational data (NEVER commit) ---
+# Uploaded invoices contain real vendor/pricing data.
+data/uploads/
+
+# NOTE: data/*_rules.json (SKU -> HTSUS classification rules) is
+# intentionally NOT ignored -- it's committed so it travels with the repo
+# between computers. See rules_store.py and README.md.
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editor & OS ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Upload Invoice{% endblock %}
+{% block body %}
+<h1>Customs Form Generator</h1>
+<p class="sub">Upload a supplier's commercial invoice PDF to draft a U.S. HTSUS classification addendum. You'll review and confirm every classification before the final form is generated.</p>
+
+<div class="card">
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <div class="row" style="margin-bottom: 16px;">
+      <label for="vendor">Supplier</label>
+      <select name="vendor" id="vendor" required style="width: auto;">
+        <option value="" disabled selected>Choose a supplier...</option>
+        {% for slug, v in vendors.items() %}
+          <option value="{{ slug }}" {{ "disabled" if not v.available }}>
+            {{ v.label }}{{ " (not set up yet)" if not v.available }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="row" style="margin-bottom: 16px;">
+      <label for="invoice_pdf">Invoice PDF</label>
+      <input type="file" name="invoice_pdf" id="invoice_pdf" accept="application/pdf" required>
+    </div>
+    <button type="submit">Parse invoice</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">Supported suppliers</h2>
+  <table>
+    <tr><th>Supplier</th><th>Status</th></tr>
+    {% for slug, v in vendors.items() %}
+    <tr>
+      <td>{{ v.label }}</td>
+      <td>{% if v.available %}<span class="badge ok">Ready</span>{% else %}<span class="badge warn">Needs a sample invoice to build a parser</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Review Classifications{% endblock %}
+{% block body %}
+<h1>Review classifications</h1>
+<p class="sub">
+  {{ source_filename }} &middot; {{ header.document_no }} &middot; {{ total }} line{{ "s" if total != 1 }}
+  &middot; <span class="badge {{ 'ok' if unmatched == 0 else 'warn' }}">
+    {{ total - unmatched }} auto-matched from past invoices, {{ unmatched }} need review
+  </span>
+</p>
+
+<form action="/review/save" method="post">
+<div class="card" style="max-width: none; overflow-x: auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Line</th>
+        <th>SKU</th>
+        <th>Description</th>
+        <th>Size</th>
+        <th>Qty</th>
+        <th>Net total (EUR)</th>
+        <th style="min-width: 150px;">Proposed HTSUS</th>
+        <th style="min-width: 160px;">Description group</th>
+        <th style="min-width: 200px;">Fiber content</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr class="{{ 'matched' if it.match_source == 'exact' else 'needs-review' }}">
+        <td>{{ it.line_no }}</td>
+        <td>{{ it.item_sku }}</td>
+        <td>{{ it.description }}</td>
+        <td>{{ it.size }}</td>
+        <td>{{ it.qty }}</td>
+        <td>{{ "%.2f"|format(it.net_total) }}</td>
+        <td>
+          <input type="text" name="htsus_{{ it.line_no }}" value="{{ it.htsus_code }}"
+                 list="hints_{{ it.line_no }}" placeholder="e.g. 6111.90.05.30">
+          {% if hints.get(it.item_sku) %}
+          <datalist id="hints_{{ it.line_no }}">
+            {% for h in hints[it.item_sku] %}
+            <option value="{{ h.htsus_code }}">{{ h.description_group }} ({{ h.n }} prior SKU{{ "s" if h.n != 1 }})</option>
+            {% endfor %}
+          </datalist>
+          <div class="hint">
+            {% if it.match_source == 'exact' %}confirmed from a prior invoice
+            {% elif hints.get(it.item_sku) %}style {{ it.style_number }} seen before &mdash; pick a suggestion or enter new
+            {% else %}new style, no prior classification on file{% endif %}
+          </div>
+          {% endif %}
+        </td>
+        <td><input type="text" name="desc_{{ it.line_no }}" value="{{ it.description_group }}"></td>
+        <td><input type="text" name="fiber_{{ it.line_no }}" value="{{ it.fiber_content }}"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card no-print" style="max-width: none;">
+  <p class="hint" style="margin-top:0;">
+    Saving writes every HTSUS code you enter or confirm here to <code>data/{{ header.vendor }}_rules.json</code>, so the same SKU auto-fills next time &mdash; on this computer <strong>or any other computer that pulls this repo</strong>. After saving, commit and push that file (<code>git add data/{{ header.vendor }}_rules.json &amp;&amp; git commit -m "Add HTSUS classifications from invoice {{ header.document_no }}" &amp;&amp; git push</code>) so it's there next time someone else runs this tool. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.
+  </p>
+  <button type="submit">Save &amp; generate addendum</button>
+  <a href="/" class="btn secondary">Start over</a>
+</div>
+</form>
+{% endblock %}

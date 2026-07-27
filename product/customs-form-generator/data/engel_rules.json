@@ -1,0 +1,1444 @@
+{
+  "364150-01-3-8085-BC": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "364150-01-6-8590-DE": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "364150-01-7-95110-DE": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "364150-09-5-8085-DE": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "364150-09-6-8590-DE": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "364150-09-8-95110-BC": {
+    "style_number": "364150",
+    "description_group": "Nursing bras",
+    "fiber_content": "92% organic cotton / 8% elastane",
+    "htsus_code": "6212.10.90.10",
+    "updated_at": "2026-07-27"
+  },
+  "405550-01-5056": {
+    "style_number": "405550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "405550-01-6268": {
+    "style_number": "405550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "405550-01-7480": {
+    "style_number": "405550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-01-5056": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-044E-5056": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-044E-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-051E-7480": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-051E-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-075-7480": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-075-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-079E-7480": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-079E-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-080-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-087E-6268": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-087E-7480": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-087E-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "573501-091-7480": {
+    "style_number": "573501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "573501-091-8692": {
+    "style_number": "573501",
+    "description_group": "Baby pants",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.41.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575423-044E-116": {
+    "style_number": "575423",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575423-044E-128": {
+    "style_number": "575423",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575423-079E-128": {
+    "style_number": "575423",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575450-018E-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-051E-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-051E-8692": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-052E-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-052E-8692": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-075-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-075-8692": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-079E-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-080-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-080-8692": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-087E-7480": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575450-087E-8692": {
+    "style_number": "575450",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575481-051E-116": {
+    "style_number": "575481",
+    "description_group": "Children's vests; Ladies' vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.80",
+    "updated_at": "2026-07-27"
+  },
+  "575481-051E-128": {
+    "style_number": "575481",
+    "description_group": "Children's vests; Ladies' vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.80",
+    "updated_at": "2026-07-27"
+  },
+  "575481-075-104": {
+    "style_number": "575481",
+    "description_group": "Children's vests; Men's vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.70",
+    "updated_at": "2026-07-27"
+  },
+  "575481-075-140": {
+    "style_number": "575481",
+    "description_group": "Children's vests; Men's vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.70",
+    "updated_at": "2026-07-27"
+  },
+  "575520-01-5056": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-01-6268": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-018E-7480": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-018E-8692": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-110116": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6104.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-5056": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-6268": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-7480": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-8692": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6104.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-051E-98104": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6104.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-075-110116": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-075-7480": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-075-8692": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-075-98104": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-079E-8692": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-079E-98104": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-080-110116": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-080-7480": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-080-98104": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-087E-110116": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-087E-5056": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-087E-7480": {
+    "style_number": "575520",
+    "description_group": "Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6111.90.05.10",
+    "updated_at": "2026-07-27"
+  },
+  "575520-087E-8692": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-087E-98104": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-091-110116": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-091-8692": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575520-091-98104": {
+    "style_number": "575520",
+    "description_group": "Children's hooded jackets; Hooded jackets",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6103.31.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "575550-01-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-01-6268": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-018E-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-051E-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-051E-6268": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-075-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-075-6268": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-079E-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-079E-6268": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-087E-5056": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575550-087E-6268": {
+    "style_number": "575550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-01-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-044E-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-051E-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-052E-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-075-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-079E-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-080-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-087E-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575570-091-1": {
+    "style_number": "575570",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-01-1": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-01-2": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-051E-1": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-051E-2": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-052E-2": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-075-1": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-075-2": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575582-080-2": {
+    "style_number": "575582",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-01-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-01-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-044E-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-044E-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-044E-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-044E-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-051E-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-051E-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-051E-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-052E-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-052E-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-052E-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-075-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-075-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-075-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-075-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-079E-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-079E-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-080-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-080-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-080-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-080-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-087E-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-087E-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-087E-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-087E-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-091-5056": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-091-6268": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-091-7480": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "575722-091-8692": {
+    "style_number": "575722",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "584461-087E-3436": {
+    "style_number": "584461",
+    "description_group": "Children's vests; Ladies' vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.80",
+    "updated_at": "2026-07-27"
+  },
+  "584461-090-3436": {
+    "style_number": "584461",
+    "description_group": "Children's vests; Ladies' vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.80",
+    "updated_at": "2026-07-27"
+  },
+  "584481-090-5860": {
+    "style_number": "584481",
+    "description_group": "Children's vests; Men's vests",
+    "fiber_content": "100% virgin wool (fleece)",
+    "htsus_code": "6110.11.00.70",
+    "updated_at": "2026-07-27"
+  },
+  "595723-035E-7480": {
+    "style_number": "595723",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "595723-035E-8692": {
+    "style_number": "595723",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "595723-035E-98104": {
+    "style_number": "595723",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "595723-088E-110116": {
+    "style_number": "595723",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "595723-088E-7480": {
+    "style_number": "595723",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "701310-091-3436": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-091-3840": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-091-4244": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-091-4648": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-33-3840": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-33-4244": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701310-33-4648": {
+    "style_number": "701310",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701340-75-3436": {
+    "style_number": "701340",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701340-75-3840": {
+    "style_number": "701340",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701340-75-4244": {
+    "style_number": "701340",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701340-75-4648": {
+    "style_number": "701340",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701500-33-3436": {
+    "style_number": "701500",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701500-33-4244": {
+    "style_number": "701500",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "701500-33-4648": {
+    "style_number": "701500",
+    "description_group": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6108.29.90.00",
+    "updated_at": "2026-07-27"
+  },
+  "703501-43E-7480": {
+    "style_number": "703501",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "704010-75-3436": {
+    "style_number": "704010",
+    "description_group": "Ladies' tank tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.80.20",
+    "updated_at": "2026-07-27"
+  },
+  "704010-75-3840": {
+    "style_number": "704010",
+    "description_group": "Ladies' tank tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.80.20",
+    "updated_at": "2026-07-27"
+  },
+  "704010-75-4244": {
+    "style_number": "704010",
+    "description_group": "Ladies' tank tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.80.20",
+    "updated_at": "2026-07-27"
+  },
+  "704010-75-4648": {
+    "style_number": "704010",
+    "description_group": "Ladies' tank tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.80.20",
+    "updated_at": "2026-07-27"
+  },
+  "704500-43E-104": {
+    "style_number": "704500",
+    "description_group": "Children's leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6107.19.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "704500-43E-116": {
+    "style_number": "704500",
+    "description_group": "Children's leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6107.19.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "704500-43E-140": {
+    "style_number": "704500",
+    "description_group": "Children's leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6107.19.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "704500-43E-152": {
+    "style_number": "704500",
+    "description_group": "Children's leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6107.19.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "704500-43E-176": {
+    "style_number": "704500",
+    "description_group": "Children's leggings",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6107.19.00.00",
+    "updated_at": "2026-07-27"
+  },
+  "704970-33-3436": {
+    "style_number": "704970",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "704970-33-3840": {
+    "style_number": "704970",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "704970-33-4244": {
+    "style_number": "704970",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "704970-33-4648": {
+    "style_number": "704970",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "705544-33-1": {
+    "style_number": "705544",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705544-75-1": {
+    "style_number": "705544",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705550-091-5056": {
+    "style_number": "705550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705550-091-6268": {
+    "style_number": "705550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705550-091-7480": {
+    "style_number": "705550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705550-75-5056": {
+    "style_number": "705550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705550-75-7480": {
+    "style_number": "705550",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-091-7480": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-091-8692": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-091-98104": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-33-6268": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-33-7480": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-33-8692": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "705561-33-98104": {
+    "style_number": "705561",
+    "description_group": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+    "fiber_content": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6505.00.30.30",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-104": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-116": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-128": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-140": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-152": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-164": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-176": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707810-43E-92": {
+    "style_number": "707810",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "707815-55E-140": {
+    "style_number": "707815",
+    "description_group": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+    "fiber_content": "70% virgin wool / 30% silk",
+    "htsus_code": "6109.90.15.40",
+    "updated_at": "2026-07-27"
+  },
+  "709030-43E-6268": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-43E-7480": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-43E-8692": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-51E-5056": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-51E-6268": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-51E-7480": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-51E-8692": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "709030-51E-98104": {
+    "style_number": "709030",
+    "description_group": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+    "fiber_content": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+    "htsus_code": "6111.90.05.30",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-7200-L": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-7200-M": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-7200-S": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-7200-XL": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-9900-L": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-9900-M": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-9900-S": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W150201910-9900-XL": {
+    "style_number": "W150201910",
+    "description_group": "Sports bustiers / bras",
+    "fiber_content": "70% virgin wool / 28% silk / 2% elastane",
+    "htsus_code": "6212.10.90.40",
+    "updated_at": "2026-07-27"
+  },
+  "W240205862-9900-L": {
+    "style_number": "W240205862",
+    "description_group": "Women's yoga pants",
+    "fiber_content": "Organic merino wool / organic silk (exact ratio not stated)",
+    "htsus_code": "6104.61.00.10",
+    "updated_at": "2026-07-27"
+  },
+  "W240205862-9900-M": {
+    "style_number": "W240205862",
+    "description_group": "Women's yoga pants",
+    "fiber_content": "Organic merino wool / organic silk (exact ratio not stated)",
+    "htsus_code": "6104.61.00.10",
+    "updated_at": "2026-07-27"
+  },
+  "W240205862-9900-XL": {
+    "style_number": "W240205862",
+    "description_group": "Women's yoga pants",
+    "fiber_content": "Organic merino wool / organic silk (exact ratio not stated)",
+    "htsus_code": "6104.61.00.10",
+    "updated_at": "2026-07-27"
+  }
+}
