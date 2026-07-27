@@ -1,0 +1,2250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customs Form Generator - Cheshire Horse</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --ink: #1f2a24;
+    --muted: #6b7a70;
+    --border: #d9e0da;
+    --accent: #2f6b4f;
+    --accent-bg: #eaf3ee;
+    --warn: #a15c00;
+    --warn-bg: #fdf1de;
+    --bg: #f7f8f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; margin: 24px 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 0.92rem; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    max-width: 1180px;
+  }
+  .card.wide { max-width: none; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: #f0f2ef; position: sticky; top: 0; font-weight: 600; }
+  tr.needs-review { background: var(--warn-bg); }
+  tr.matched { background: var(--accent-bg); }
+  input[type=text], select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .badge.ok { background: var(--accent-bg); color: var(--accent); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  button, .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  button.secondary, .btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .hint { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  label { font-weight: 600; font-size: 0.9rem; }
+  code { background: #f0f2ef; padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .spinner-box { text-align: center; padding: 40px; color: var(--muted); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .no-print { display: none !important; }
+    .card { border: none; box-shadow: none; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================= UPLOAD ============================= -->
+<div id="view-upload" class="view active">
+  <h1>Customs Form Generator</h1>
+  <p class="sub">Upload a supplier's commercial invoice PDF to draft a U.S. HTSUS classification addendum. You'll review and confirm every classification before the final form is generated. Runs entirely in your browser &mdash; nothing is uploaded anywhere.</p>
+
+  <div class="card">
+    <div class="row" style="margin-bottom: 16px;">
+      <label for="vendor-select">Supplier</label>
+      <select id="vendor-select" style="width: auto;"></select>
+    </div>
+    <div class="row" style="margin-bottom: 16px;">
+      <label for="pdf-input">Invoice PDF</label>
+      <input type="file" id="pdf-input" accept="application/pdf">
+    </div>
+    <button id="parse-btn" disabled>Parse invoice</button>
+    <div id="upload-error" class="hint" style="color:var(--warn); display:none;"></div>
+  </div>
+
+  <div class="card" id="spinner-card" style="display:none;">
+    <div class="spinner-box">Parsing invoice&hellip;</div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Supported suppliers</h2>
+    <table id="vendor-table"></table>
+  </div>
+</div>
+
+<!-- ============================= REVIEW ============================= -->
+<div id="view-review" class="view">
+  <h1>Review classifications</h1>
+  <p class="sub" id="review-summary"></p>
+
+  <div class="card wide">
+    <table>
+      <thead>
+        <tr>
+          <th>Line</th>
+          <th>SKU</th>
+          <th>Description</th>
+          <th>Size</th>
+          <th>Qty</th>
+          <th>Net total</th>
+          <th style="min-width: 150px;">Proposed HTSUS</th>
+          <th style="min-width: 160px;">Description group</th>
+          <th style="min-width: 200px;">Fiber content</th>
+        </tr>
+      </thead>
+      <tbody id="review-tbody"></tbody>
+    </table>
+  </div>
+  <div class="card wide no-print">
+    <p class="hint" id="save-hint" style="margin-top:0;"></p>
+    <button id="save-btn">Save &amp; generate addendum</button>
+    <a href="#" id="start-over-link" class="btn secondary">Start over</a>
+  </div>
+</div>
+
+<!-- ============================= ADDENDUM ============================= -->
+<div id="view-addendum" class="view">
+  <div class="row no-print" style="margin-bottom: 16px;">
+    <a href="#" id="back-to-review-link" class="btn secondary">&larr; Back to review</a>
+    <button id="export-csv-btn" class="secondary" style="background:#fff;color:var(--accent);border:1px solid var(--accent);">Download line-level CSV</button>
+    <button id="export-updates-btn" class="secondary" style="background:#fff;color:var(--accent);border:1px solid var(--accent);">Download classification updates</button>
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div id="reconcile-warning" class="card no-print" style="display:none; border-color:#a15c00; background:#fdf1de;"></div>
+
+  <div class="card">
+    <h1>U.S. HTSUS Classification Addendum to Commercial Invoice</h1>
+    <p class="sub" style="text-align:center; margin-top:-4px;" id="addendum-invoice-no"></p>
+
+    <table style="margin-bottom: 16px;" id="addendum-header-table"></table>
+    <p class="hint">Maps invoice lines to proposed 10-digit U.S. HTSUS classifications for U.S. customs clearance. This addendum supplements, and does not replace, the commercial invoice.</p>
+
+    <h2>Summary by Proposed U.S. HTSUS Code</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Proposed U.S. HTSUS</th>
+          <th>Invoice Line(s)</th>
+          <th>Description Group</th>
+          <th>Fiber Content</th>
+          <th>Qty</th>
+          <th>Supplier Customs Code(s)</th>
+          <th>Invoice Line Value</th>
+        </tr>
+      </thead>
+      <tbody id="addendum-tbody"></tbody>
+    </table>
+
+    <h2>Notes</h2>
+    <ul class="hint" id="addendum-notes"></ul>
+
+    <h2>Prepared by Importer</h2>
+    <table id="addendum-prepared-table"></table>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   pdf.js setup
+   =================================================================== */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+/* ===================================================================
+   Embedded starter classification rules.
+   Regenerated from data/engel_rules.json by scripts/embed_rules.py --
+   do not hand-edit this block, edit the JSON file and re-run that
+   script instead.
+   =================================================================== */
+// EMBEDDED_RULES_START
+const EMBEDDED_RULES = {
+  "engel": {
+    "364150-01-3-8085-BC": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "364150-01-6-8590-DE": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "364150-01-7-95110-DE": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "364150-09-5-8085-DE": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "364150-09-6-8590-DE": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "364150-09-8-95110-BC": {
+      "descriptionGroup": "Nursing bras",
+      "fiberContent": "92% organic cotton / 8% elastane",
+      "htsusCode": "6212.10.90.10",
+      "styleNumber": "364150",
+      "updatedAt": "2026-07-27"
+    },
+    "405550-01-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "405550",
+      "updatedAt": "2026-07-27"
+    },
+    "405550-01-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "405550",
+      "updatedAt": "2026-07-27"
+    },
+    "405550-01-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "405550",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-01-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-044E-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-044E-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-051E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-051E-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-075-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-075-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-079E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-079E-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-080-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-087E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-087E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-087E-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-091-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "573501-091-8692": {
+      "descriptionGroup": "Baby pants",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.41.00.00",
+      "styleNumber": "573501",
+      "updatedAt": "2026-07-27"
+    },
+    "575423-044E-116": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575423",
+      "updatedAt": "2026-07-27"
+    },
+    "575423-044E-128": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575423",
+      "updatedAt": "2026-07-27"
+    },
+    "575423-079E-128": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575423",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-018E-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-051E-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-051E-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-052E-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-052E-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-075-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-075-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-079E-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-080-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-080-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-087E-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575450-087E-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575450",
+      "updatedAt": "2026-07-27"
+    },
+    "575481-051E-116": {
+      "descriptionGroup": "Children's vests; Ladies' vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.80",
+      "styleNumber": "575481",
+      "updatedAt": "2026-07-27"
+    },
+    "575481-051E-128": {
+      "descriptionGroup": "Children's vests; Ladies' vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.80",
+      "styleNumber": "575481",
+      "updatedAt": "2026-07-27"
+    },
+    "575481-075-104": {
+      "descriptionGroup": "Children's vests; Men's vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.70",
+      "styleNumber": "575481",
+      "updatedAt": "2026-07-27"
+    },
+    "575481-075-140": {
+      "descriptionGroup": "Children's vests; Men's vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.70",
+      "styleNumber": "575481",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-01-5056": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-01-6268": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-018E-7480": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-018E-8692": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-110116": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6104.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-5056": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-6268": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-7480": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-8692": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6104.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-051E-98104": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6104.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-075-110116": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-075-7480": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-075-8692": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-075-98104": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-079E-8692": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-079E-98104": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-080-110116": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-080-7480": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-080-98104": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-087E-110116": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-087E-5056": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-087E-7480": {
+      "descriptionGroup": "Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6111.90.05.10",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-087E-8692": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-087E-98104": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-091-110116": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-091-8692": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575520-091-98104": {
+      "descriptionGroup": "Children's hooded jackets; Hooded jackets",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6103.31.00.00",
+      "styleNumber": "575520",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-01-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-01-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-018E-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-051E-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-051E-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-075-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-075-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-079E-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-079E-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-087E-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575550-087E-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "575550",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-01-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-044E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-051E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-052E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-075-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-079E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-080-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-087E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575570-091-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575570",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-01-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-01-2": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-051E-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-051E-2": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-052E-2": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-075-1": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-075-2": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575582-080-2": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575582",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-01-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-01-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-044E-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-044E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-044E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-044E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-051E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-051E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-051E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-052E-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-052E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-052E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-075-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-075-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-075-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-075-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-079E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-079E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-080-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-080-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-080-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-080-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-087E-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-087E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-087E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-087E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-091-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-091-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-091-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "575722-091-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "575722",
+      "updatedAt": "2026-07-27"
+    },
+    "584461-087E-3436": {
+      "descriptionGroup": "Children's vests; Ladies' vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.80",
+      "styleNumber": "584461",
+      "updatedAt": "2026-07-27"
+    },
+    "584461-090-3436": {
+      "descriptionGroup": "Children's vests; Ladies' vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.80",
+      "styleNumber": "584461",
+      "updatedAt": "2026-07-27"
+    },
+    "584481-090-5860": {
+      "descriptionGroup": "Children's vests; Men's vests",
+      "fiberContent": "100% virgin wool (fleece)",
+      "htsusCode": "6110.11.00.70",
+      "styleNumber": "584481",
+      "updatedAt": "2026-07-27"
+    },
+    "595723-035E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "595723",
+      "updatedAt": "2026-07-27"
+    },
+    "595723-035E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "595723",
+      "updatedAt": "2026-07-27"
+    },
+    "595723-035E-98104": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "595723",
+      "updatedAt": "2026-07-27"
+    },
+    "595723-088E-110116": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "595723",
+      "updatedAt": "2026-07-27"
+    },
+    "595723-088E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "595723",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-091-3436": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-091-3840": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-091-4244": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-091-4648": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-33-3840": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-33-4244": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701310-33-4648": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701310",
+      "updatedAt": "2026-07-27"
+    },
+    "701340-75-3436": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701340",
+      "updatedAt": "2026-07-27"
+    },
+    "701340-75-3840": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701340",
+      "updatedAt": "2026-07-27"
+    },
+    "701340-75-4244": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701340",
+      "updatedAt": "2026-07-27"
+    },
+    "701340-75-4648": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701340",
+      "updatedAt": "2026-07-27"
+    },
+    "701500-33-3436": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701500",
+      "updatedAt": "2026-07-27"
+    },
+    "701500-33-4244": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701500",
+      "updatedAt": "2026-07-27"
+    },
+    "701500-33-4648": {
+      "descriptionGroup": "Ladies' briefs; Ladies' briefs / panties; Ladies' leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6108.29.90.00",
+      "styleNumber": "701500",
+      "updatedAt": "2026-07-27"
+    },
+    "703501-43E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "703501",
+      "updatedAt": "2026-07-27"
+    },
+    "704010-75-3436": {
+      "descriptionGroup": "Ladies' tank tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.80.20",
+      "styleNumber": "704010",
+      "updatedAt": "2026-07-27"
+    },
+    "704010-75-3840": {
+      "descriptionGroup": "Ladies' tank tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.80.20",
+      "styleNumber": "704010",
+      "updatedAt": "2026-07-27"
+    },
+    "704010-75-4244": {
+      "descriptionGroup": "Ladies' tank tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.80.20",
+      "styleNumber": "704010",
+      "updatedAt": "2026-07-27"
+    },
+    "704010-75-4648": {
+      "descriptionGroup": "Ladies' tank tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.80.20",
+      "styleNumber": "704010",
+      "updatedAt": "2026-07-27"
+    },
+    "704500-43E-104": {
+      "descriptionGroup": "Children's leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6107.19.00.00",
+      "styleNumber": "704500",
+      "updatedAt": "2026-07-27"
+    },
+    "704500-43E-116": {
+      "descriptionGroup": "Children's leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6107.19.00.00",
+      "styleNumber": "704500",
+      "updatedAt": "2026-07-27"
+    },
+    "704500-43E-140": {
+      "descriptionGroup": "Children's leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6107.19.00.00",
+      "styleNumber": "704500",
+      "updatedAt": "2026-07-27"
+    },
+    "704500-43E-152": {
+      "descriptionGroup": "Children's leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6107.19.00.00",
+      "styleNumber": "704500",
+      "updatedAt": "2026-07-27"
+    },
+    "704500-43E-176": {
+      "descriptionGroup": "Children's leggings",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6107.19.00.00",
+      "styleNumber": "704500",
+      "updatedAt": "2026-07-27"
+    },
+    "704970-33-3436": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "704970",
+      "updatedAt": "2026-07-27"
+    },
+    "704970-33-3840": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "704970",
+      "updatedAt": "2026-07-27"
+    },
+    "704970-33-4244": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "704970",
+      "updatedAt": "2026-07-27"
+    },
+    "704970-33-4648": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "704970",
+      "updatedAt": "2026-07-27"
+    },
+    "705544-33-1": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705544",
+      "updatedAt": "2026-07-27"
+    },
+    "705544-75-1": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705544",
+      "updatedAt": "2026-07-27"
+    },
+    "705550-091-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705550",
+      "updatedAt": "2026-07-27"
+    },
+    "705550-091-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705550",
+      "updatedAt": "2026-07-27"
+    },
+    "705550-091-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705550",
+      "updatedAt": "2026-07-27"
+    },
+    "705550-75-5056": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705550",
+      "updatedAt": "2026-07-27"
+    },
+    "705550-75-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705550",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-091-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-091-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-091-98104": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-33-6268": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-33-7480": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-33-8692": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "705561-33-98104": {
+      "descriptionGroup": "Adult hats; Baby balaclavas; Baby bonnets; Baby hats",
+      "fiberContent": "100% virgin wool / 100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6505.00.30.30",
+      "styleNumber": "705561",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-104": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-116": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-128": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-140": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-152": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-164": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-176": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707810-43E-92": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707810",
+      "updatedAt": "2026-07-27"
+    },
+    "707815-55E-140": {
+      "descriptionGroup": "Children's long-sleeve shirts; Ladies' long-sleeve shirts; Leisure / pajama tops",
+      "fiberContent": "70% virgin wool / 30% silk",
+      "htsusCode": "6109.90.15.40",
+      "styleNumber": "707815",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-43E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-43E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-43E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-51E-5056": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-51E-6268": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-51E-7480": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-51E-8692": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "709030-51E-98104": {
+      "descriptionGroup": "Baby bodysuits; Baby bootees; Baby mittens; Baby pants; Hooded baby jackets; Hooded baby overalls",
+      "fiberContent": "100% virgin wool (fleece) / 70% virgin wool / 30% silk (varies by line -- see notes)",
+      "htsusCode": "6111.90.05.30",
+      "styleNumber": "709030",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-7200-L": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-7200-M": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-7200-S": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-7200-XL": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-9900-L": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-9900-M": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-9900-S": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W150201910-9900-XL": {
+      "descriptionGroup": "Sports bustiers / bras",
+      "fiberContent": "70% virgin wool / 28% silk / 2% elastane",
+      "htsusCode": "6212.10.90.40",
+      "styleNumber": "W150201910",
+      "updatedAt": "2026-07-27"
+    },
+    "W240205862-9900-L": {
+      "descriptionGroup": "Women's yoga pants",
+      "fiberContent": "Organic merino wool / organic silk (exact ratio not stated)",
+      "htsusCode": "6104.61.00.10",
+      "styleNumber": "W240205862",
+      "updatedAt": "2026-07-27"
+    },
+    "W240205862-9900-M": {
+      "descriptionGroup": "Women's yoga pants",
+      "fiberContent": "Organic merino wool / organic silk (exact ratio not stated)",
+      "htsusCode": "6104.61.00.10",
+      "styleNumber": "W240205862",
+      "updatedAt": "2026-07-27"
+    },
+    "W240205862-9900-XL": {
+      "descriptionGroup": "Women's yoga pants",
+      "fiberContent": "Organic merino wool / organic silk (exact ratio not stated)",
+      "htsusCode": "6104.61.00.10",
+      "styleNumber": "W240205862",
+      "updatedAt": "2026-07-27"
+    }
+  }
+};
+// EMBEDDED_RULES_END
+
+/* ===================================================================
+   Vendor registry
+   =================================================================== */
+const VENDORS = {
+  engel: { label: "Engel GmbH (Germany)", available: true },
+  janus: { label: "Janus (Norway)", available: false },
+  ruskovilla: { label: "Ruskovilla (Finland)", available: false },
+};
+
+/* ===================================================================
+   PDF text extraction: cluster pdf.js text items into lines by Y
+   position (reading order), inserting a space wherever there's a
+   visible horizontal gap between items (pdf.js sometimes omits the
+   literal space glyph when spacing comes from TJ positioning rather
+   than a space character). Validated against the real sample invoice
+   to reproduce the same line structure as Python's pdfplumber.
+   =================================================================== */
+function clusterLines(items, yTol = 2.0) {
+  const sorted = [...items].sort((a, b) => b.y - a.y);
+  const lines = [];
+  let current = [];
+  let currentY = null;
+  for (const it of sorted) {
+    if (currentY === null || Math.abs(it.y - currentY) <= yTol) {
+      current.push(it);
+      if (currentY === null) currentY = it.y;
+    } else {
+      lines.push(current);
+      current = [it];
+      currentY = it.y;
+    }
+  }
+  if (current.length) lines.push(current);
+
+  return lines.map((line) => {
+    const xs = [...line].sort((a, b) => a.x - b.x);
+    let out = "";
+    let prevEnd = null;
+    for (const w of xs) {
+      if (prevEnd !== null) {
+        const gap = w.x - prevEnd;
+        out += gap > 1.0 ? " " : "";
+      }
+      out += w.str;
+      prevEnd = w.x + w.width;
+    }
+    return out;
+  });
+}
+
+async function extractPdfText(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const allLines = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const items = content.items.map((it) => ({
+      str: it.str,
+      x: it.transform[4],
+      y: it.transform[5],
+      width: it.width,
+    }));
+    allLines.push(...clusterLines(items));
+  }
+  return allLines.join("\n");
+}
+
+/* ===================================================================
+   Engel GmbH parser -- ported line-for-line from parsers/engel.py.
+   See that file's history for how it was calibrated against a real
+   206-line / 17-page sample invoice.
+   =================================================================== */
+const engelParser = (() => {
+  const ITEM_LINE_RE = /^(\d{3})\s+(.+?)\s+(\d+)\s+pcs\.\s+([\d.,]+)\s+(\d+)\s+([\d.,]+)\s*$/;
+  const ITEM_NO_RE = /^Item No\.\s+(\S+)\s+RRP\s+([\d.,]+)\s*$/;
+  const CUSTOMS_RE = /^Customs Code\s+(\d+)\s+Country of Origin\s+(\S+)\s+Weight\s+([\d.,]+)\s*kg\s*$/;
+  const DOC_HEADER_ROW_RE = /^\d+\s+\d{2}\.\d{2}\.\d{4}\s+\d+\/\d+\s*$/;
+  const BOILERPLATE_PREFIXES = [
+    "#VGCS#", "Invoice", "Document No.", "Description", "ENGEL GmbH",
+    "Wörthstra", "Geschäftsführung", "Amtsgericht", "BW Bank", "GLS Bank",
+    "KSK Reutlingen", "Postbank", "T +49", "F +49", "info@engel", "www.engel",
+  ];
+
+  function isBoilerplate(line) {
+    if (DOC_HEADER_ROW_RE.test(line)) return true;
+    return BOILERPLATE_PREFIXES.some((p) => line.startsWith(p));
+  }
+
+  function toEuroFloat(s) {
+    return parseFloat(s.replace(/\./g, "").replace(",", "."));
+  }
+
+  function parseLines(fullText) {
+    const rawLines = fullText.split("\n");
+    const items = [];
+    let current = null;
+    for (const raw of rawLines) {
+      const line = raw.trim();
+      let m = line.match(ITEM_LINE_RE);
+      if (m) {
+        const [, lineNo, blob, qty, unitPrice, taxPct, netTotal] = m;
+        const idx = blob.lastIndexOf(" ");
+        const description = idx >= 0 ? blob.slice(0, idx) : blob;
+        const size = idx >= 0 ? blob.slice(idx + 1) : "";
+        current = {
+          lineNo, description, size,
+          qty: parseInt(qty, 10),
+          unitPrice: toEuroFloat(unitPrice),
+          taxPct: toEuroFloat(taxPct),
+          netTotal: toEuroFloat(netTotal),
+        };
+        continue;
+      }
+      m = line.match(ITEM_NO_RE);
+      if (m && current !== null) {
+        const [, sku, rrp] = m;
+        current.itemSku = sku;
+        current.styleNumber = sku.split("-")[0];
+        current.rrp = parseFloat(rrp); // plain dot-decimal, unlike the rest of the invoice
+        continue;
+      }
+      m = line.match(CUSTOMS_RE);
+      if (m && current !== null) {
+        const [, code, country, weight] = m;
+        current.customsCodeVendor = code;
+        current.countryOfOrigin = country;
+        current.weightKg = toEuroFloat(weight);
+        current.htsusCode = "";
+        current.fiberContent = "";
+        current.descriptionGroup = "";
+        current.matchSource = "";
+        items.push(current);
+        current = null;
+        continue;
+      }
+      if (current !== null && !("itemSku" in current) && line && !isBoilerplate(line)) {
+        current.description = (current.description + " " + line).trim();
+      }
+    }
+    return items;
+  }
+
+  function parseHeader(fullText) {
+    const header = {
+      vendor: "engel", documentNo: "", documentDate: "", customerNo: "",
+      currency: "", importerName: "The Cheshire Horse", importerEin: "02-0350695",
+      countryOfOrigin: "", quantityTotal: "", subtotal: "", discountPct: "",
+      discountAmount: "", additionalExpenses: "", netTotalAmount: "",
+      taxAmount: "", totalAmount: "", shipmentType: "", paymentTerms: "", notes: [],
+    };
+
+    let m = fullText.match(/(\d{7,9})\s+(\d{2}\.\d{2}\.\d{4})\s+\d+\/\d+/);
+    if (m) { header.documentNo = m[1]; header.documentDate = m[2]; }
+
+    m = fullText.match(/(\d+)\s+(DE\d+)/);
+    if (m) header.customerNo = m[1];
+
+    m = fullText.match(/Currency:\s*([A-Z]{3})/);
+    if (m) header.currency = m[1];
+
+    m = fullText.match(/Country of Origin\s+(\S+)/);
+    if (m) header.countryOfOrigin = m[1];
+
+    let totalsBlock = "";
+    const tm = fullText.match(/Quantity\s+([\d.,]+)\s*\n\s*Subtotal\s+([\d.,]+)/);
+    if (tm) {
+      header.quantityTotal = tm[1];
+      header.subtotal = tm[2];
+      totalsBlock = fullText.slice(tm.index, tm.index + 2000);
+    }
+
+    function findAmount(label) {
+      const re = new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*\\n?\\s*([\\d.,]+)");
+      const mm = totalsBlock.match(re);
+      return mm ? mm[1] : "";
+    }
+
+    const dm = totalsBlock.match(/Discount\s*\((\d+)%\)\s*\n?\s*([\d.,]+)/);
+    if (dm) { header.discountPct = dm[1]; header.discountAmount = dm[2]; }
+    header.additionalExpenses = findAmount("Additional Expenses");
+    header.netTotalAmount = findAmount("Net Total Amount");
+    header.taxAmount = findAmount("Tax Amount");
+    header.totalAmount = findAmount("Total Amount");
+
+    m = totalsBlock.match(/Shipment Type\s*\n?\s*(\S+)/);
+    if (m) header.shipmentType = m[1];
+    m = totalsBlock.match(/Payment Terms\s*\n?\s*([^\n]+)/);
+    if (m) header.paymentTerms = m[1].trim();
+
+    header.notes = fullText.split("\n").map((l) => l.trim())
+      .filter((l) => l.startsWith("Articles start with") || l.startsWith("Article "));
+
+    return header;
+  }
+
+  async function parse(arrayBuffer) {
+    const fullText = await extractPdfText(arrayBuffer);
+    const items = parseLines(fullText);
+    const header = parseHeader(fullText);
+    return { header, items };
+  }
+
+  return { parse };
+})();
+
+const PARSERS = { engel: engelParser };
+
+/* ===================================================================
+   Classification rules: embedded starter data + this-browser learned
+   overrides in localStorage. See README for how learned rules make
+   it back into the committed data/<vendor>_rules.json for everyone.
+   =================================================================== */
+function learnedRulesKey(vendor) {
+  return `chCustomsFormGenerator.learnedRules.${vendor}`;
+}
+
+function loadLearnedRules(vendor) {
+  try {
+    return JSON.parse(localStorage.getItem(learnedRulesKey(vendor)) || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLearnedRule(vendor, itemSku, styleNumber, descriptionGroup, fiberContent, htsusCode) {
+  const rules = loadLearnedRules(vendor);
+  rules[itemSku] = {
+    styleNumber, descriptionGroup, fiberContent, htsusCode,
+    updatedAt: new Date().toISOString().slice(0, 10),
+  };
+  localStorage.setItem(learnedRulesKey(vendor), JSON.stringify(rules));
+}
+
+function effectiveRules(vendor) {
+  return { ...(EMBEDDED_RULES[vendor] || {}), ...loadLearnedRules(vendor) };
+}
+
+function applyKnownRules(vendor, items) {
+  const rules = effectiveRules(vendor);
+  for (const item of items) {
+    const rule = rules[item.itemSku];
+    if (rule) {
+      item.htsusCode = rule.htsusCode || "";
+      item.fiberContent = rule.fiberContent || "";
+      item.descriptionGroup = rule.descriptionGroup || "";
+      item.matchSource = "exact";
+    }
+  }
+}
+
+function getStyleHints(vendor, styleNumber) {
+  const rules = effectiveRules(vendor);
+  const DELIM = String.fromCharCode(31);
+  const counts = new Map();
+  for (const [sku, rule] of Object.entries(rules)) {
+    if (rule.styleNumber !== styleNumber) continue;
+    const key = [rule.htsusCode || "", rule.descriptionGroup || "", rule.fiberContent || ""].join(DELIM);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  const hints = [...counts.entries()].map(([key, n]) => {
+    const [htsusCode, descriptionGroup, fiberContent] = key.split(DELIM);
+    return { htsusCode, descriptionGroup, fiberContent, n };
+  });
+  hints.sort((a, b) => b.n - a.n);
+  return hints;
+}
+
+/* ===================================================================
+   Grouping/addendum logic -- ported from classification.py
+   =================================================================== */
+function compressLineRanges(lineNos) {
+  const nums = lineNos.map((n) => parseInt(n, 10)).sort((a, b) => a - b);
+  if (!nums.length) return "";
+  const ranges = [];
+  let start = nums[0], prev = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    const n = nums[i];
+    if (n === prev + 1) { prev = n; continue; }
+    ranges.push([start, prev]);
+    start = prev = n;
+  }
+  ranges.push([start, prev]);
+  const width = Math.max(...lineNos.map((n) => n.length));
+  return ranges
+    .map(([a, b]) => (a === b ? String(a).padStart(width, "0") : `${String(a).padStart(width, "0")}-${String(b).padStart(width, "0")}`))
+    .join(", ");
+}
+
+function groupByHtsus(items) {
+  const sorted = [...items].sort((a, b) => {
+    const ka = a.htsusCode || "￿";
+    const kb = b.htsusCode || "￿";
+    if (ka !== kb) return ka < kb ? -1 : 1;
+    return a.lineNo < b.lineNo ? -1 : a.lineNo > b.lineNo ? 1 : 0;
+  });
+  const rows = [];
+  let i = 0;
+  while (i < sorted.length) {
+    const code = sorted[i].htsusCode;
+    const group = [];
+    while (i < sorted.length && sorted[i].htsusCode === code) { group.push(sorted[i]); i++; }
+    const descGroups = [];
+    for (const it of group) if (it.descriptionGroup && !descGroups.includes(it.descriptionGroup)) descGroups.push(it.descriptionGroup);
+    const fibers = [];
+    for (const it of group) if (it.fiberContent && !fibers.includes(it.fiberContent)) fibers.push(it.fiberContent);
+    const vendorCodes = [...new Set(group.map((it) => it.customsCodeVendor).filter(Boolean))].sort();
+    rows.push({
+      htsusCode: code,
+      lineRanges: compressLineRanges(group.map((it) => it.lineNo)),
+      descriptionGroup: descGroups.join("; "),
+      fiberContent: fibers.join("; "),
+      qty: group.reduce((s, it) => s + it.qty, 0),
+      value: Math.round(group.reduce((s, it) => s + it.netTotal, 0) * 100) / 100,
+      vendorCustomsCodes: vendorCodes.join(", "),
+      lineCount: group.length,
+      needsReview: !code,
+    });
+  }
+  return rows;
+}
+
+function fmt2(n) {
+  return (Math.round(n * 100) / 100).toFixed(2);
+}
+
+/* ===================================================================
+   App state + view wiring
+   =================================================================== */
+const STATE = { vendor: null, header: null, items: null, sourceFilename: null };
+
+function show(viewId) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.getElementById(viewId).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+function initUploadView() {
+  const select = document.getElementById("vendor-select");
+  const table = document.getElementById("vendor-table");
+  select.innerHTML = '<option value="" disabled selected>Choose a supplier...</option>';
+  let rows = "";
+  for (const [slug, v] of Object.entries(VENDORS)) {
+    const opt = document.createElement("option");
+    opt.value = slug;
+    opt.textContent = v.available ? v.label : `${v.label} (not set up yet)`;
+    opt.disabled = !v.available;
+    select.appendChild(opt);
+    rows += `<tr><td>${v.label}</td><td>${v.available ? '<span class="badge ok">Ready</span>' : '<span class="badge warn">Needs a sample invoice to build a parser</span>'}</td></tr>`;
+  }
+  table.innerHTML = `<tr><th>Supplier</th><th>Status</th></tr>${rows}`;
+
+  const fileInput = document.getElementById("pdf-input");
+  const parseBtn = document.getElementById("parse-btn");
+  function updateBtn() {
+    parseBtn.disabled = !(select.value && fileInput.files.length);
+  }
+  select.addEventListener("change", updateBtn);
+  fileInput.addEventListener("change", updateBtn);
+
+  parseBtn.addEventListener("click", async () => {
+    const vendor = select.value;
+    const file = fileInput.files[0];
+    const errorEl = document.getElementById("upload-error");
+    errorEl.style.display = "none";
+    document.getElementById("spinner-card").style.display = "block";
+    parseBtn.disabled = true;
+    try {
+      const buf = await file.arrayBuffer();
+      const { header, items } = await PARSERS[vendor].parse(buf);
+      header.vendor = vendor;
+      applyKnownRules(vendor, items);
+      STATE.vendor = vendor;
+      STATE.header = header;
+      STATE.items = items;
+      STATE.sourceFilename = file.name;
+      renderReview();
+      show("view-review");
+    } catch (e) {
+      console.error(e);
+      errorEl.textContent = "Could not parse this PDF: " + e.message;
+      errorEl.style.display = "block";
+    } finally {
+      document.getElementById("spinner-card").style.display = "none";
+      parseBtn.disabled = false;
+    }
+  });
+}
+
+function renderReview() {
+  const items = STATE.items;
+  const vendor = STATE.vendor;
+  const unmatched = items.filter((it) => it.matchSource !== "exact").length;
+
+  document.getElementById("review-summary").innerHTML =
+    `${STATE.sourceFilename} &middot; ${STATE.header.documentNo} &middot; ${items.length} line${items.length !== 1 ? "s" : ""} ` +
+    `&middot; <span class="badge ${unmatched === 0 ? "ok" : "warn"}">${items.length - unmatched} auto-matched from past invoices, ${unmatched} need review</span>`;
+
+  const tbody = document.getElementById("review-tbody");
+  tbody.innerHTML = "";
+  for (const it of items) {
+    const tr = document.createElement("tr");
+    tr.className = it.matchSource === "exact" ? "matched" : "needs-review";
+
+    const hints = it.matchSource === "exact" ? [] : getStyleHints(vendor, it.styleNumber);
+    const listId = `hints_${it.lineNo}`;
+    let hintNote;
+    if (it.matchSource === "exact") hintNote = "confirmed from a prior invoice";
+    else if (hints.length) hintNote = `style ${it.styleNumber} seen before &mdash; pick a suggestion or enter new`;
+    else hintNote = "new style, no prior classification on file";
+
+    tr.innerHTML = `
+      <td>${it.lineNo}</td>
+      <td>${it.itemSku}</td>
+      <td>${escapeHtml(it.description)}</td>
+      <td>${escapeHtml(it.size)}</td>
+      <td>${it.qty}</td>
+      <td>${fmt2(it.netTotal)}</td>
+      <td>
+        <input type="text" data-field="htsusCode" data-line="${it.lineNo}" value="${escapeHtml(it.htsusCode)}" list="${listId}" placeholder="e.g. 6111.90.05.30">
+        <datalist id="${listId}">
+          ${hints.map((h) => `<option value="${escapeHtml(h.htsusCode)}">${escapeHtml(h.descriptionGroup)} (${h.n} prior SKU${h.n !== 1 ? "s" : ""})</option>`).join("")}
+        </datalist>
+        <div class="hint">${hintNote}</div>
+      </td>
+      <td><input type="text" data-field="descriptionGroup" data-line="${it.lineNo}" value="${escapeHtml(it.descriptionGroup)}"></td>
+      <td><input type="text" data-field="fiberContent" data-line="${it.lineNo}" value="${escapeHtml(it.fiberContent)}"></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById("save-hint").innerHTML =
+    `Saving keeps every HTSUS code you enter or confirm in this browser (via local storage), so the same SKU auto-fills next time on this computer. Use <strong>Download classification updates</strong> on the next page to share newly-confirmed codes so someone can fold them into the shared <code>data/${vendor}_rules.json</code> for other computers too. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`;
+}
+
+function readReviewFormIntoItems() {
+  const inputs = document.querySelectorAll("#review-tbody input");
+  const byLine = {};
+  for (const input of inputs) {
+    const line = input.dataset.line;
+    byLine[line] = byLine[line] || {};
+    byLine[line][input.dataset.field] = input.value.trim();
+  }
+  for (const it of STATE.items) {
+    const edits = byLine[it.lineNo] || {};
+    it.htsusCode = edits.htsusCode || "";
+    it.descriptionGroup = edits.descriptionGroup || "";
+    it.fiberContent = edits.fiberContent || "";
+  }
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+document.getElementById("save-btn").addEventListener("click", () => {
+  readReviewFormIntoItems();
+  for (const it of STATE.items) {
+    if (it.htsusCode) {
+      saveLearnedRule(STATE.vendor, it.itemSku, it.styleNumber, it.descriptionGroup, it.fiberContent, it.htsusCode);
+    }
+  }
+  renderAddendum();
+  show("view-addendum");
+});
+
+document.getElementById("start-over-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  show("view-upload");
+});
+document.getElementById("back-to-review-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  show("view-review");
+});
+
+function renderAddendum() {
+  const { header, items, vendor } = STATE;
+  const rows = groupByHtsus(items);
+  const expected = parseFloat((header.subtotal || "0").replace(/\./g, "").replace(",", "."));
+  const groupedTotal = Math.round(rows.reduce((s, r) => s + r.value, 0) * 100) / 100;
+  const reconciled = Math.abs(groupedTotal - expected) <= 0.05;
+
+  const warnEl = document.getElementById("reconcile-warning");
+  if (!reconciled) {
+    warnEl.style.display = "block";
+    warnEl.innerHTML = `<strong>Totals don't reconcile.</strong> Grouped merchandise value is ${fmt2(groupedTotal)} ${header.currency}, invoice subtotal is ${fmt2(expected)} ${header.currency}. Check for lines with a blank or duplicated HTSUS code before sending this to the broker.`;
+  } else {
+    warnEl.style.display = "none";
+  }
+
+  document.getElementById("addendum-invoice-no").textContent = `Commercial Invoice No. ${header.documentNo}`;
+  document.getElementById("addendum-header-table").innerHTML = `
+    <tr><td><strong>Supplier</strong></td><td>${VENDORS[vendor].label}</td><td><strong>Importer</strong></td><td>${header.importerName}</td></tr>
+    <tr><td><strong>Invoice Date</strong></td><td>${header.documentDate}</td><td><strong>Importer EIN</strong></td><td>${header.importerEin}</td></tr>
+    <tr><td><strong>Country of Origin</strong></td><td>${header.countryOfOrigin}</td><td><strong>Invoice Currency</strong></td><td>${header.currency}</td></tr>
+  `;
+
+  const tbody = document.getElementById("addendum-tbody");
+  tbody.innerHTML = rows.map((r) => `
+    <tr class="${r.needsReview ? "needs-review" : ""}">
+      <td><strong>${r.htsusCode || "(unclassified)"}</strong></td>
+      <td>${r.lineRanges}</td>
+      <td>${escapeHtml(r.descriptionGroup)}</td>
+      <td>${escapeHtml(r.fiberContent)}</td>
+      <td>${r.qty}</td>
+      <td>${r.vendorCustomsCodes}</td>
+      <td>${fmt2(r.value)}</td>
+    </tr>
+  `).join("") + `
+    <tr style="font-weight:600; background:#f0f2ef;">
+      <td colspan="4">TOTAL</td>
+      <td>${rows.reduce((s, r) => s + r.qty, 0)}</td>
+      <td></td>
+      <td>${fmt2(groupedTotal)}</td>
+    </tr>
+  `;
+
+  const notes = [
+    `Invoice line values are gross merchandise values before any separately stated invoice discount and additional expenses. The grouped merchandise value ${reconciled ? "reconciles" : "does NOT reconcile"} to the invoice subtotal (${fmt2(expected)} ${header.currency}).`,
+    "Fiber compositions are based on the invoice's composition key and prior confirmed classifications for these SKUs; new styles were classified manually during review.",
+    "The supplier's customs codes are EU/international codes. The classifications above are proposed U.S. 10-digit HTSUS classifications for entry documentation.",
+    "Duty rates, Chapter 99 duties, fees, and trade-remedy measures are intentionally omitted. The customs broker should determine all applicable charges using the HTSUS and CBP guidance in effect on the date of entry.",
+    "Final classification is subject to review by the customs broker and U.S. Customs and Border Protection.",
+    ...header.notes,
+  ];
+  document.getElementById("addendum-notes").innerHTML = notes.map((n) => `<li>${escapeHtml(n)}</li>`).join("");
+
+  document.getElementById("addendum-prepared-table").innerHTML = `
+    <tr><td><strong>Prepared by</strong></td><td>${header.importerName}</td></tr>
+    <tr><td><strong>EIN</strong></td><td>${header.importerEin}</td></tr>
+    <tr><td><strong>Date</strong></td><td>${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</td></tr>
+  `;
+}
+
+function downloadBlob(filename, mime, content) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("export-csv-btn").addEventListener("click", () => {
+  const header = [
+    "Line No", "Item SKU", "Description", "Size", "Qty", "Unit Price", "Net Total",
+    "Vendor Customs Code", "Country of Origin", "Weight (kg)",
+    "Proposed HTSUS", "Description Group", "Fiber Content",
+  ];
+  const csvEscape = (v) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [header.map(csvEscape).join(",")];
+  for (const it of STATE.items) {
+    lines.push([
+      it.lineNo, it.itemSku, it.description, it.size, it.qty, it.unitPrice, it.netTotal,
+      it.customsCodeVendor, it.countryOfOrigin, it.weightKg,
+      it.htsusCode, it.descriptionGroup, it.fiberContent,
+    ].map(csvEscape).join(","));
+  }
+  downloadBlob(`customs-form-lines-${STATE.header.documentNo || "export"}.csv`, "text/csv", lines.join("\n"));
+});
+
+document.getElementById("export-updates-btn").addEventListener("click", () => {
+  const baseline = EMBEDDED_RULES[STATE.vendor] || {};
+  const updates = {};
+  for (const it of STATE.items) {
+    if (!it.htsusCode) continue;
+    const existing = baseline[it.itemSku];
+    const changed = !existing || existing.htsusCode !== it.htsusCode ||
+      existing.descriptionGroup !== it.descriptionGroup || existing.fiberContent !== it.fiberContent;
+    if (changed) {
+      updates[it.itemSku] = {
+        styleNumber: it.styleNumber,
+        descriptionGroup: it.descriptionGroup,
+        fiberContent: it.fiberContent,
+        htsusCode: it.htsusCode,
+        updatedAt: new Date().toISOString().slice(0, 10),
+      };
+    }
+  }
+  if (Object.keys(updates).length === 0) {
+    alert("No new or changed classifications to export -- everything on this invoice matched the built-in rules.");
+    return;
+  }
+  downloadBlob(
+    `${STATE.vendor}_rules_updates_${new Date().toISOString().slice(0, 10)}.json`,
+    "application/json",
+    JSON.stringify(updates, null, 2)
+  );
+});
+
+initUploadView();
+</script>
+</body>
+</html>

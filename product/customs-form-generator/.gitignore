@@ -4,9 +4,10 @@ data/uploads/
 
 # NOTE: data/*_rules.json (SKU -> HTSUS classification rules) is
 # intentionally NOT ignored -- it's committed so it travels with the repo
-# between computers. See rules_store.py and README.md.
+# between computers, and index.html embeds its contents directly.
+# See scripts/embed_rules.py and README.md.
 
-# --- Python ---
+# --- Python (used by scripts/, not by index.html itself) ---
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,6 +22,10 @@ ENV/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# --- Node (only used transiently for local testing, never shipped) ---
+.nodejs/
+node_modules/
 
 # --- Editor & OS ---
 .vscode/

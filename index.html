@@ -204,12 +204,10 @@ const TOOLS = [
   {
     name: "Customs Form Generator",
     icon: "🛃",
-    desc: "Upload an overseas supplier's invoice PDF to draft a U.S. HTSUS classification addendum for customs entry. Learns SKU classifications over time so repeat styles auto-fill on the next order.",
-    type: "python",
+    desc: "Upload an overseas supplier's invoice PDF to draft a U.S. HTSUS classification addendum for customs entry. Learns SKU classifications over time so repeat styles auto-fill on the next order. Runs entirely in the browser.",
+    type: "html",
     category: "product",
-    private: true,
-    cmd: "start_customs_form_generator.bat",
-    note: "Double-click in product\\customs-form-generator",
+    url: "product/customs-form-generator/",
   },
   {
     name: "Vendor Order Planner",
