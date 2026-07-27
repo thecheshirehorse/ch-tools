@@ -31,11 +31,45 @@ have loaded once.
    **addendum** — group totals reconcile against the invoice subtotal
    automatically, so a missing or duplicated line is easy to catch
    before it goes to the broker.
-5. If you classified anything new, click **Download classification
-   updates** on the addendum page. That downloads a small JSON file
-   with just the new/changed SKUs — send it to whoever maintains this
-   repo (Slack, email, whatever's easiest) so they can fold it into the
-   shared rule set for every computer, not just yours.
+5. To share new classifications with other computers, either:
+   - **Connect a shared rules file** (recommended if you have one) —
+     see below, or
+   - Click **Download classification updates** on the addendum page.
+     That downloads a small JSON file with just the new/changed SKUs —
+     send it to whoever maintains this repo so they can fold it into
+     the shared rule set for every computer.
+
+## Sharing classifications automatically (no git required)
+
+If your computers already sync a folder via OneDrive, Google Drive, or
+Dropbox, you can point this tool at a file inside it and skip the
+manual "download and send" step entirely:
+
+1. On the upload screen, pick a supplier, then click **Connect...**
+   next to "Shared rules file."
+2. In the file picker, navigate to your synced folder and either pick
+   an existing `<vendor>_rules.json` there, or type that name to create
+   a new one.
+3. From then on, every classification you confirm and save is written
+   straight into that file. Once the sync service (OneDrive/Drive/
+   Dropbox) carries the updated file to the other computer, whoever
+   connects to that same file there picks up the new classifications
+   automatically — no download, no email, no git.
+
+Each computer connects to the file once; the browser remembers the
+connection (you may need to click **Reconnect** once per browser
+restart, since browsers require a fresh permission grant then). This
+uses the browser's File System Access API, supported in Edge and
+Chrome but not Firefox — on unsupported browsers this section is
+hidden and the download-and-send flow above is the only option.
+
+This is a convenience layer on top of local storage, not a replacement
+for it — classifications are always also kept in this browser's local
+storage as a fallback, and the committed `data/<vendor>_rules.json` /
+embedded baseline (below) is still what every fresh install starts
+from. Think of the shared file as the fast path between computers day
+to day, and the git-committed baseline as an occasional checkpoint of
+it (see "Maintaining the shared classification rules").
 
 ## Why classification is keyed on the exact SKU, not the style
 
@@ -60,10 +94,13 @@ near the top of the `<script>` block).
 **This part still needs Python** (only for whoever maintains the repo —
 not for anyone just using the tool):
 
-1. Someone downloads a "classification updates" file from the tool (see
-   step 5 above) and sends it to you.
-2. Merge those entries into `data/<vendor>_rules.json` (by hand for a
-   couple of SKUs, or write a quick script if it's a lot).
+1. Get the new entries into `data/<vendor>_rules.json`. Either:
+   - Someone downloads a "classification updates" file from the tool
+     and sends it to you — merge those entries in by hand, or
+   - If a shared rules file is in use (see above), just copy its
+     current contents over `data/<vendor>_rules.json` wholesale — it's
+     already in the same format and is the more complete/current set.
+2. (For the manual-merge path) Add each new entry to the JSON file.
 3. Regenerate the embedded block:
    ```
    python scripts/embed_rules.py

@@ -97,6 +97,11 @@
       <label for="vendor-select">Supplier</label>
       <select id="vendor-select" style="width: auto;"></select>
     </div>
+    <div class="row" style="margin-bottom: 16px;" id="shared-file-row">
+      <label>Shared rules file</label>
+      <span id="shared-file-status" class="hint"></span>
+      <button type="button" id="shared-file-btn" class="secondary"></button>
+    </div>
     <div class="row" style="margin-bottom: 16px;">
       <label for="pdf-input">Invoice PDF</label>
       <input type="file" id="pdf-input" accept="application/pdf">
@@ -1857,10 +1862,24 @@ const engelParser = (() => {
 const PARSERS = { engel: engelParser };
 
 /* ===================================================================
-   Classification rules: embedded starter data + this-browser learned
-   overrides in localStorage. See README for how learned rules make
-   it back into the committed data/<vendor>_rules.json for everyone.
+   Classification rules: three layers, later layers win --
+     1. EMBEDDED_RULES        baked into this file at last deploy (see scripts/embed_rules.py)
+     2. localStorage          this-browser-only cache, always-on fallback
+     3. shared file           a file this browser is connected to (e.g. inside a
+                               OneDrive/Google Drive/Dropbox folder) via the File
+                               System Access API -- the same file another computer
+                               can be connected to, so classifications sync between
+                               computers without anyone touching git.
    =================================================================== */
+const SHARED_KEY_MAP = {
+  style_number: "styleNumber",
+  description_group: "descriptionGroup",
+  fiber_content: "fiberContent",
+  htsus_code: "htsusCode",
+  updated_at: "updatedAt",
+};
+const CAMEL_TO_SNAKE = Object.fromEntries(Object.entries(SHARED_KEY_MAP).map(([a, b]) => [b, a]));
+
 function learnedRulesKey(vendor) {
   return `chCustomsFormGenerator.learnedRules.${vendor}`;
 }
@@ -1882,12 +1901,122 @@ function saveLearnedRule(vendor, itemSku, styleNumber, descriptionGroup, fiberCo
   localStorage.setItem(learnedRulesKey(vendor), JSON.stringify(rules));
 }
 
-function effectiveRules(vendor) {
-  return { ...(EMBEDDED_RULES[vendor] || {}), ...loadLearnedRules(vendor) };
+/* ---- shared file (File System Access API) ---- */
+const SHARED_FILE_SUPPORTED = "showSaveFilePicker" in window;
+const SHARED_HANDLES = {}; // vendor -> FileSystemFileHandle, cached for this page load
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("chCustomsFormGeneratorDB", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("fileHandles");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
 
-function applyKnownRules(vendor, items) {
-  const rules = effectiveRules(vendor);
+async function storeHandleRecord(vendor, handle) {
+  const db = await openHandleDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("fileHandles", "readwrite");
+    tx.objectStore("fileHandles").put(handle, vendor);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getStoredHandleRecord(vendor) {
+  const db = await openHandleDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("fileHandles", "readonly");
+    const req = tx.objectStore("fileHandles").get(vendor);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Called once per vendor selection: reattaches a previously-connected handle for
+// this browser if permission is still (silently) granted. If a handle exists but
+// needs a fresh user gesture to re-grant access, the caller shows a "Reconnect" button.
+async function tryReattachSharedFile(vendor) {
+  if (!SHARED_FILE_SUPPORTED) return "unsupported";
+  const handle = await getStoredHandleRecord(vendor);
+  if (!handle) return "not-connected";
+  const perm = await handle.queryPermission({ mode: "readwrite" });
+  if (perm === "granted") {
+    SHARED_HANDLES[vendor] = handle;
+    return "connected";
+  }
+  SHARED_HANDLES[vendor] = handle; // kept for the reconnect click to re-request permission on
+  return "needs-reconnect";
+}
+
+async function connectSharedFile(vendor) {
+  const handle = await window.showSaveFilePicker({
+    suggestedName: `${vendor}_rules.json`,
+    types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+  });
+  await storeHandleRecord(vendor, handle);
+  SHARED_HANDLES[vendor] = handle;
+}
+
+async function reconnectSharedFile(vendor) {
+  const handle = SHARED_HANDLES[vendor];
+  if (!handle) return false;
+  const perm = await handle.requestPermission({ mode: "readwrite" });
+  return perm === "granted";
+}
+
+function snakeRuleToCamel(rule) {
+  const out = {};
+  for (const [k, v] of Object.entries(rule)) out[SHARED_KEY_MAP[k] || k] = v;
+  return out;
+}
+function camelRuleToSnake(rule) {
+  const out = {};
+  for (const [k, v] of Object.entries(rule)) out[CAMEL_TO_SNAKE[k] || k] = v;
+  return out;
+}
+
+// Reads the shared file's raw (snake_case, disk-format) contents, or {} if not
+// connected / empty / unreadable.
+async function readSharedFileRaw(vendor) {
+  const handle = SHARED_HANDLES[vendor];
+  if (!handle) return {};
+  try {
+    const file = await handle.getFile();
+    const text = await file.text();
+    if (!text.trim()) return {};
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn("could not read shared rules file for", vendor, e);
+    return {};
+  }
+}
+
+// Re-reads the shared file, merges in newEntries (camelCase, keyed by SKU), and
+// writes the result back -- read-modify-write right before saving to minimize
+// clobbering edits the other computer made since this page was loaded.
+async function writeSharedFileEntries(vendor, newEntriesCamel) {
+  const handle = SHARED_HANDLES[vendor];
+  if (!handle) return false;
+  const current = await readSharedFileRaw(vendor);
+  for (const [sku, rule] of Object.entries(newEntriesCamel)) {
+    current[sku] = camelRuleToSnake(rule);
+  }
+  const ordered = Object.fromEntries(Object.keys(current).sort().map((k) => [k, current[k]]));
+  const writable = await handle.createWritable();
+  await writable.write(JSON.stringify(ordered, null, 2) + "\n");
+  await writable.close();
+  return true;
+}
+
+async function effectiveRules(vendor) {
+  const sharedRaw = await readSharedFileRaw(vendor);
+  const shared = Object.fromEntries(Object.entries(sharedRaw).map(([sku, r]) => [sku, snakeRuleToCamel(r)]));
+  return { ...(EMBEDDED_RULES[vendor] || {}), ...loadLearnedRules(vendor), ...shared };
+}
+
+function applyKnownRulesSync(items, rules) {
   for (const item of items) {
     const rule = rules[item.itemSku];
     if (rule) {
@@ -1899,8 +2028,7 @@ function applyKnownRules(vendor, items) {
   }
 }
 
-function getStyleHints(vendor, styleNumber) {
-  const rules = effectiveRules(vendor);
+function getStyleHintsSync(rules, styleNumber) {
   const DELIM = String.fromCharCode(31);
   const counts = new Map();
   for (const [sku, rule] of Object.entries(rules)) {
@@ -1985,6 +2113,40 @@ function show(viewId) {
   window.scrollTo(0, 0);
 }
 
+async function refreshSharedFileUI(vendor) {
+  const row = document.getElementById("shared-file-row");
+  const statusEl = document.getElementById("shared-file-status");
+  const btn = document.getElementById("shared-file-btn");
+
+  if (!SHARED_FILE_SUPPORTED) {
+    row.style.display = "none";
+    return;
+  }
+  row.style.display = "flex";
+  if (!vendor) {
+    statusEl.textContent = "choose a supplier first";
+    btn.style.display = "none";
+    return;
+  }
+
+  const state = await tryReattachSharedFile(vendor);
+  btn.style.display = "inline-block";
+  if (state === "connected") {
+    const handle = SHARED_HANDLES[vendor];
+    statusEl.innerHTML = `<span class="badge ok">Connected: ${escapeHtml(handle.name)}</span> classifications sync automatically`;
+    btn.textContent = "Change...";
+    btn.onclick = () => connectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+  } else if (state === "needs-reconnect") {
+    statusEl.innerHTML = `<span class="badge warn">Connection needs refreshing</span>`;
+    btn.textContent = "Reconnect";
+    btn.onclick = () => reconnectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+  } else {
+    statusEl.textContent = "not connected -- updates only saved on this computer";
+    btn.textContent = "Connect...";
+    btn.onclick = () => connectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+  }
+}
+
 function initUploadView() {
   const select = document.getElementById("vendor-select");
   const table = document.getElementById("vendor-table");
@@ -1999,13 +2161,17 @@ function initUploadView() {
     rows += `<tr><td>${v.label}</td><td>${v.available ? '<span class="badge ok">Ready</span>' : '<span class="badge warn">Needs a sample invoice to build a parser</span>'}</td></tr>`;
   }
   table.innerHTML = `<tr><th>Supplier</th><th>Status</th></tr>${rows}`;
+  refreshSharedFileUI(null);
 
   const fileInput = document.getElementById("pdf-input");
   const parseBtn = document.getElementById("parse-btn");
   function updateBtn() {
     parseBtn.disabled = !(select.value && fileInput.files.length);
   }
-  select.addEventListener("change", updateBtn);
+  select.addEventListener("change", () => {
+    updateBtn();
+    refreshSharedFileUI(select.value);
+  });
   fileInput.addEventListener("change", updateBtn);
 
   parseBtn.addEventListener("click", async () => {
@@ -2019,11 +2185,13 @@ function initUploadView() {
       const buf = await file.arrayBuffer();
       const { header, items } = await PARSERS[vendor].parse(buf);
       header.vendor = vendor;
-      applyKnownRules(vendor, items);
+      const rules = await effectiveRules(vendor);
+      applyKnownRulesSync(items, rules);
       STATE.vendor = vendor;
       STATE.header = header;
       STATE.items = items;
       STATE.sourceFilename = file.name;
+      STATE.rulesSnapshot = rules;
       renderReview();
       show("view-review");
     } catch (e) {
@@ -2052,7 +2220,7 @@ function renderReview() {
     const tr = document.createElement("tr");
     tr.className = it.matchSource === "exact" ? "matched" : "needs-review";
 
-    const hints = it.matchSource === "exact" ? [] : getStyleHints(vendor, it.styleNumber);
+    const hints = it.matchSource === "exact" ? [] : getStyleHintsSync(STATE.rulesSnapshot, it.styleNumber);
     const listId = `hints_${it.lineNo}`;
     let hintNote;
     if (it.matchSource === "exact") hintNote = "confirmed from a prior invoice";
@@ -2079,8 +2247,10 @@ function renderReview() {
     tbody.appendChild(tr);
   }
 
-  document.getElementById("save-hint").innerHTML =
-    `Saving keeps every HTSUS code you enter or confirm in this browser (via local storage), so the same SKU auto-fills next time on this computer. Use <strong>Download classification updates</strong> on the next page to share newly-confirmed codes so someone can fold them into the shared <code>data/${vendor}_rules.json</code> for other computers too. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`;
+  const connected = !!SHARED_HANDLES[vendor];
+  document.getElementById("save-hint").innerHTML = connected
+    ? `Saving writes every HTSUS code you enter or confirm to your connected shared rules file (<code>${escapeHtml(SHARED_HANDLES[vendor].name)}</code>) &mdash; any other computer connected to that same file (e.g. via a synced OneDrive/Google Drive/Dropbox folder) will pick up these classifications automatically. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`
+    : `Saving keeps every HTSUS code you enter or confirm in this browser only (no shared file connected on this session). Use <strong>Download classification updates</strong> on the next page to share newly-confirmed codes with other computers, or connect a shared rules file on the upload screen next time. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`;
 }
 
 function readReviewFormIntoItems() {
@@ -2103,12 +2273,36 @@ function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-document.getElementById("save-btn").addEventListener("click", () => {
+document.getElementById("save-btn").addEventListener("click", async () => {
   readReviewFormIntoItems();
-  for (const it of STATE.items) {
-    if (it.htsusCode) {
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  try {
+    const toSave = {};
+    for (const it of STATE.items) {
+      if (!it.htsusCode) continue;
       saveLearnedRule(STATE.vendor, it.itemSku, it.styleNumber, it.descriptionGroup, it.fiberContent, it.htsusCode);
+      toSave[it.itemSku] = {
+        styleNumber: it.styleNumber,
+        descriptionGroup: it.descriptionGroup,
+        fiberContent: it.fiberContent,
+        htsusCode: it.htsusCode,
+        updatedAt: new Date().toISOString().slice(0, 10),
+      };
     }
+    if (SHARED_HANDLES[STATE.vendor] && Object.keys(toSave).length) {
+      btn.textContent = "Saving to shared file...";
+      try {
+        await writeSharedFileEntries(STATE.vendor, toSave);
+      } catch (e) {
+        console.error("could not write shared rules file", e);
+        alert("Saved to this browser, but could not write the shared rules file: " + e.message);
+      }
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
   renderAddendum();
   show("view-addendum");
