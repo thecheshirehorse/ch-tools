@@ -215,6 +215,10 @@
 
   <div class="panel toolbar">
     <div class="meta" id="datasetMeta">loading…</div>
+    <div class="actions" id="sharedFileRow" style="display:none;">
+      <span id="sharedFileStatus" style="font-size:12px;color:var(--text-muted);"></span>
+      <button type="button" id="sharedFileBtn"></button>
+    </div>
     <div class="actions">
       <button type="button" id="exportBtn">Export data</button>
       <button type="button" class="danger-outline" id="clearBtn">Clear my local edits</button>
@@ -933,10 +937,167 @@ const SEED_DATA = {
     catch(e){ showToast("Couldn't save to local storage."); }
   }
 
+  // ---------- shared file sync (OneDrive/Google Drive/Dropbox folder) ----------
+  // Same idea as the Customs Form Generator tool: connect to a JSON file inside
+  // a folder that syncs between computers, so edits reach the other computer
+  // through that sync service instead of the manual Export -> update_data.py ->
+  // commit dance. localStorage above remains the always-on fallback either way.
+  var SHARED_FILE_SUPPORTED = "showSaveFilePicker" in window;
+  var SHARED_HANDLE = null;
+  var sharedWritePending = null;
+  var sharedWriteQueued = false;
+
+  function openHandleDB(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open("chWebsiteMetricsDB", 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore("fileHandles"); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  function storeHandleRecord(handle){
+    return openHandleDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("fileHandles", "readwrite");
+        tx.objectStore("fileHandles").put(handle, "overlay");
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function getStoredHandleRecord(){
+    return openHandleDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction("fileHandles", "readonly");
+        var req = tx.objectStore("fileHandles").get("overlay");
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+
+  function readSharedOverlay(){
+    if (!SHARED_HANDLE) return Promise.resolve({});
+    return SHARED_HANDLE.getFile()
+      .then(function(file){ return file.text(); })
+      .then(function(text){ return text.trim() ? JSON.parse(text) : {}; })
+      .catch(function(e){ console.warn("could not read shared metrics file", e); return {}; });
+  }
+
+  // Pulls in whatever's currently on the shared file, merging it under this
+  // browser's own overlay (this browser's in-progress edits still win), then
+  // re-renders so connecting (or opening while already connected) shows the
+  // latest numbers immediately.
+  function pullSharedOverlay(){
+    return readSharedOverlay().then(function(shared){
+      overlay = deepMerge(shared, overlay);
+      saveOverlay();
+      DATA = deepMerge(SEED_DATA, overlay);
+      renderAll();
+    });
+  }
+
+  // Debounced read-modify-write: waits for a pause in editing, re-reads the
+  // shared file (in case the other computer wrote since we last read), merges
+  // this browser's overlay on top, and writes the result back.
+  function scheduleSharedWrite(){
+    if (!SHARED_HANDLE) return;
+    sharedWriteQueued = true;
+    if (sharedWritePending) return;
+    sharedWritePending = new Promise(function(resolve){ setTimeout(resolve, 900); })
+      .then(function(){
+        sharedWriteQueued = false;
+        return readSharedOverlay();
+      })
+      .then(function(onDisk){
+        var merged = deepMerge(onDisk, overlay);
+        return SHARED_HANDLE.createWritable().then(function(w){
+          return w.write(JSON.stringify(merged, null, 2) + "\n").then(function(){ return w.close(); });
+        }).then(function(){ return merged; });
+      })
+      .then(function(merged){
+        overlay = merged;
+        saveOverlay();
+        DATA = deepMerge(SEED_DATA, overlay);
+        renderAll();
+      })
+      .catch(function(e){
+        console.error("could not write shared metrics file", e);
+        showToast("Saved locally, but couldn't write the shared file.");
+      })
+      .then(function(){
+        sharedWritePending = null;
+        if (sharedWriteQueued) scheduleSharedWrite();
+      });
+  }
+
+  function refreshSharedFileUI(){
+    var row = document.getElementById("sharedFileRow");
+    var statusEl = document.getElementById("sharedFileStatus");
+    var btn = document.getElementById("sharedFileBtn");
+    if (!SHARED_FILE_SUPPORTED){ row.style.display = "none"; return; }
+    row.style.display = "flex";
+    if (SHARED_HANDLE){
+      statusEl.textContent = "Shared file connected: " + SHARED_HANDLE.name;
+      btn.textContent = "Change...";
+    } else {
+      statusEl.textContent = "Shared data file: not connected";
+      btn.textContent = "Connect...";
+    }
+    btn.onclick = connectSharedFile;
+  }
+
+  function connectSharedFile(){
+    window.showSaveFilePicker({
+      suggestedName: "website_metrics_overlay.json",
+      types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
+    }).then(function(handle){
+      SHARED_HANDLE = handle;
+      return storeHandleRecord(handle);
+    }).then(function(){
+      refreshSharedFileUI();
+      return pullSharedOverlay();
+    }).then(function(){
+      showToast("Connected to shared file");
+    }).catch(function(e){
+      if (e && e.name === "AbortError") return; // user cancelled the picker
+      console.error(e);
+      showToast("Couldn't connect to a shared file.");
+    });
+  }
+
+  function initSharedFile(){
+    if (!SHARED_FILE_SUPPORTED){ refreshSharedFileUI(); return; }
+    getStoredHandleRecord().then(function(handle){
+      if (!handle) { refreshSharedFileUI(); return; }
+      return handle.queryPermission({ mode: "readwrite" }).then(function(perm){
+        if (perm === "granted"){
+          SHARED_HANDLE = handle;
+          refreshSharedFileUI();
+          return pullSharedOverlay();
+        }
+        // needs a fresh user gesture to re-grant; wire the button to do that
+        refreshSharedFileUI();
+        document.getElementById("sharedFileStatus").textContent = "Shared data file: connection needs refreshing";
+        document.getElementById("sharedFileBtn").textContent = "Reconnect";
+        document.getElementById("sharedFileBtn").onclick = function(){
+          handle.requestPermission({ mode: "readwrite" }).then(function(p){
+            if (p === "granted"){
+              SHARED_HANDLE = handle;
+              refreshSharedFileUI();
+              return pullSharedOverlay();
+            }
+          });
+        };
+      });
+    });
+  }
+
   function setValue(path, val){
     setDeep(DATA, path, val);
     setDeep(overlay, path, val);
     saveOverlay();
+    scheduleSharedWrite();
     showToast("Saved");
   }
 
@@ -1477,6 +1638,7 @@ const SEED_DATA = {
   document.getElementById("clearBtn").addEventListener("click", clearLocalEdits);
   initTabs();
   renderAll();
+  initSharedFile();
 })();
 </script>
 </body>

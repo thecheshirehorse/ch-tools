@@ -7,6 +7,17 @@ button to download a JSON file, then run this script to splice that
 file into index.html between the SEED_DATA marker comments. Commit the
 updated index.html so everyone else's copy shows the new numbers.
 
+If you just want new numbers to reach another computer -- not to
+permanently update the baseline everyone starts from -- there's now a
+faster path: on the page, click "Connect..." next to "Shared data
+file" and point it at a file inside a folder that syncs between your
+computers (OneDrive/Google Drive/Dropbox). Edits then sync through
+that automatically, no export/script/commit needed. This script is
+still how you fold accumulated edits into the git-committed baseline
+periodically (e.g. copy the shared file's contents in as
+<exported-data.json> here) so a brand new install still starts with
+reasonably current numbers.
+
 Usage:
     python update_data.py <exported-data.json>
 """
