@@ -1,0 +1,627 @@
+{
+  "meta": {
+    "seededOn": "2026-07-28",
+    "note": "Initial import from the 'Website Metrics' Google Sheet. Revenue figures use the sheet's canonical multi-year per-source tables (Revenue (Eagle) / (Google Analytics) / (Klaviyo)); a couple of Aug/Sep 2025 GA cells differ slightly from an older duplicate snapshot elsewhere in that sheet and should be spot-checked against the live source. The 2023 'New Registered Shoppers' figure (228,027) also looks like an outlier compared to Total Registered Shoppers growth in surrounding years and is worth double-checking."
+  },
+  "revenue": {
+    "eagle": {
+      "2023-12": 80087.68,
+      "2024-01": 142850.69,
+      "2024-02": 135620.44,
+      "2024-03": 157661.33,
+      "2024-04": 184367.56,
+      "2024-05": 181319.74,
+      "2024-06": 151257.3,
+      "2024-07": 153880.61,
+      "2024-08": 178358.68,
+      "2024-09": 172799.26,
+      "2024-10": 184346.35,
+      "2024-11": 242997.93,
+      "2024-12": 235688.6,
+      "2025-01": 173115.36,
+      "2025-02": 130769.09,
+      "2025-03": 146191.88,
+      "2025-04": 175457.49,
+      "2025-05": 197814.66,
+      "2025-06": 151649.57,
+      "2025-07": 177486.89,
+      "2025-08": 152660.95,
+      "2025-09": 188826.69,
+      "2025-10": 180292.78,
+      "2025-11": 230929.3,
+      "2025-12": 284252.17,
+      "2026-01": 184782.19,
+      "2026-02": 117792.95,
+      "2026-03": 155621
+    },
+    "ga": {
+      "2022-09": 102547.48,
+      "2022-10": 127276.75,
+      "2022-11": 209387.22,
+      "2022-12": 162920.31,
+      "2023-01": 136745.66,
+      "2023-02": 133211.51,
+      "2023-03": 124807.13,
+      "2023-04": 131792.2,
+      "2023-05": 163578.59,
+      "2023-06": 134810.62,
+      "2023-07": 142659.62,
+      "2023-08": 131043.96,
+      "2023-09": 145706.55,
+      "2023-10": 126173.48,
+      "2023-11": 238219.03,
+      "2023-12": 184520.75,
+      "2024-01": 118059.21,
+      "2024-02": 117804.68,
+      "2024-03": 147638.2,
+      "2024-04": 159063.33,
+      "2024-05": 150102.98,
+      "2024-06": 136379.02,
+      "2024-07": 138380.27,
+      "2024-08": 148327.13,
+      "2024-09": 150178.18,
+      "2024-10": 168951.27,
+      "2024-11": 264677.01,
+      "2024-12": 195310.38,
+      "2025-01": 146930.91,
+      "2025-02": 120420.54,
+      "2025-03": 137779.85,
+      "2025-04": 158290.71,
+      "2025-05": 182619.4,
+      "2025-06": 130741.88,
+      "2025-07": 160241.85,
+      "2025-08": 151138.54,
+      "2025-09": 147615.28,
+      "2025-10": 161552.37,
+      "2025-11": 230477.41,
+      "2025-12": 230128.05,
+      "2026-01": 153746.37,
+      "2026-02": 107890.7,
+      "2026-03": 133989.55
+    },
+    "klaviyo": {
+      "2022-01": 153332.77,
+      "2022-02": 107503.42,
+      "2022-03": 139332.59,
+      "2022-04": 137361.92,
+      "2022-05": 137983.51,
+      "2022-06": 116280.77,
+      "2022-07": 139214.86,
+      "2022-08": 123459.95,
+      "2022-09": 157249.09,
+      "2022-10": 146424.15,
+      "2022-11": 234218.34,
+      "2022-12": 187424.7,
+      "2023-01": 159905.88,
+      "2023-02": 146779.34,
+      "2023-03": 146469.76,
+      "2023-04": 157184.98,
+      "2023-05": 187730.93,
+      "2023-06": 157957.32,
+      "2023-07": 169003.62,
+      "2023-08": 157201.69,
+      "2023-09": 173107.58,
+      "2023-10": 149345.09,
+      "2023-11": 265436.95,
+      "2023-12": 216564.77,
+      "2024-01": 143254.8,
+      "2024-02": 145983.75,
+      "2024-03": 175901.9,
+      "2024-04": 192284.11,
+      "2024-05": 187716.25,
+      "2024-06": 162914.31,
+      "2024-07": 166749.89,
+      "2024-08": 181765.91,
+      "2024-09": 182406.94,
+      "2024-10": 200946.5,
+      "2024-11": 281722.07,
+      "2024-12": 233219,
+      "2025-01": 175324.72,
+      "2025-02": 144205.82,
+      "2025-03": 165655.28,
+      "2025-04": 186300.67,
+      "2025-05": 215058.39,
+      "2025-06": 155094.16,
+      "2025-07": 190916.65,
+      "2025-08": 180323.59,
+      "2025-09": 180590.8,
+      "2025-10": 191847.07,
+      "2025-11": 278198.21,
+      "2025-12": 282989.99,
+      "2026-01": 176180.12,
+      "2026-02": 129383.66,
+      "2026-03": 164324.15
+    }
+  },
+  "siteVisits": {
+    "2021": {
+      "visits": 997704,
+      "avgDurationSec": 54,
+      "revenuePerVisit": 0.9,
+      "newRegistered": 3476,
+      "totalRegistered": 23712
+    },
+    "2022": {
+      "visits": 1455863,
+      "avgDurationSec": 61,
+      "revenuePerVisit": 1.13,
+      "newRegistered": 4421,
+      "totalRegistered": 28166
+    },
+    "2023": {
+      "visits": 585704,
+      "avgDurationSec": 164,
+      "revenuePerVisit": 3.26,
+      "newRegistered": 228027,
+      "totalRegistered": 33872
+    },
+    "2024": {
+      "visits": 569130,
+      "avgDurationSec": 171,
+      "revenuePerVisit": 3.65,
+      "newRegistered": 5374,
+      "totalRegistered": 39269
+    },
+    "2025": {
+      "visits": 595056,
+      "avgDurationSec": 168,
+      "revenuePerVisit": 3.65,
+      "newRegistered": 4450,
+      "totalRegistered": 43726
+    }
+  },
+  "shipping": {
+    "2023-01": {
+      "ordersShipped": 2655,
+      "orderSales": 139960.83,
+      "shippingCollected": 11794.38,
+      "shippingCost": 20317.76,
+      "insuranceCost": 660.4,
+      "weightShippedOz": 177535,
+      "itemsShipped": 4745
+    },
+    "2023-02": {
+      "ordersShipped": 2187,
+      "orderSales": 127241.44,
+      "shippingCollected": 11169.95,
+      "shippingCost": 18143.83,
+      "insuranceCost": 271.1,
+      "weightShippedOz": 153093,
+      "itemsShipped": 4056
+    },
+    "2023-03": {
+      "ordersShipped": 2502,
+      "orderSales": 123294.02,
+      "shippingCollected": 11847.97,
+      "shippingCost": 19573.3,
+      "insuranceCost": 169.2,
+      "weightShippedOz": 174444,
+      "itemsShipped": 4354
+    },
+    "2023-04": {
+      "ordersShipped": 2682,
+      "orderSales": 134300.83,
+      "shippingCollected": 11764.04,
+      "shippingCost": 19250.12,
+      "insuranceCost": 282.1,
+      "weightShippedOz": 172991,
+      "itemsShipped": 4500
+    },
+    "2023-05": {
+      "ordersShipped": 2860,
+      "orderSales": 165000.6,
+      "shippingCollected": 14743.28,
+      "shippingCost": 24094.25,
+      "insuranceCost": 546.9,
+      "weightShippedOz": 210486,
+      "itemsShipped": 4779
+    },
+    "2023-06": {
+      "ordersShipped": 2576,
+      "orderSales": 139872.89,
+      "shippingCollected": 14040.56,
+      "shippingCost": 22468.96,
+      "insuranceCost": 504.45,
+      "weightShippedOz": 196988,
+      "itemsShipped": 4859
+    },
+    "2023-07": {
+      "ordersShipped": 2755,
+      "orderSales": 147567.43,
+      "shippingCollected": 13364.27,
+      "shippingCost": 20899.67,
+      "insuranceCost": 266.4,
+      "weightShippedOz": 193124,
+      "itemsShipped": 4537
+    },
+    "2023-08": {
+      "ordersShipped": 2696,
+      "orderSales": 140234.06,
+      "shippingCollected": 13537.25,
+      "shippingCost": 22150.03,
+      "insuranceCost": 400.6,
+      "weightShippedOz": 200879,
+      "itemsShipped": 4825
+    },
+    "2023-09": {
+      "ordersShipped": 3127,
+      "orderSales": 159875.42,
+      "shippingCollected": 12033.43,
+      "shippingCost": 20410.99,
+      "insuranceCost": 166.35,
+      "weightShippedOz": 172649,
+      "itemsShipped": 4806
+    },
+    "2023-10": {
+      "ordersShipped": 2605,
+      "orderSales": 141252.42,
+      "shippingCollected": 10840.85,
+      "shippingCost": 19065.38,
+      "insuranceCost": 136.5,
+      "weightShippedOz": 162503,
+      "itemsShipped": 4522
+    },
+    "2023-11": {
+      "ordersShipped": 5206,
+      "orderSales": 261081.22,
+      "shippingCollected": 16136.62,
+      "shippingCost": 27171.32,
+      "insuranceCost": 500.2,
+      "weightShippedOz": 219154,
+      "itemsShipped": 6683
+    },
+    "2023-12": {
+      "ordersShipped": 3784,
+      "orderSales": 222529.58,
+      "shippingCollected": 14767.88,
+      "shippingCost": 24085.51,
+      "insuranceCost": 533,
+      "weightShippedOz": 179706,
+      "itemsShipped": 5779
+    },
+    "2024-01": {
+      "ordersShipped": 2376,
+      "orderSales": 132854.16,
+      "shippingCollected": 13515.49,
+      "shippingCost": 19171.67,
+      "insuranceCost": 152.6,
+      "weightShippedOz": 201492,
+      "itemsShipped": 4386
+    },
+    "2024-02": {
+      "ordersShipped": 2273,
+      "orderSales": 137312.85,
+      "shippingCollected": 12285.85,
+      "shippingCost": 17628.32,
+      "insuranceCost": 214.2,
+      "weightShippedOz": 163789,
+      "itemsShipped": 4095
+    },
+    "2024-03": {
+      "ordersShipped": 2823,
+      "orderSales": 160653.41,
+      "shippingCollected": 12826.65,
+      "shippingCost": 19852.09,
+      "insuranceCost": 312.2,
+      "weightShippedOz": 174223,
+      "itemsShipped": 4664
+    },
+    "2024-04": {
+      "ordersShipped": 3103,
+      "orderSales": 190302.25,
+      "shippingCollected": 14369.34,
+      "shippingCost": 22601.93,
+      "insuranceCost": 407.4,
+      "weightShippedOz": 192099,
+      "itemsShipped": 4846
+    },
+    "2024-05": {
+      "ordersShipped": 2944,
+      "orderSales": 177140.32,
+      "shippingCollected": 14730,
+      "shippingCost": 22870.98,
+      "insuranceCost": 246.4,
+      "weightShippedOz": 199344,
+      "itemsShipped": 5003
+    },
+    "2024-06": {
+      "ordersShipped": 2592,
+      "orderSales": 151504.64,
+      "shippingCollected": 12550.76,
+      "shippingCost": 19231.02,
+      "insuranceCost": 44.8,
+      "weightShippedOz": 176785,
+      "itemsShipped": 4396
+    },
+    "2024-07": {
+      "ordersShipped": 2775,
+      "orderSales": 161506.84,
+      "shippingCollected": 12819.93,
+      "shippingCost": 19954.13,
+      "insuranceCost": 214.2,
+      "weightShippedOz": 177801,
+      "itemsShipped": 4758
+    },
+    "2024-08": {
+      "ordersShipped": 2902,
+      "orderSales": 181936.76,
+      "shippingCollected": 14274.08,
+      "shippingCost": 22361.04,
+      "insuranceCost": 404.6,
+      "weightShippedOz": 197000,
+      "itemsShipped": 5139
+    },
+    "2024-09": {
+      "ordersShipped": 3270,
+      "orderSales": 178800.21,
+      "shippingCollected": 12301.8,
+      "shippingCost": 20807.39,
+      "insuranceCost": 257.6,
+      "weightShippedOz": 172053,
+      "itemsShipped": 5854
+    },
+    "2024-10": {
+      "ordersShipped": 3686,
+      "orderSales": 184121.93,
+      "shippingCollected": 13307.18,
+      "shippingCost": 22552.18,
+      "insuranceCost": 176.4,
+      "weightShippedOz": 177183,
+      "itemsShipped": 5729
+    },
+    "2024-11": {
+      "ordersShipped": 5415,
+      "orderSales": 283758.53,
+      "shippingCollected": 14190.97,
+      "shippingCost": 27000.69,
+      "insuranceCost": 347,
+      "weightShippedOz": 213959,
+      "itemsShipped": 6990
+    },
+    "2024-12": {
+      "ordersShipped": 4588,
+      "orderSales": 216470.31,
+      "shippingCollected": 14640.94,
+      "shippingCost": 28330.13,
+      "insuranceCost": 135.8,
+      "weightShippedOz": 184637,
+      "itemsShipped": 6571
+    },
+    "2025-01": {
+      "ordersShipped": 2700,
+      "orderSales": 166930.65,
+      "shippingCollected": 12631.23,
+      "shippingCost": 21379.37,
+      "insuranceCost": 15,
+      "weightShippedOz": 163665,
+      "itemsShipped": 4550
+    },
+    "2025-02": {
+      "ordersShipped": 2411,
+      "orderSales": 138558.64,
+      "shippingCollected": 9884.49,
+      "shippingCost": 17375.64,
+      "insuranceCost": 126,
+      "weightShippedOz": 136115,
+      "itemsShipped": 3695
+    },
+    "2025-03": {
+      "ordersShipped": 2670,
+      "orderSales": 159927.27,
+      "shippingCollected": 11741.25,
+      "shippingCost": 19065.81,
+      "insuranceCost": 31.5,
+      "weightShippedOz": 147857,
+      "itemsShipped": 4223
+    },
+    "2025-04": {
+      "ordersShipped": 3158,
+      "orderSales": 176428.88,
+      "shippingCollected": 14511.22,
+      "shippingCost": 23741.94,
+      "insuranceCost": 0,
+      "weightShippedOz": 193249,
+      "itemsShipped": 5084
+    },
+    "2025-05": {
+      "ordersShipped": 3394,
+      "orderSales": 214001.99,
+      "shippingCollected": 13125.62,
+      "shippingCost": 23684.67,
+      "insuranceCost": 126,
+      "weightShippedOz": 183879,
+      "itemsShipped": 4877
+    },
+    "2025-06": {
+      "ordersShipped": 2396,
+      "orderSales": 149487.88,
+      "shippingCollected": 12215.75,
+      "shippingCost": 20466.03,
+      "insuranceCost": 0,
+      "weightShippedOz": 160523,
+      "itemsShipped": 4051
+    },
+    "2025-07": {
+      "ordersShipped": 3164,
+      "orderSales": 181868.34,
+      "shippingCollected": 13419.18,
+      "shippingCost": 23324.46,
+      "insuranceCost": 0,
+      "weightShippedOz": 176175,
+      "itemsShipped": 5118
+    },
+    "2025-08": {
+      "ordersShipped": 1624,
+      "orderSales": 179583.85,
+      "shippingCollected": 12284.42,
+      "shippingCost": 20056.59,
+      "insuranceCost": 0,
+      "weightShippedOz": 165881,
+      "itemsShipped": 4277
+    },
+    "2025-09": {
+      "ordersShipped": 1608,
+      "orderSales": 182068.3,
+      "shippingCollected": 13636.91,
+      "shippingCost": 24202.2,
+      "insuranceCost": 0,
+      "weightShippedOz": 181916,
+      "itemsShipped": 5613
+    },
+    "2025-10": {
+      "ordersShipped": 2755,
+      "orderSales": 179118.7,
+      "shippingCollected": 12567.29,
+      "shippingCost": 22086.54,
+      "insuranceCost": 0,
+      "weightShippedOz": 156963,
+      "itemsShipped": 4569
+    },
+    "2025-11": {
+      "ordersShipped": 1826,
+      "orderSales": 215853.41,
+      "shippingCollected": 13368.44,
+      "shippingCost": 28462.68,
+      "insuranceCost": 0,
+      "weightShippedOz": 173717,
+      "itemsShipped": 5214
+    },
+    "2025-12": {
+      "ordersShipped": 2765,
+      "orderSales": 252598.13,
+      "shippingCollected": 17461.27,
+      "shippingCost": 35427.03,
+      "insuranceCost": 0,
+      "weightShippedOz": 198083,
+      "itemsShipped": 7678
+    },
+    "2026-01": {
+      "ordersShipped": 1730,
+      "orderSales": 171141.73,
+      "shippingCollected": 11927.64,
+      "shippingCost": 21925.97,
+      "insuranceCost": 0,
+      "weightShippedOz": 160569,
+      "itemsShipped": 4759
+    },
+    "2026-02": {
+      "ordersShipped": 1080,
+      "orderSales": 126402.88,
+      "shippingCollected": 9449.84,
+      "shippingCost": 15473.45,
+      "insuranceCost": 0,
+      "weightShippedOz": 120851,
+      "itemsShipped": 3129
+    },
+    "2026-03": {
+      "ordersShipped": 1379,
+      "orderSales": 169882.02,
+      "shippingCollected": 10569.06,
+      "shippingCost": 20623.27,
+      "insuranceCost": 0,
+      "weightShippedOz": 138228,
+      "itemsShipped": 4209
+    },
+    "2026-04": {
+      "ordersShipped": 1425,
+      "orderSales": 176402.44,
+      "shippingCollected": 10905.12,
+      "shippingCost": 20874.26,
+      "insuranceCost": 6.6,
+      "weightShippedOz": 140429,
+      "itemsShipped": 4261
+    },
+    "2026-05": {
+      "ordersShipped": 1551,
+      "orderSales": 197764.42,
+      "shippingCollected": 11062,
+      "shippingCost": 23043.81,
+      "insuranceCost": 0,
+      "weightShippedOz": 148908,
+      "itemsShipped": 4412
+    },
+    "2026-06": {
+      "ordersShipped": 1454,
+      "orderSales": 187491.43,
+      "shippingCollected": 11726.2,
+      "shippingCost": 22060.92,
+      "insuranceCost": 8.25,
+      "weightShippedOz": 139185,
+      "itemsShipped": 4192
+    }
+  },
+  "searchConsole": {
+    "2025-04": {
+      "clicks": 9038,
+      "impressions": 1242633,
+      "ctr": 0.007,
+      "avgPosition": 26.3
+    },
+    "2025-05": {
+      "clicks": 11416,
+      "impressions": 1591899,
+      "ctr": 0.007,
+      "avgPosition": 28.6
+    },
+    "2025-06": {
+      "clicks": 10589,
+      "impressions": 1599973,
+      "ctr": 0.007,
+      "avgPosition": 27.9
+    },
+    "2025-07": {
+      "clicks": 11117,
+      "impressions": 1839183,
+      "ctr": 0.006,
+      "avgPosition": 27.6
+    },
+    "2025-08": {
+      "clicks": 11070,
+      "impressions": 1841959,
+      "ctr": 0.006,
+      "avgPosition": 27.5
+    },
+    "2025-09": {
+      "clicks": 10038,
+      "impressions": 1286028,
+      "ctr": 0.008,
+      "avgPosition": 21.1
+    },
+    "2025-10": {
+      "clicks": 11602,
+      "impressions": 1144907,
+      "ctr": 0.01,
+      "avgPosition": 12.1
+    },
+    "2025-11": {
+      "clicks": 12251,
+      "impressions": 1356226,
+      "ctr": 0.009,
+      "avgPosition": 12.3
+    },
+    "2025-12": {
+      "clicks": 11069,
+      "impressions": 1458877,
+      "ctr": 0.008,
+      "avgPosition": 14.2
+    },
+    "2026-01": {
+      "clicks": 10945,
+      "impressions": 1611835,
+      "ctr": 0.007,
+      "avgPosition": 13.8
+    },
+    "2026-02": {
+      "clicks": 10013,
+      "impressions": 2043450,
+      "ctr": 0.005,
+      "avgPosition": 11.6
+    },
+    "2026-03": {
+      "clicks": 11712,
+      "impressions": 1965717,
+      "ctr": 0.006,
+      "avgPosition": 9.5
+    }
+  }
+}
