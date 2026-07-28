@@ -1901,9 +1901,17 @@ function saveLearnedRule(vendor, itemSku, styleNumber, descriptionGroup, fiberCo
   localStorage.setItem(learnedRulesKey(vendor), JSON.stringify(rules));
 }
 
-/* ---- shared file (File System Access API) ---- */
+/* ---- shared file (File System Access API) ----
+   "Connect..." points this page at an actual COPY of index.html (e.g. one
+   living in a folder that syncs between computers). Saving reads that file's
+   own EMBEDDED_RULES block (covers every vendor, since that's how it's
+   stored in the page), merges in this vendor's newly confirmed SKUs, and
+   writes the result back into that same block -- everything else in the
+   file (markup, CSS, all the JS logic) is preserved exactly as read. One
+   connection covers every vendor; there's only one such file. */
 const SHARED_FILE_SUPPORTED = "showSaveFilePicker" in window;
-const SHARED_HANDLES = {}; // vendor -> FileSystemFileHandle, cached for this page load
+let SHARED_HANDLE = null; // single handle, shared across all vendors
+const EMBEDDED_RULES_BLOCK_RE = /(\/\/ EMBEDDED_RULES_START\s*\nconst EMBEDDED_RULES = )([\s\S]*?)(;\s*\n\/\/ EMBEDDED_RULES_END)/;
 
 function openHandleDB() {
   return new Promise((resolve, reject) => {
@@ -1914,55 +1922,56 @@ function openHandleDB() {
   });
 }
 
-async function storeHandleRecord(vendor, handle) {
+async function storeHandleRecord(handle) {
   const db = await openHandleDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction("fileHandles", "readwrite");
-    tx.objectStore("fileHandles").put(handle, vendor);
+    tx.objectStore("fileHandles").put(handle, "sharedHtml");
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
-async function getStoredHandleRecord(vendor) {
+async function getStoredHandleRecord() {
   const db = await openHandleDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction("fileHandles", "readonly");
-    const req = tx.objectStore("fileHandles").get(vendor);
+    const req = tx.objectStore("fileHandles").get("sharedHtml");
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
 }
 
-// Called once per vendor selection: reattaches a previously-connected handle for
-// this browser if permission is still (silently) granted. If a handle exists but
-// needs a fresh user gesture to re-grant access, the caller shows a "Reconnect" button.
-async function tryReattachSharedFile(vendor) {
+// Called once on load / vendor selection: reattaches a previously-connected
+// handle for this browser if permission is still (silently) granted. If a
+// handle exists but needs a fresh user gesture to re-grant access, the
+// caller shows a "Reconnect" button.
+async function tryReattachSharedFile() {
   if (!SHARED_FILE_SUPPORTED) return "unsupported";
-  const handle = await getStoredHandleRecord(vendor);
+  const handle = await getStoredHandleRecord();
   if (!handle) return "not-connected";
   const perm = await handle.queryPermission({ mode: "readwrite" });
   if (perm === "granted") {
-    SHARED_HANDLES[vendor] = handle;
+    SHARED_HANDLE = handle;
     return "connected";
   }
-  SHARED_HANDLES[vendor] = handle; // kept for the reconnect click to re-request permission on
+  SHARED_HANDLE = handle; // kept for the reconnect click to re-request permission on
   return "needs-reconnect";
 }
 
-async function connectSharedFile(vendor) {
+async function connectSharedFile() {
   const handle = await window.showSaveFilePicker({
-    suggestedName: `${vendor}_rules.json`,
-    types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+    suggestedName: "index.html",
+    types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
   });
-  await storeHandleRecord(vendor, handle);
-  SHARED_HANDLES[vendor] = handle;
+  await storeHandleRecord(handle);
+  SHARED_HANDLE = handle;
+  await writeSharedNow({}); // bootstrap the file if it's new/empty
 }
 
-async function reconnectSharedFile(vendor) {
-  const handle = SHARED_HANDLES[vendor];
-  if (!handle) return false;
-  const perm = await handle.requestPermission({ mode: "readwrite" });
+async function reconnectSharedFile() {
+  if (!SHARED_HANDLE) return false;
+  const perm = await SHARED_HANDLE.requestPermission({ mode: "readwrite" });
   return perm === "granted";
 }
 
@@ -1977,41 +1986,71 @@ function camelRuleToSnake(rule) {
   return out;
 }
 
-// Reads the shared file's raw (snake_case, disk-format) contents, or {} if not
-// connected / empty / unreadable.
-async function readSharedFileRaw(vendor) {
-  const handle = SHARED_HANDLES[vendor];
-  if (!handle) return {};
+function extractEmbeddedRulesFromText(text) {
+  const m = text.match(EMBEDDED_RULES_BLOCK_RE);
+  if (!m) return null;
+  try { return JSON.parse(m[2]); } catch (e) { return null; }
+}
+function spliceEmbeddedRulesIntoText(text, newRulesAllVendors) {
+  const m = text.match(EMBEDDED_RULES_BLOCK_RE);
+  if (!m) return null;
+  const json = JSON.stringify(newRulesAllVendors, null, 2);
+  return text.slice(0, m.index) + m[1] + json + m[3] + text.slice(m.index + m[0].length);
+}
+
+function currentPageTemplate() {
+  return "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+}
+
+async function readSharedFileText() {
+  if (!SHARED_HANDLE) return null;
   try {
-    const file = await handle.getFile();
-    const text = await file.text();
-    if (!text.trim()) return {};
-    return JSON.parse(text);
+    const file = await SHARED_HANDLE.getFile();
+    return await file.text();
   } catch (e) {
-    console.warn("could not read shared rules file for", vendor, e);
-    return {};
+    console.warn("could not read shared file", e);
+    return null;
   }
 }
 
-// Re-reads the shared file, merges in newEntries (camelCase, keyed by SKU), and
-// writes the result back -- read-modify-write right before saving to minimize
-// clobbering edits the other computer made since this page was loaded.
-async function writeSharedFileEntries(vendor, newEntriesCamel) {
-  const handle = SHARED_HANDLES[vendor];
-  if (!handle) return false;
-  const current = await readSharedFileRaw(vendor);
-  for (const [sku, rule] of Object.entries(newEntriesCamel)) {
-    current[sku] = camelRuleToSnake(rule);
+// Reads the connected file's EMBEDDED_RULES (all vendors, snake_case/disk
+// format), or {} if not connected / not yet a recognizable copy of this page.
+async function readSharedRulesRaw() {
+  const text = await readSharedFileText();
+  if (!text) return {};
+  return extractEmbeddedRulesFromText(text) || {};
+}
+
+// Re-reads the connected file fresh, merges in newEntries (camelCase, keyed
+// by SKU) for one vendor, and writes the whole file back -- preserving
+// whatever shell is currently in that file, or bootstrapping from this
+// page's own source if the file is new/empty. Read-fresh-before-write
+// minimizes clobbering edits another computer made since this page loaded.
+async function writeSharedNow(newEntriesCamelForVendor, vendor) {
+  if (!SHARED_HANDLE) return false;
+  const text = await readSharedFileText();
+  const base = text && extractEmbeddedRulesFromText(text) != null ? text : currentPageTemplate();
+  const diskRules = extractEmbeddedRulesFromText(base) || EMBEDDED_RULES;
+
+  const allVendors = { ...diskRules };
+  if (vendor && newEntriesCamelForVendor && Object.keys(newEntriesCamelForVendor).length) {
+    const vendorRules = { ...(allVendors[vendor] || {}) };
+    for (const [sku, rule] of Object.entries(newEntriesCamelForVendor)) {
+      vendorRules[sku] = camelRuleToSnake(rule);
+    }
+    allVendors[vendor] = Object.fromEntries(Object.keys(vendorRules).sort().map((k) => [k, vendorRules[k]]));
   }
-  const ordered = Object.fromEntries(Object.keys(current).sort().map((k) => [k, current[k]]));
-  const writable = await handle.createWritable();
-  await writable.write(JSON.stringify(ordered, null, 2) + "\n");
+
+  const newText = spliceEmbeddedRulesIntoText(base, allVendors);
+  if (newText == null) throw new Error("template is missing the EMBEDDED_RULES markers");
+  const writable = await SHARED_HANDLE.createWritable();
+  await writable.write(newText);
   await writable.close();
   return true;
 }
 
 async function effectiveRules(vendor) {
-  const sharedRaw = await readSharedFileRaw(vendor);
+  const sharedRaw = (await readSharedRulesRaw())[vendor] || {};
   const shared = Object.fromEntries(Object.entries(sharedRaw).map(([sku, r]) => [sku, snakeRuleToCamel(r)]));
   return { ...(EMBEDDED_RULES[vendor] || {}), ...loadLearnedRules(vendor), ...shared };
 }
@@ -2113,7 +2152,7 @@ function show(viewId) {
   window.scrollTo(0, 0);
 }
 
-async function refreshSharedFileUI(vendor) {
+async function refreshSharedFileUI() {
   const row = document.getElementById("shared-file-row");
   const statusEl = document.getElementById("shared-file-status");
   const btn = document.getElementById("shared-file-btn");
@@ -2123,27 +2162,21 @@ async function refreshSharedFileUI(vendor) {
     return;
   }
   row.style.display = "flex";
-  if (!vendor) {
-    statusEl.textContent = "choose a supplier first";
-    btn.style.display = "none";
-    return;
-  }
 
-  const state = await tryReattachSharedFile(vendor);
+  const state = await tryReattachSharedFile();
   btn.style.display = "inline-block";
   if (state === "connected") {
-    const handle = SHARED_HANDLES[vendor];
-    statusEl.innerHTML = `<span class="badge ok">Connected: ${escapeHtml(handle.name)}</span> classifications sync automatically`;
+    statusEl.innerHTML = `<span class="badge ok">Connected: ${escapeHtml(SHARED_HANDLE.name)}</span> classifications sync automatically`;
     btn.textContent = "Change...";
-    btn.onclick = () => connectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+    btn.onclick = () => connectSharedFile().then(refreshSharedFileUI);
   } else if (state === "needs-reconnect") {
     statusEl.innerHTML = `<span class="badge warn">Connection needs refreshing</span>`;
     btn.textContent = "Reconnect";
-    btn.onclick = () => reconnectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+    btn.onclick = () => reconnectSharedFile().then(refreshSharedFileUI);
   } else {
     statusEl.textContent = "not connected -- updates only saved on this computer";
     btn.textContent = "Connect...";
-    btn.onclick = () => connectSharedFile(vendor).then(() => refreshSharedFileUI(vendor));
+    btn.onclick = () => connectSharedFile().then(refreshSharedFileUI);
   }
 }
 
@@ -2161,17 +2194,14 @@ function initUploadView() {
     rows += `<tr><td>${v.label}</td><td>${v.available ? '<span class="badge ok">Ready</span>' : '<span class="badge warn">Needs a sample invoice to build a parser</span>'}</td></tr>`;
   }
   table.innerHTML = `<tr><th>Supplier</th><th>Status</th></tr>${rows}`;
-  refreshSharedFileUI(null);
+  refreshSharedFileUI();
 
   const fileInput = document.getElementById("pdf-input");
   const parseBtn = document.getElementById("parse-btn");
   function updateBtn() {
     parseBtn.disabled = !(select.value && fileInput.files.length);
   }
-  select.addEventListener("change", () => {
-    updateBtn();
-    refreshSharedFileUI(select.value);
-  });
+  select.addEventListener("change", updateBtn);
   fileInput.addEventListener("change", updateBtn);
 
   parseBtn.addEventListener("click", async () => {
@@ -2247,10 +2277,10 @@ function renderReview() {
     tbody.appendChild(tr);
   }
 
-  const connected = !!SHARED_HANDLES[vendor];
+  const connected = !!SHARED_HANDLE;
   document.getElementById("save-hint").innerHTML = connected
-    ? `Saving writes every HTSUS code you enter or confirm to your connected shared rules file (<code>${escapeHtml(SHARED_HANDLES[vendor].name)}</code>) &mdash; any other computer connected to that same file (e.g. via a synced OneDrive/Google Drive/Dropbox folder) will pick up these classifications automatically. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`
-    : `Saving keeps every HTSUS code you enter or confirm in this browser only (no shared file connected on this session). Use <strong>Download classification updates</strong> on the next page to share newly-confirmed codes with other computers, or connect a shared rules file on the upload screen next time. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`;
+    ? `Saving writes every HTSUS code you enter or confirm into your connected shared copy of this page (<code>${escapeHtml(SHARED_HANDLE.name)}</code>) &mdash; any other computer connected to that same file (e.g. via a synced Google Drive/OneDrive/Dropbox folder) will pick up these classifications automatically next time it opens. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`
+    : `Saving keeps every HTSUS code you enter or confirm in this browser only (no shared file connected on this session). Use <strong>Download classification updates</strong> on the next page to share newly-confirmed codes with other computers, or connect a shared copy of this page on the upload screen next time. Blank HTSUS codes will show as "needs review" on the generated addendum &mdash; you can still generate it, but it isn't ready to hand to the broker until every line has a code.`;
 }
 
 function readReviewFormIntoItems() {
@@ -2291,10 +2321,10 @@ document.getElementById("save-btn").addEventListener("click", async () => {
         updatedAt: new Date().toISOString().slice(0, 10),
       };
     }
-    if (SHARED_HANDLES[STATE.vendor] && Object.keys(toSave).length) {
+    if (SHARED_HANDLE && Object.keys(toSave).length) {
       btn.textContent = "Saving to shared file...";
       try {
-        await writeSharedFileEntries(STATE.vendor, toSave);
+        await writeSharedNow(toSave, STATE.vendor);
       } catch (e) {
         console.error("could not write shared rules file", e);
         alert("Saved to this browser, but could not write the shared rules file: " + e.message);

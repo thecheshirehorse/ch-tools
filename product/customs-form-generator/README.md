@@ -32,8 +32,8 @@ have loaded once.
    automatically, so a missing or duplicated line is easy to catch
    before it goes to the broker.
 5. To share new classifications with other computers, either:
-   - **Connect a shared rules file** (recommended if you have one) —
-     see below, or
+   - **Connect a shared copy of this page** (recommended if you have
+     one) — see below, or
    - Click **Download classification updates** on the addendum page.
      That downloads a small JSON file with just the new/changed SKUs —
      send it to whoever maintains this repo so they can fold it into
@@ -41,22 +41,25 @@ have loaded once.
 
 ## Sharing classifications automatically (no git required)
 
-If your computers already sync a folder via OneDrive, Google Drive, or
-Dropbox, you can point this tool at a file inside it and skip the
-manual "download and send" step entirely:
+If your computers already sync a folder via Google Drive, OneDrive, or
+Dropbox, you can point this tool at an actual copy of `index.html`
+living in it and skip the manual "download and send" step entirely:
 
-1. On the upload screen, pick a supplier, then click **Connect...**
-   next to "Shared rules file."
+1. On the upload screen, click **Connect...** next to "Shared rules
+   file."
 2. In the file picker, navigate to your synced folder and either pick
-   an existing `<vendor>_rules.json` there, or type that name to create
-   a new one.
+   an existing copy of this page there, or type `index.html` to create
+   a new one (it'll be seeded with whatever this page currently has).
 3. From then on, every classification you confirm and save is written
-   straight into that file. Once the sync service (OneDrive/Drive/
-   Dropbox) carries the updated file to the other computer, whoever
-   connects to that same file there picks up the new classifications
+   straight into that file's own copy of the classification table —
+   everything else in the file (the page itself, styling, logic) is
+   left untouched. Once the sync service (Drive/OneDrive/Dropbox)
+   carries the updated file to the other computer, whoever opens (or
+   is connected to) that same file there sees the new classifications
    automatically — no download, no email, no git.
 
-Each computer connects to the file once; the browser remembers the
+One connection covers every supplier, since they all live in the same
+file. Each computer connects once; the browser remembers the
 connection (you may need to click **Reconnect** once per browser
 restart, since browsers require a fresh permission grant then). This
 uses the browser's File System Access API, supported in Edge and
@@ -97,9 +100,11 @@ not for anyone just using the tool):
 1. Get the new entries into `data/<vendor>_rules.json`. Either:
    - Someone downloads a "classification updates" file from the tool
      and sends it to you — merge those entries in by hand, or
-   - If a shared rules file is in use (see above), just copy its
-     current contents over `data/<vendor>_rules.json` wholesale — it's
-     already in the same format and is the more complete/current set.
+   - If a shared copy of the page is in use (see above), open it and
+     copy the `EMBEDDED_RULES` block (between the `EMBEDDED_RULES_START`/
+     `END` comments) — that JS object's `[vendor]` key is the same
+     shape as `data/<vendor>_rules.json` (just camelCase field names
+     instead of snake_case), and is the more complete/current set.
 2. (For the manual-merge path) Add each new entry to the JSON file.
 3. Regenerate the embedded block:
    ```
