@@ -6,6 +6,7 @@
 <title>Website Metrics · Cheshire Horse</title>
 <link rel="icon" href="favicon.ico">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg: #f6f8f6;
@@ -215,15 +216,30 @@
 
   <div class="panel toolbar">
     <div class="meta" id="datasetMeta">loading…</div>
-    <div class="actions" id="sharedFileRow" style="display:none;">
-      <span id="sharedFileStatus" style="font-size:12px;color:var(--text-muted);"></span>
-      <button type="button" id="sharedFileBtn"></button>
-    </div>
     <div class="actions">
+      <button type="button" class="primary" id="importShipStationBtn">Import from ShipStation</button>
+      <button type="button" id="exportXlsxBtn">Export to Excel</button>
       <button type="button" id="exportBtn">Export data</button>
       <button type="button" class="danger-outline" id="clearBtn">Clear my local edits</button>
     </div>
   </div>
+
+  <dialog id="shipstationCredsDialog" style="border:none;border-radius:12px;padding:0;max-width:380px;width:90%;">
+    <form method="dialog" id="shipstationCredsForm" style="padding:20px;">
+      <h3 style="margin:0 0 4px;font-size:15px;">ShipStation API credentials</h3>
+      <p style="font-size:12.5px;color:var(--text-muted);margin:0 0 14px;">
+        Used only to pull Shipping tab numbers, in this browser. Stored in this browser's local storage, not sent anywhere else.
+      </p>
+      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:4px;">API Key</label>
+      <input type="text" id="ssApiKeyInput" autocomplete="off" style="width:100%;padding:7px 9px;border:0.5px solid var(--border-strong);border-radius:6px;font-size:13px;margin-bottom:10px;box-sizing:border-box;">
+      <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:4px;">API Secret</label>
+      <input type="password" id="ssApiSecretInput" autocomplete="off" style="width:100%;padding:7px 9px;border:0.5px solid var(--border-strong);border-radius:6px;font-size:13px;margin-bottom:16px;box-sizing:border-box;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" id="ssCredsCancelBtn">Cancel</button>
+        <button type="submit" class="primary" id="ssCredsSaveBtn">Save &amp; continue</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- OVERVIEW -->
   <section class="view active" id="view-overview">
@@ -937,16 +953,18 @@ const SEED_DATA = {
     { key:"avgPosition", label:"Avg. Position", kind:"dec1", lowerIsBetter:true }
   ];
 
+  // All read-only now -- Shipping tab data comes from "Import from ShipStation"
+  // (see importFromShipStation()), not manual entry.
   var SHIPPING_FIELDS = [
-    { key:"ordersShipped", label:"Orders", kind:"int", editable:true },
-    { key:"orderSales", label:"Order Sales", kind:"currency", editable:true },
-    { key:"shippingCollected", label:"Ship. Collected", kind:"currency", editable:true },
-    { key:"shippingCost", label:"Ship. Cost", kind:"currency", editable:true },
+    { key:"ordersShipped", label:"Orders", kind:"int", editable:false },
+    { key:"orderSales", label:"Order Sales", kind:"currency", editable:false },
+    { key:"shippingCollected", label:"Ship. Collected", kind:"currency", editable:false },
+    { key:"shippingCost", label:"Ship. Cost", kind:"currency", editable:false },
     { key:"shippingLoss", label:"Ship. Loss", kind:"currency", editable:false },
     { key:"salesMinusLoss", label:"Sales − Loss", kind:"currency", editable:false },
-    { key:"insuranceCost", label:"Insurance", kind:"currency", editable:true },
-    { key:"weightShippedOz", label:"Weight (oz)", kind:"int", editable:true },
-    { key:"itemsShipped", label:"Items", kind:"int", editable:true }
+    { key:"insuranceCost", label:"Insurance", kind:"currency", editable:false },
+    { key:"weightShippedOz", label:"Weight (oz)", kind:"int", editable:false },
+    { key:"itemsShipped", label:"Items", kind:"int", editable:false }
   ];
 
   // ---------- storage ----------
@@ -964,194 +982,10 @@ const SEED_DATA = {
     catch(e){ showToast("Couldn't save to local storage."); }
   }
 
-  // ---------- shared file sync ----------
-  // "Connect..." points this page at an actual COPY of index.html -- e.g. one
-  // living in a folder that syncs between computers (Google Drive, OneDrive,
-  // Dropbox). Saves read that file's current SEED_DATA block, merge in this
-  // browser's edits, and write the result back into that same block, leaving
-  // everything else in the file (markup, CSS, all the JS logic) untouched. Any
-  // other computer connected to the same file picks up the change next time it
-  // opens/reconnects. localStorage above remains the always-on local fallback.
-  var SHARED_FILE_SUPPORTED = "showSaveFilePicker" in window;
-  var SHARED_HANDLE = null;
-  var sharedWritePending = null;
-  var sharedWriteQueued = false;
-  var SEED_BLOCK_RE = /(\/\/ BEGIN SEED_DATA\s*\nconst SEED_DATA = )([\s\S]*?)(;\s*\n\/\/ END SEED_DATA)/;
-
-  function openHandleDB(){
-    return new Promise(function(resolve, reject){
-      var req = indexedDB.open("chWebsiteMetricsDB", 1);
-      req.onupgradeneeded = function(){ req.result.createObjectStore("fileHandles"); };
-      req.onsuccess = function(){ resolve(req.result); };
-      req.onerror = function(){ reject(req.error); };
-    });
-  }
-  function storeHandleRecord(handle){
-    return openHandleDB().then(function(db){
-      return new Promise(function(resolve, reject){
-        var tx = db.transaction("fileHandles", "readwrite");
-        tx.objectStore("fileHandles").put(handle, "sharedHtml");
-        tx.oncomplete = function(){ resolve(); };
-        tx.onerror = function(){ reject(tx.error); };
-      });
-    });
-  }
-  function getStoredHandleRecord(){
-    return openHandleDB().then(function(db){
-      return new Promise(function(resolve, reject){
-        var tx = db.transaction("fileHandles", "readonly");
-        var req = tx.objectStore("fileHandles").get("sharedHtml");
-        req.onsuccess = function(){ resolve(req.result || null); };
-        req.onerror = function(){ reject(req.error); };
-      });
-    });
-  }
-
-  function extractSeedDataFromText(text){
-    var m = text.match(SEED_BLOCK_RE);
-    if (!m) return null;
-    try { return JSON.parse(m[2]); } catch(e){ return null; }
-  }
-  function spliceSeedDataIntoText(text, newData){
-    var m = text.match(SEED_BLOCK_RE);
-    var json = JSON.stringify(newData, null, 2);
-    if (!m) return null;
-    return text.slice(0, m.index) + m[1] + json + m[3] + text.slice(m.index + m[0].length);
-  }
-
-  function readSharedFileText(){
-    if (!SHARED_HANDLE) return Promise.resolve(null);
-    return SHARED_HANDLE.getFile().then(function(file){ return file.text(); })
-      .catch(function(e){ console.warn("could not read shared file", e); return null; });
-  }
-
-  // Pulls in whatever's currently on the connected file, merging it under this
-  // browser's own overlay (this browser's in-progress edits still win), then
-  // re-renders so connecting (or opening while already connected) shows the
-  // latest numbers immediately. If the connected file is empty or isn't a
-  // recognizable copy of this page yet, bootstraps it from this page's own
-  // current source instead of failing.
-  function pullSharedFile(){
-    return readSharedFileText().then(function(text){
-      var diskData = text ? extractSeedDataFromText(text) : null;
-      if (diskData){
-        DATA = deepMerge(deepMerge(SEED_DATA, diskData), overlay);
-        renderAll();
-        return;
-      }
-      // nothing usable there yet (new/empty file) -- seed it from this page
-      return writeSharedNow();
-    });
-  }
-
-  function currentPageTemplate(){
-    return "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-  }
-
-  // Reads the connected file fresh, merges this browser's overlay into its
-  // SEED_DATA, and writes the result back -- preserving whatever shell
-  // (markup/CSS/JS) is currently in that file, or bootstrapping from this
-  // page's own source if the file doesn't have one yet.
-  function writeSharedNow(){
-    return readSharedFileText().then(function(text){
-      var base = text && extractSeedDataFromText(text) != null ? text : currentPageTemplate();
-      var diskData = extractSeedDataFromText(base) || SEED_DATA;
-      var merged = deepMerge(diskData, overlay);
-      var newText = spliceSeedDataIntoText(base, merged);
-      if (newText == null) throw new Error("template is missing the SEED_DATA markers");
-      return SHARED_HANDLE.createWritable().then(function(w){
-        return w.write(newText).then(function(){ return w.close(); });
-      }).then(function(){
-        DATA = deepMerge(SEED_DATA, merged);
-        renderAll();
-      });
-    });
-  }
-
-  // Debounced version for use while typing -- waits for a pause, then writes.
-  function scheduleSharedWrite(){
-    if (!SHARED_HANDLE) return;
-    sharedWriteQueued = true;
-    if (sharedWritePending) return;
-    sharedWritePending = new Promise(function(resolve){ setTimeout(resolve, 900); })
-      .then(function(){ sharedWriteQueued = false; return writeSharedNow(); })
-      .catch(function(e){
-        console.error("could not write shared file", e);
-        showToast("Saved locally, but couldn't write the shared file.");
-      })
-      .then(function(){
-        sharedWritePending = null;
-        if (sharedWriteQueued) scheduleSharedWrite();
-      });
-  }
-
-  function refreshSharedFileUI(){
-    var row = document.getElementById("sharedFileRow");
-    var statusEl = document.getElementById("sharedFileStatus");
-    var btn = document.getElementById("sharedFileBtn");
-    if (!SHARED_FILE_SUPPORTED){ row.style.display = "none"; return; }
-    row.style.display = "flex";
-    if (SHARED_HANDLE){
-      statusEl.textContent = "Shared copy connected: " + SHARED_HANDLE.name;
-      btn.textContent = "Change...";
-    } else {
-      statusEl.textContent = "Shared copy of this page: not connected";
-      btn.textContent = "Connect...";
-    }
-    btn.onclick = connectSharedFile;
-  }
-
-  function connectSharedFile(){
-    window.showSaveFilePicker({
-      suggestedName: "index.html",
-      types: [{ description: "HTML", accept: { "text/html": [".html"] } }]
-    }).then(function(handle){
-      SHARED_HANDLE = handle;
-      return storeHandleRecord(handle);
-    }).then(function(){
-      refreshSharedFileUI();
-      return pullSharedFile();
-    }).then(function(){
-      showToast("Connected");
-    }).catch(function(e){
-      if (e && e.name === "AbortError") return; // user cancelled the picker
-      console.error(e);
-      showToast("Couldn't connect to a shared file.");
-    });
-  }
-
-  function initSharedFile(){
-    if (!SHARED_FILE_SUPPORTED){ refreshSharedFileUI(); return; }
-    getStoredHandleRecord().then(function(handle){
-      if (!handle) { refreshSharedFileUI(); return; }
-      return handle.queryPermission({ mode: "readwrite" }).then(function(perm){
-        if (perm === "granted"){
-          SHARED_HANDLE = handle;
-          refreshSharedFileUI();
-          return pullSharedFile();
-        }
-        // needs a fresh user gesture to re-grant; wire the button to do that
-        refreshSharedFileUI();
-        document.getElementById("sharedFileStatus").textContent = "Shared copy of this page: connection needs refreshing";
-        document.getElementById("sharedFileBtn").textContent = "Reconnect";
-        document.getElementById("sharedFileBtn").onclick = function(){
-          handle.requestPermission({ mode: "readwrite" }).then(function(p){
-            if (p === "granted"){
-              SHARED_HANDLE = handle;
-              refreshSharedFileUI();
-              return pullSharedFile();
-            }
-          });
-        };
-      });
-    });
-  }
-
   function setValue(path, val){
     setDeep(DATA, path, val);
     setDeep(overlay, path, val);
     saveOverlay();
-    scheduleSharedWrite();
     showToast("Saved");
   }
 
@@ -1486,7 +1320,12 @@ const SEED_DATA = {
     if (!row) return null;
     var loss = (row.shippingCollected!=null && row.shippingCost!=null) ? (row.shippingCollected - row.shippingCost) : null;
     var salesMinusLoss = (row.orderSales!=null && loss!=null) ? (row.orderSales + loss) : null;
-    return { raw:row, shippingLoss:loss, salesMinusLoss:salesMinusLoss };
+    var out = {};
+    for (var k in row) out[k] = row[k];
+    out.raw = row;
+    out.shippingLoss = loss;
+    out.salesMinusLoss = salesMinusLoss;
+    return out;
   }
 
   function renderShippingTable(year){
@@ -1502,16 +1341,9 @@ const SEED_DATA = {
       var r = shippingRow(year, m);
       html += '<tr><td>' + MONTH_LABELS[m] + '</td>';
       SHIPPING_FIELDS.forEach(function(f){
-        var v = r ? (f.editable ? r.raw[f.key] : r[f.key]) : (r===null ? undefined : r[f.key]);
-        if (r){
-          if (v !== undefined && v !== null){ totals[f.key] += v; }
-        }
-        if (f.editable){
-          var displayVal = v!=null ? (f.kind === "currency" ? fmtCurrency(v) : v) : '';
-          html += '<td><input type="text" inputmode="decimal" class="cell-input" data-m="'+m+'" data-f="'+f.key+'" value="' + displayVal + '"></td>';
-        } else {
-          html += '<td class="ro">' + (v!=null ? fmtByKind(v, f.kind) : '—') + '</td>';
-        }
+        var v = r ? r[f.key] : undefined;
+        if (r && v !== undefined && v !== null){ totals[f.key] += v; }
+        html += '<td class="ro">' + (v!=null ? fmtByKind(v, f.kind) : '—') + '</td>';
       });
       html += '</tr>';
       if (r) anyMonth = true;
@@ -1533,7 +1365,7 @@ const SEED_DATA = {
       if (!pr) continue;
       priorAny = true;
       SHIPPING_FIELDS.forEach(function(f){
-        var v = f.editable ? pr.raw[f.key] : pr[f.key];
+        var v = pr[f.key];
         if (v !== undefined && v !== null) priorTotals[f.key] += v;
       });
     }
@@ -1544,18 +1376,6 @@ const SEED_DATA = {
 
     html += '</tbody></table></div>';
     wrap.innerHTML = html;
-
-    Array.prototype.forEach.call(wrap.querySelectorAll(".cell-input"), function(inp){
-      inp.addEventListener("blur", function(){
-        var m = Number(inp.dataset.m), f = inp.dataset.f;
-        var raw = inp.value.trim();
-        if (raw === ""){ setValue(["shipping", monthKey(year,m), f], null); renderAll(); return; }
-        var n = parseFloat(raw.replace(/[$,]/g,""));
-        if (isNaN(n)){ showToast("Enter a number."); renderAll(); return; }
-        setValue(["shipping", monthKey(year,m), f], n);
-        renderAll();
-      });
-    });
   }
 
   function renderShippingChart(year){
@@ -1642,6 +1462,285 @@ const SEED_DATA = {
     el.textContent = "Baseline seeded " + seeded + (hasLocalEdits ? " · unsaved local edits present" : "");
   }
 
+  // ---------- ShipStation import ----------
+  // Pulls Shipping-tab numbers straight from the ShipStation API into this
+  // browser -- port of pull_shipping_metrics.py's join logic (shipments
+  // joined with orders, scoped to storeId 221388 "SFCC Production" =
+  // cheshirehorse.com, since the same ShipStation account also carries an
+  // in-store channel and two unrelated businesses; voided shipments
+  // excluded). See that script's docstring for the accuracy notes: exact on
+  // shippingCollected/shippingCost/weightShippedOz/itemsShipped, best-effort
+  // (~1-2%) on ordersShipped/orderSales.
+  var SS_API_BASE = "https://ssapi.shipstation.com";
+  var SS_WEBSITE_STORE_ID = 221388;
+  var SS_CREDS_KEY = "chWebsiteMetrics.shipstationCreds";
+
+  function getShipStationCreds(){
+    try{
+      var raw = localStorage.getItem(SS_CREDS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function saveShipStationCreds(creds){
+    localStorage.setItem(SS_CREDS_KEY, JSON.stringify(creds));
+  }
+
+  function promptForShipStationCreds(){
+    return new Promise(function(resolve){
+      var dialog = document.getElementById("shipstationCredsDialog");
+      var form = document.getElementById("shipstationCredsForm");
+      var keyInput = document.getElementById("ssApiKeyInput");
+      var secretInput = document.getElementById("ssApiSecretInput");
+      var cancelBtn = document.getElementById("ssCredsCancelBtn");
+      keyInput.value = ""; secretInput.value = "";
+
+      function cleanup(){
+        form.removeEventListener("submit", onSubmit);
+        cancelBtn.removeEventListener("click", onCancel);
+      }
+      function onSubmit(e){
+        e.preventDefault();
+        var creds = { apiKey: keyInput.value.trim(), apiSecret: secretInput.value.trim() };
+        cleanup();
+        dialog.close();
+        resolve(creds.apiKey && creds.apiSecret ? creds : null);
+      }
+      function onCancel(){
+        cleanup();
+        dialog.close();
+        resolve(null);
+      }
+      form.addEventListener("submit", onSubmit);
+      cancelBtn.addEventListener("click", onCancel);
+      dialog.showModal();
+      keyInput.focus();
+    });
+  }
+
+  function ssBasicAuthHeader(creds){
+    return "Basic " + btoa(creds.apiKey + ":" + creds.apiSecret);
+  }
+
+  function ssGet(creds, path, params){
+    var url = new URL(SS_API_BASE + path);
+    Object.keys(params || {}).forEach(function(k){ url.searchParams.set(k, params[k]); });
+    function attempt(triesLeft){
+      return fetch(url.toString(), { headers: { "Authorization": ssBasicAuthHeader(creds) } })
+        .then(function(r){
+          if (r.status === 429){
+            if (triesLeft <= 0) throw new Error("rate limited too many times");
+            var wait = (Number(r.headers.get("X-Rate-Limit-Reset")) || 5) + 1;
+            return new Promise(function(res){ setTimeout(res, wait * 1000); }).then(function(){ return attempt(triesLeft - 1); });
+          }
+          if (r.status === 401) throw new Error("ShipStation rejected that API key/secret (401)");
+          if (!r.ok) throw new Error("ShipStation API error " + r.status + " on " + path);
+          return r.json();
+        });
+    }
+    return attempt(6);
+  }
+
+  function ssFetchAll(creds, path, paramsBase, listKey, onProgress){
+    var page = 1;
+    var out = [];
+    function loop(){
+      var params = Object.assign({}, paramsBase, { page: page, pageSize: 500 });
+      return ssGet(creds, path, params).then(function(data){
+        out = out.concat(data[listKey]);
+        if (onProgress) onProgress(out.length, data.pages);
+        if (page >= data.pages) return out;
+        page += 1;
+        return new Promise(function(res){ setTimeout(res, 250); }).then(loop);
+      });
+    }
+    return loop();
+  }
+
+  function ssMonthBounds(monthStr){
+    var parts = monthStr.split("-");
+    var y = Number(parts[0]), m = Number(parts[1]);
+    var lastDay = new Date(y, m, 0).getDate();
+    return { start: monthStr + "-01", end: monthStr + "-" + pad2(lastDay) };
+  }
+
+  function ssPullMonth(creds, monthStr, onProgress){
+    var bounds = ssMonthBounds(monthStr);
+    return ssFetchAll(creds, "/shipments", { shipDateStart: bounds.start, shipDateEnd: bounds.end }, "shipments", function(n){
+      if (onProgress) onProgress("Fetching " + monthStr + " shipments... " + n);
+    }).then(function(shipments){
+      var nonVoided = shipments.filter(function(s){ return !s.voided; });
+
+      // orders are looked up in a window wider than the ship-date range, since
+      // an order can be placed several days before it actually ships
+      var startDate = new Date(bounds.start + "T00:00:00");
+      var endDate = new Date(bounds.end + "T00:00:00");
+      startDate.setDate(startDate.getDate() - 14);
+      endDate.setDate(endDate.getDate() + 14);
+      var orderWindowStart = startDate.toISOString().slice(0, 10);
+      var orderWindowEnd = endDate.toISOString().slice(0, 10);
+
+      return ssFetchAll(creds, "/orders", { orderDateStart: orderWindowStart, orderDateEnd: orderWindowEnd }, "orders", function(n){
+        if (onProgress) onProgress("Fetching " + monthStr + " orders... " + n);
+      }).then(function(orders){
+        var ordersById = {};
+        orders.forEach(function(o){ ordersById[o.orderId] = o; });
+
+        var n = 0, sumOrderTotal = 0, sumShippingAmount = 0, sumShipmentCost = 0, sumInsuranceCost = 0, sumWeight = 0, sumItemsQty = 0;
+        nonVoided.forEach(function(s){
+          var o = ordersById[s.orderId];
+          if (!o || !o.advancedOptions || o.advancedOptions.storeId !== SS_WEBSITE_STORE_ID) return;
+          n += 1;
+          sumShipmentCost += s.shipmentCost || 0;
+          sumInsuranceCost += s.insuranceCost || 0;
+          if (s.weight && s.weight.units === "ounces") sumWeight += s.weight.value || 0;
+          else if (s.weight && s.weight.units === "pounds") sumWeight += (s.weight.value || 0) * 16;
+          sumOrderTotal += o.orderTotal || 0;
+          sumShippingAmount += o.shippingAmount || 0;
+          (o.items || []).forEach(function(it){ sumItemsQty += it.quantity || 0; });
+        });
+
+        return {
+          ordersShipped: n,
+          orderSales: Math.round(sumOrderTotal * 100) / 100,
+          shippingCollected: Math.round(sumShippingAmount * 100) / 100,
+          shippingCost: Math.round(sumShipmentCost * 100) / 100,
+          insuranceCost: Math.round(sumInsuranceCost * 100) / 100,
+          weightShippedOz: Math.round(sumWeight),
+          itemsShipped: sumItemsQty,
+        };
+      });
+    });
+  }
+
+  function lastCompleteMonth(){
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth(); // getMonth() is 0-indexed = previous month
+    if (m === 0){ m = 12; y -= 1; }
+    return y + "-" + pad2(m);
+  }
+
+  function monthsBetweenExclusiveStart(fromMonth, toMonth){
+    var out = [];
+    var y = Number(fromMonth.slice(0, 4)), m = Number(fromMonth.slice(5, 7)) + 1;
+    if (m > 12){ m = 1; y += 1; }
+    var ty = Number(toMonth.slice(0, 4)), tm = Number(toMonth.slice(5, 7));
+    while (y < ty || (y === ty && m <= tm)){
+      out.push(y + "-" + pad2(m));
+      m += 1;
+      if (m > 12){ m = 1; y += 1; }
+    }
+    return out;
+  }
+
+  function detectMissingShippingMonths(){
+    var months = Object.keys(DATA.shipping || {}).sort();
+    var target = lastCompleteMonth();
+    if (!months.length) return [target];
+    var latest = months[months.length - 1];
+    if (latest >= target) return [];
+    return monthsBetweenExclusiveStart(latest, target);
+  }
+
+  function setValueQuiet(path, val){
+    setDeep(DATA, path, val);
+    setDeep(overlay, path, val);
+  }
+
+  function importFromShipStation(){
+    var creds = getShipStationCreds();
+    (creds ? Promise.resolve(creds) : promptForShipStationCreds().then(function(c){
+      if (c) saveShipStationCreds(c);
+      return c;
+    })).then(function(creds){
+      if (!creds) return;
+      var months = detectMissingShippingMonths();
+      if (!months.length){
+        showToast("Shipping data is already up to date through last month.");
+        return;
+      }
+      if (!confirm("Pull ShipStation data for: " + months.join(", ") + "?\n\nThis may take a minute or two.")) return;
+
+      var btn = document.getElementById("importShipStationBtn");
+      btn.disabled = true;
+      var originalLabel = btn.textContent;
+
+      var chain = Promise.resolve();
+      months.forEach(function(monthStr){
+        chain = chain.then(function(){
+          return ssPullMonth(creds, monthStr, function(msg){ btn.textContent = msg; }).then(function(values){
+            Object.keys(values).forEach(function(field){
+              setValueQuiet(["shipping", monthStr, field], values[field]);
+            });
+          });
+        });
+      });
+      chain.then(function(){
+        saveOverlay();
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        renderAll();
+        showToast("Imported " + months.length + " month" + (months.length !== 1 ? "s" : "") + " from ShipStation");
+      }).catch(function(e){
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        showToast("ShipStation import failed: " + e.message);
+      });
+    });
+  }
+
+  function exportToXlsx(){
+    if (typeof XLSX === "undefined"){
+      showToast("Excel export library didn't load -- check your internet connection and try again.");
+      return;
+    }
+    var wb = XLSX.utils.book_new();
+
+    var revMonths = uniq(REVENUE_SOURCES.reduce(function(acc, src){
+      return acc.concat(Object.keys(DATA.revenue[src.key] || {}));
+    }, [])).sort();
+    var revRows = [["Month", "Eagle POS Net Sales", "GA Purchase Revenue", "Klaviyo Placed Order Revenue"]];
+    revMonths.forEach(function(mk){
+      revRows.push([
+        mk,
+        DATA.revenue.eagle[mk] != null ? DATA.revenue.eagle[mk] : "",
+        DATA.revenue.ga[mk] != null ? DATA.revenue.ga[mk] : "",
+        DATA.revenue.klaviyo[mk] != null ? DATA.revenue.klaviyo[mk] : "",
+      ]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(revRows), "Revenue");
+
+    var visitYears = Object.keys(DATA.siteVisits || {}).sort();
+    var visitRows = [["Year", "Visits", "Avg Duration (sec)", "Revenue / Visit", "New Registered", "Total Registered"]];
+    visitYears.forEach(function(y){
+      var r = DATA.siteVisits[y] || {};
+      visitRows.push([y, r.visits, r.avgDurationSec, r.revenuePerVisit, r.newRegistered, r.totalRegistered]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(visitRows), "Site Visits");
+
+    var shipMonths = Object.keys(DATA.shipping || {}).sort();
+    var shipRows = [["Month", "Orders", "Order Sales", "Ship. Collected", "Ship. Cost", "Ship. Loss", "Sales - Loss", "Insurance", "Weight (oz)", "Items"]];
+    shipMonths.forEach(function(mk){
+      var r = DATA.shipping[mk] || {};
+      var loss = (r.shippingCollected != null && r.shippingCost != null) ? (r.shippingCollected - r.shippingCost) : null;
+      var salesMinusLoss = (r.orderSales != null && loss != null) ? (r.orderSales + loss) : null;
+      shipRows.push([mk, r.ordersShipped, r.orderSales, r.shippingCollected, r.shippingCost, loss, salesMinusLoss, r.insuranceCost, r.weightShippedOz, r.itemsShipped]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(shipRows), "Shipping");
+
+    var gscMonths = Object.keys(DATA.searchConsole || {}).sort();
+    var gscRows = [["Month", "Clicks", "Impressions", "CTR", "Avg Position"]];
+    gscMonths.forEach(function(mk){
+      var r = DATA.searchConsole[mk] || {};
+      gscRows.push([mk, r.clicks, r.impressions, r.ctr, r.avgPosition]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(gscRows), "Search Console");
+
+    var today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, "website-metrics-" + today + ".xlsx");
+    showToast("Exported to Excel");
+  }
+
   function exportData(){
     var merged = deepClone(DATA);
     merged.meta = merged.meta || {};
@@ -1690,9 +1789,10 @@ const SEED_DATA = {
 
   document.getElementById("exportBtn").addEventListener("click", exportData);
   document.getElementById("clearBtn").addEventListener("click", clearLocalEdits);
+  document.getElementById("importShipStationBtn").addEventListener("click", importFromShipStation);
+  document.getElementById("exportXlsxBtn").addEventListener("click", exportToXlsx);
   initTabs();
   renderAll();
-  initSharedFile();
 })();
 </script>
 </body>

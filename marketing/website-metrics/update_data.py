@@ -2,22 +2,18 @@
 
 The dashboard (index.html) keeps its baseline dataset inline as a JS
 constant so it works when opened directly from disk (no server, no
-fetch). After entering new numbers in the page, use its "Export data"
-button to download a JSON file, then run this script to splice that
-file into index.html between the SEED_DATA marker comments. Commit the
-updated index.html so everyone else's copy shows the new numbers.
+fetch). Shipping-tab numbers are pulled live via the page's "Import
+from ShipStation" button (see ssPullMonth() in index.html, ported from
+pull_shipping_metrics.py); Revenue/Site Visits/Search Console are still
+entered by hand in the page, since those come from Eagle/GA/Klaviyo/GSC
+dashboards ShipStation has no visibility into.
 
-If you just want new numbers to reach another computer -- not to
-permanently update the baseline everyone starts from -- there's now a
-faster path: on the page, click "Connect..." next to "Shared data
-file" and point it at an actual copy of this index.html living in a
-folder that syncs between your computers (Google Drive/OneDrive/
-Dropbox). Edits then write straight into that copy's own SEED_DATA and
-sync through automatically, no export/script/commit needed. This
-script is still how you fold accumulated edits into the git-committed
-baseline periodically -- open the connected copy, use its own "Export
-data" button, and run this script on that export -- so a brand new
-install still starts with reasonably current numbers.
+Either way, edits stay local to whatever browser made them (in
+localStorage) until someone runs this script: use the page's "Export
+data" button to download a JSON snapshot of the current numbers, then
+run this script to splice that file into index.html between the
+SEED_DATA marker comments. Commit the updated index.html so everyone
+else's copy shows the new numbers.
 
 Usage:
     python update_data.py <exported-data.json>
