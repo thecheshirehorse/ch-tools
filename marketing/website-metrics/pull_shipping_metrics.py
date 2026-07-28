@@ -19,6 +19,15 @@ index.html's SEED_DATA:
     every number is inflated ~5-8%.
   - Excludes voided shipments (a purchased-then-voided label isn't a real
     outbound shipment).
+  - Excludes orders tagged "In-Store PickUp" (tag 75027) or "In-Store
+    Pickup Never Picked up" (tag 69330). Cheshire Horse selects FedEx as
+    the carrier for these even though nothing actually ships, which adds a
+    real (fake) shipmentCost with zero offsetting shippingAmount -- as of
+    June 2026 this was 155 of 1,454 "orders shipped" (10.7%) and $1,654.56
+    of the month's $22,060.92 shippingCost (7.5%), overstating shipping
+    loss. ShipStation's tagId filter on /orders doesn't work (same
+    silent-ignore behavior as its date filters), so this is applied
+    client-side against each order's tagIds array.
 
 Accuracy after that scoping fix (validated against March 2026, which was
 manually entered from ShipStation's Reports UI feature -- confirmed to have
@@ -52,6 +61,7 @@ import requests
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "product" / "shipstation-order-aging" / "config.json"
 API_BASE = "https://ssapi.shipstation.com"
 WEBSITE_STORE_ID = 221388  # "SFCC Production" (Salesforce Commerce Cloud) = cheshirehorse.com
+ISPU_TAG_IDS = {75027, 69330}  # "In-Store PickUp", "In-Store Pickup Never Picked up"
 
 
 def load_credentials():
@@ -139,6 +149,8 @@ def pull_month(session, month_str):
         if not o or o.get("advancedOptions", {}).get("storeId") != WEBSITE_STORE_ID:
             if not o:
                 unmatched += 1
+            continue
+        if ISPU_TAG_IDS.intersection(o.get("tagIds") or []):
             continue
         n += 1
         sum_shipment_cost += s.get("shipmentCost") or 0.0

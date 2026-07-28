@@ -827,31 +827,31 @@ const SEED_DATA = {
       "itemsShipped": 4209
     },
     "2026-04": {
-      "ordersShipped": 1425,
-      "orderSales": 176402.44,
-      "shippingCollected": 10905.12,
-      "shippingCost": 20874.26,
+      "ordersShipped": 1268,
+      "orderSales": 156234.29,
+      "shippingCollected": 10890.12,
+      "shippingCost": 19200.03,
       "insuranceCost": 6.6,
-      "weightShippedOz": 140429,
-      "itemsShipped": 4261
+      "weightShippedOz": 140272,
+      "itemsShipped": 3584
     },
     "2026-05": {
-      "ordersShipped": 1551,
-      "orderSales": 197764.42,
+      "ordersShipped": 1406,
+      "orderSales": 181871.51,
       "shippingCollected": 11062.0,
-      "shippingCost": 23043.81,
+      "shippingCost": 21502.64,
       "insuranceCost": 0.0,
-      "weightShippedOz": 148908,
-      "itemsShipped": 4412
+      "weightShippedOz": 148583,
+      "itemsShipped": 3869
     },
     "2026-06": {
-      "ordersShipped": 1454,
-      "orderSales": 187491.43,
+      "ordersShipped": 1299,
+      "orderSales": 163444.62,
       "shippingCollected": 11726.2,
-      "shippingCost": 22060.92,
+      "shippingCost": 20406.36,
       "insuranceCost": 8.25,
-      "weightShippedOz": 139185,
-      "itemsShipped": 4192
+      "weightShippedOz": 137817,
+      "itemsShipped": 3523
     }
   },
   "searchConsole": {
@@ -1471,8 +1471,16 @@ const SEED_DATA = {
   // excluded). See that script's docstring for the accuracy notes: exact on
   // shippingCollected/shippingCost/weightShippedOz/itemsShipped, best-effort
   // (~1-2%) on ordersShipped/orderSales.
+  //
+  // Also excludes orders tagged "In-Store PickUp" (75027) or "In-Store
+  // Pickup Never Picked up" (69330) -- Cheshire Horse selects FedEx as the
+  // carrier for these even though nothing ships, adding a real (fake)
+  // shipmentCost with zero offsetting shippingAmount (10.7% of "orders
+  // shipped" and 7.5% of shippingCost in June 2026). tagId isn't a working
+  // /orders filter param, so this is applied client-side against tagIds.
   var SS_API_BASE = "https://ssapi.shipstation.com";
   var SS_WEBSITE_STORE_ID = 221388;
+  var SS_ISPU_TAG_IDS = [75027, 69330];
   var SS_CREDS_KEY = "chWebsiteMetrics.shipstationCreds";
 
   function getShipStationCreds(){
@@ -1589,6 +1597,8 @@ const SEED_DATA = {
         nonVoided.forEach(function(s){
           var o = ordersById[s.orderId];
           if (!o || !o.advancedOptions || o.advancedOptions.storeId !== SS_WEBSITE_STORE_ID) return;
+          var tagIds = o.tagIds || [];
+          if (SS_ISPU_TAG_IDS.some(function(t){ return tagIds.indexOf(t) !== -1; })) return;
           n += 1;
           sumShipmentCost += s.shipmentCost || 0;
           sumInsuranceCost += s.insuranceCost || 0;
